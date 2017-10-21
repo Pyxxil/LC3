@@ -6,6 +6,8 @@
 #include <utility>
 #include <vector>
 
+#include "Debug.hpp"
+
 #include "Callback.hpp"
 
 static const std::string Anonymous_Callback{ "Anonymous Callback" };
@@ -43,9 +45,18 @@ private:
 };
 
 template<NOTIFY_EVENT T>
-struct Notification_Wrapper
+class Notification_Wrapper
 {
+public:
   Notification_Wrapper<T>() = default;
+
+  Notification_Wrapper<T>(const Notification_Wrapper<T>&) = default;
+  Notification_Wrapper<T>(Notification_Wrapper<T>&&) noexcept = default;
+
+  Notification_Wrapper<T>& operator=(const Notification_Wrapper<T>&) = default;
+  Notification_Wrapper<T>& operator=(Notification_Wrapper<T>&&) noexcept =
+    default;
+
   ~Notification_Wrapper() = default;
 
   Notification_Wrapper& operator<<(Notification::Notifier<T> t)
@@ -61,7 +72,19 @@ struct Notification_Wrapper
     }
   }
 
-  std::vector<Notification::Notifier<T>> notifications;
+  void notify_all()
+  {
+    for_each([](auto&& n) { n.notify(); });
+  }
+
+  void notify_all_and_clear()
+  {
+    notify_all();
+    notifications.clear();
+  }
+
+private:
+  std::vector<Notification::Notifier<T>> notifications{};
 };
 
 template<>
