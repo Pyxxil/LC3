@@ -11,9 +11,9 @@ public:
   explicit Sub(std::string t)
     : Token(std::move(t),
             Requirements(2,
-                         { Token_Match(Token_Type::REGISTER),
-                           Token_Match(Token_Type::REGISTER),
-                           Token_Match(Token_Type::REGISTER) },
+                         { Match(Token_Type::REGISTER),
+                           Match(Token_Type::REGISTER),
+                           Match(Token_Type::REGISTER) },
                          3))
   {}
 
@@ -26,6 +26,8 @@ public:
   ~Sub() override = default;
 
   Token_Type tokenType() const final { return SUB; }
+
+  void assemble() override { Token::assemble(); }
 
 private:
 };

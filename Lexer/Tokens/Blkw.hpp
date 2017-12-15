@@ -9,8 +9,7 @@ class Blkw : public Token
 {
 public:
   explicit Blkw(std::string t)
-    : Token(std::move(t),
-            Requirements(1, { Token_Match(Token_Type::IMMEDIATE) }))
+    : Token(std::move(t), Requirements(1, { Match(Token_Type::IMMEDIATE) }))
   {}
 
   Blkw(const Blkw&) = default;
@@ -22,6 +21,8 @@ public:
   ~Blkw() override = default;
 
   Token_Type tokenType() const final { return BLKW; }
+
+  void assemble() override { Token::assemble(); }
 
 private:
 };

@@ -10,9 +10,9 @@ class Lshift : public Token
 public:
   explicit Lshift(std::string t)
     : Token(std::move(t),
-            Requirements(2,
-                         { Token_Match(Token_Type::REGISTER),
-                           Token_Match(Token_Type::IMMEDIATE) }))
+            Requirements(
+              2,
+              { Match(Token_Type::REGISTER), Match(Token_Type::IMMEDIATE) }))
   {}
 
   Lshift(const Lshift&) = default;
@@ -24,6 +24,8 @@ public:
   ~Lshift() override = default;
 
   Token_Type tokenType() const final { return LSHIFT; }
+
+  void assemble() override { Token::assemble(); }
 
 private:
 };

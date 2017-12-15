@@ -11,9 +11,9 @@ public:
   explicit Str(std::string t)
     : Token(std::move(t),
             Requirements(3,
-                         { Token_Match(Token_Type::REGISTER),
-                           Token_Match(Token_Type::REGISTER),
-                           Token_Match(Token_Type::IMMEDIATE) }))
+                         { Match(Token_Type::REGISTER),
+                           Match(Token_Type::REGISTER),
+                           Match(Token_Type::IMMEDIATE) }))
   {}
 
   Str(const Str&) = default;
@@ -26,9 +26,11 @@ public:
 
   Token_Type tokenType() const final { return STR; }
 
+  void assemble() override { Token::assemble(); }
+
 private:
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

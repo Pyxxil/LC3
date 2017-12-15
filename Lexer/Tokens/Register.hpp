@@ -23,6 +23,8 @@ public:
 
   Token_Type tokenType() const final { return REGISTER; }
 
+  void assemble() override { Token::assemble(); }
+
 private:
   size_t reg{};
 };

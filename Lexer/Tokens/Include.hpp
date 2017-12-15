@@ -9,7 +9,7 @@ class Include : public Token
 {
 public:
   explicit Include(std::string t)
-    : Token(std::move(t), Requirements(1, { Token_Match(Token_Type::STRING) }))
+    : Token(std::move(t), Requirements(1, { Match(Token_Type::STRING) }))
   {}
 
   Include(const Include&) = default;

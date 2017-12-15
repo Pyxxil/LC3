@@ -2,6 +2,7 @@
 #define DEBUG_HPP
 
 #ifndef NDEBUG
+#include <iostream>
 #define debug(x)                                                               \
   std::cerr << "DEBUG: " << __FILE__ << ": " << __LINE__ << ": "               \
             << __FUNCTION__ << ": " << x << '\n'

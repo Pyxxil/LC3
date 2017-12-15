@@ -10,11 +10,11 @@ class And : public Token
 public:
   explicit And(std::string t)
     : Token(std::move(t),
-            Requirements(3,
-                         { Token_Match(Token_Type::REGISTER),
-                           Token_Match(Token_Type::REGISTER),
-                           Token_Match(Token_Type::REGISTER) |
-                             Token_Match(Token_Type::IMMEDIATE) }))
+            Requirements(
+              3,
+              { Match(Token_Type::REGISTER),
+                Match(Token_Type::REGISTER),
+                Match(Token_Type::REGISTER) | Match(Token_Type::IMMEDIATE) }))
   {}
 
   And(const And&) = default;
@@ -26,6 +26,8 @@ public:
   ~And() override = default;
 
   Token_Type tokenType() const final { return AND; }
+
+  void assemble() override { Token::assemble(); }
 
 private:
 };

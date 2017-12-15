@@ -24,28 +24,33 @@ public:
   Lexer& operator=(const Lexer&) = default;
   Lexer& operator=(Lexer&&) = default;
 
-  ~Lexer() = default;
-
-  Lexer& operator<<(std::shared_ptr<Token::Token> t)
+  ~Lexer()
   {
-    tokens.emplace_back(std::move(t));
+    for (Token::Token* token : tokens) {
+      delete token;
+    }
+  }
+
+  Lexer& operator<<(Token::Token* t)
+  {
+    tokens.emplace_back(t);
     return *this;
   }
 
-  Lexer& operator<<(Line l)
+  Lexer& operator<<(std::string_view s)
   {
-    Tokenizer tokenizer;
-    auto&& l_tokens = tokenizer.tokenize_line(std::move(l));
+    debug("Passed in line '" << s << '\'');
+    auto&& l_tokens = Tokenizer::tokenize_line(Line(s));
     for (auto&& token : l_tokens) {
       tokens.emplace_back(std::move(token));
     }
     return *this;
   }
 
-  void for_each(std::function<void(const std::shared_ptr<Token::Token>&)> f)
+  void for_each(std::function<void(const Token::Token&)> f)
   {
     for (auto&& t : tokens) {
-      f(t);
+      f(*t);
     }
   }
 
@@ -77,7 +82,7 @@ public:
    */
   auto consume_range(std::size_t begin, std::size_t end)
   {
-    std::vector<std::shared_ptr<Token::Token>> consumed;
+    std::vector<Token::Token*> consumed;
 
     if (idx + begin > tokens.size()) {
       return consumed;
@@ -100,13 +105,13 @@ public:
   {
     if (idx + count > tokens.size()) {
       // Should this be handled here, or inside the caller?
-      return std::vector<std::shared_ptr<Token::Token>>();
+      return std::vector<Token::Token*>();
     }
 
     return consume_range(count, count);
   }
 
-  std::vector<std::shared_ptr<Token::Token>> tokens{};
+  std::vector<Token::Token*> tokens{};
 
 private:
   std::size_t idx{ 0 };

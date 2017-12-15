@@ -11,9 +11,9 @@ public:
   explicit Ldr(std::string t)
     : Token(std::move(t),
             Requirements(3,
-                         { Token_Match(Token_Type::REGISTER),
-                           Token_Match(Token_Type::REGISTER),
-                           Token_Match(Token_Type::IMMEDIATE) }))
+                         { Match(Token_Type::REGISTER),
+                           Match(Token_Type::REGISTER),
+                           Match(Token_Type::IMMEDIATE) }))
   {}
 
   Ldr(const Ldr&) = default;
@@ -25,6 +25,8 @@ public:
   ~Ldr() override = default;
 
   Token_Type tokenType() const final { return LDR; }
+
+  void assemble() override { Token::assemble(); }
 
 private:
 };

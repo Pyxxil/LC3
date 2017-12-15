@@ -9,8 +9,7 @@ class Jsrr : public Token
 {
 public:
   explicit Jsrr(std::string t)
-    : Token(std::move(t),
-            Requirements(1, { Token_Match(Token_Type::REGISTER) }))
+    : Token(std::move(t), Requirements(1, { Match(Token_Type::REGISTER) }))
   {}
 
   Jsrr(const Jsrr&) = default;
@@ -22,6 +21,8 @@ public:
   ~Jsrr() override = default;
 
   Token_Type tokenType() const final { return JSRR; }
+
+  void assemble() override { Token::assemble(); }
 
 private:
 };

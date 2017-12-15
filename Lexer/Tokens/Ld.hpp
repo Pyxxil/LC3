@@ -10,10 +10,10 @@ class Ld : public Token
 public:
   explicit Ld(std::string t)
     : Token(std::move(t),
-            Requirements(2,
-                         { Token_Match(Token_Type::REGISTER),
-                           Token_Match(Token_Type::LABEL) |
-                             Token_Match(Token_Type::IMMEDIATE) }))
+            Requirements(
+              2,
+              { Match(Token_Type::REGISTER),
+                Match(Token_Type::LABEL) | Match(Token_Type::IMMEDIATE) }))
   {}
 
   Ld(const Ld&) = default;
@@ -25,6 +25,8 @@ public:
   ~Ld() override = default;
 
   Token_Type tokenType() const final { return LD; }
+
+  void assemble() override { Token::assemble(); }
 
 private:
 };

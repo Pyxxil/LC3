@@ -10,11 +10,11 @@ class Add : public Token
 public:
   explicit Add(std::string t)
     : Token(std::move(t),
-            Requirements(3,
-                         { Token_Match(Token_Type::REGISTER),
-                           Token_Match(Token_Type::REGISTER),
-                           Token_Match(Token_Type::REGISTER) |
-                             Token_Match(Token_Type::IMMEDIATE) }))
+            Requirements(
+              3,
+              { Match(Token_Type::REGISTER),
+                Match(Token_Type::REGISTER),
+                Match(Token_Type::REGISTER) | Match(Token_Type::IMMEDIATE) }))
   {}
 
   Add(const Add&) = default;
@@ -26,6 +26,8 @@ public:
   ~Add() override = default;
 
   Token_Type tokenType() const final { return ADD; }
+
+  void assemble() override { Token::assemble(); }
 
 private:
 };

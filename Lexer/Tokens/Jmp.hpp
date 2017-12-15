@@ -9,8 +9,7 @@ class Jmp : public Token
 {
 public:
   explicit Jmp(std::string t)
-    : Token(std::move(t),
-            Requirements(1, { Token_Match(Token_Type::REGISTER) }))
+    : Token(std::move(t), Requirements(1, { Match(Token_Type::REGISTER) }))
   {}
 
   Jmp(const Jmp&) = default;
@@ -22,6 +21,8 @@ public:
   ~Jmp() override = default;
 
   Token_Type tokenType() const final { return JMP; }
+
+  void assemble() override { Token::assemble(); }
 
 private:
 };

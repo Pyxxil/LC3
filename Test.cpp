@@ -8,9 +8,13 @@
 #include "Lexer/Lexer.hpp"
 #include "Lexer/Line.hpp"
 #include "Lexer/Token.hpp"
-#include "Lexer/Tokens/Add.hpp"
-#include "Lexer/Tokens/Immediate.hpp"
-#include "Lexer/Tokens/Register.hpp"
+#include "Lexer/Tokens.hpp"
+
+#if __APPLE__
+#define TEST_FILE_PATH "/Users/pyxxil/Sync/Projects/LC3"
+#elif __linux__
+#define TEST_FILE_PATH "/home/pyxxil/Sync/Projects/LC3"
+#endif
 
 int
 main(int argc, char** argv)
@@ -38,47 +42,43 @@ main(int argc, char** argv)
 
   Lexer::Lexer lexer;
 
-  lexer << std::make_shared<Lexer::Token::Add>("Add")
-        << std::make_shared<Lexer::Token::Register>("R1")
-        << std::make_shared<Lexer::Token::Register>("R2")
-        << std::make_shared<Lexer::Token::Immediate>("10")
+  lexer << new Lexer::Token::Add("Add") << new Lexer::Token::Register("R1")
+        << new Lexer::Token::Register("R2") << new Lexer::Token::Immediate("10")
 
-        << std::make_shared<Lexer::Token::Add>("ADD")
-        << std::make_shared<Lexer::Token::Register>("R3")
-        << std::make_shared<Lexer::Token::Register>("R1")
-        << std::make_shared<Lexer::Token::Register>("R2")
+        << new Lexer::Token::Add("ADD") << new Lexer::Token::Register("R3")
+        << new Lexer::Token::Register("R1") << new Lexer::Token::Register("R2")
 
-        << Lexer::Line("\tAdd R1 R2 '\n'; Yay for comments!")
-        << Lexer::Line("\"Hello\" \"\\\"\" \"")
-        << Lexer::Line("'H'  'Hello'  '\n'")
-        << Lexer::Line(
-             "Jmp R7 JSR  LABEL JSRR R2 NOT R2 , R3 .FILL -x300 AND R1, R2")
-        << std::make_shared<Lexer::Token::Immediate>("144");
+        << "\tAdd R1 R2 '\n'; Yay for comments!"
+        << "\"Hello\" \"\\\"\" \""
+        << "'H'  'Hello'  '\n'"
+        << "Jmp R7 JSR  LABEL JSRR R2 NOT R2 ,, R3 TEST:.FILL, -x300 AND R1, R2"
+        << new Lexer::Token::Immediate("144") << "\"Unterminated string";
 
-  std::ifstream f{ "/Users/pyxxil/Sync/Projects/LC3/Examples/Fibonacci.asm" };
   std::string line;
+  std::ifstream test{ TEST_FILE_PATH "/LC3/Examples/Test.asm" };
+  while (std::getline(test, line)) {
+    lexer << line;
+  }
+
+  std::ifstream f{ TEST_FILE_PATH "/Examples/Fibonacci.asm" };
   while (std::getline(f, line)) {
-    lexer << Lexer::Line(line);
+    lexer << line;
   }
-  std::ifstream z{
-    "/Users/pyxxil/Sync/Projects/LC3/Examples/Recursive_Fibonacci.asm"
-  };
+  std::ifstream z{ TEST_FILE_PATH "/Examples/Recursive_Fibonacci.asm" };
   while (std::getline(z, line)) {
-    lexer << Lexer::Line(line);
+    lexer << line;
   }
-  std::ifstream t{ "/Users/pyxxil/Sync/Projects/LC3/Examples/Compare.asm" };
-  while (std::getline(t, line)) {
-    lexer << Lexer::Line(line);
+  std::ifstream v{ TEST_FILE_PATH "/Examples/Compare.asm" };
+  while (std::getline(v, line)) {
+    lexer << line;
   }
-  std::ifstream e{ "/Users/pyxxil/Sync/Projects/LC3/Examples/input.asm" };
+  std::ifstream e{ TEST_FILE_PATH "/Examples/input.asm" };
   while (std::getline(e, line)) {
-    lexer << Lexer::Line(line);
+    lexer << line;
   }
-  std::ifstream a{
-    "/Users/pyxxil/Sync/Projects/LC3/Examples/Multi_Word_Addition.asm"
-  };
+  std::ifstream a{ TEST_FILE_PATH "/Examples/Multi_Word_Addition.asm" };
   while (std::getline(a, line)) {
-    lexer << Lexer::Line(line);
+    lexer << line;
   }
 
   lexer.lex();

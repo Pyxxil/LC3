@@ -10,10 +10,10 @@ class Set : public Token
 public:
   explicit Set(std::string t)
     : Token(std::move(t),
-            Requirements(2,
-                         { Token_Match(Token_Type::REGISTER),
-                           Token_Match(Token_Type::IMMEDIATE) |
-                             Token_Match(Token_Type::LABEL) }))
+            Requirements(
+              2,
+              { Match(Token_Type::REGISTER),
+                Match(Token_Type::IMMEDIATE) | Match(Token_Type::LABEL) }))
   {}
 
   Set(const Set&) = default;
@@ -25,6 +25,8 @@ public:
   ~Set() override = default;
 
   Token_Type tokenType() const final { return SET; }
+
+  void assemble() override { Token::assemble(); }
 
 private:
 };

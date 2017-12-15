@@ -10,10 +10,10 @@ class Neg : public Token
 public:
   explicit Neg(std::string t)
     : Token(std::move(t),
-            Requirements(1,
-                         { Token_Match(Token_Type::REGISTER),
-                           Token_Match(Token_Type::REGISTER) },
-                         3))
+            Requirements(
+              1,
+              { Match(Token_Type::REGISTER), Match(Token_Type::REGISTER) },
+              3))
   {}
 
   Neg(const Neg&) = default;
@@ -25,6 +25,8 @@ public:
   ~Neg() override = default;
 
   Token_Type tokenType() const final { return NEG; }
+
+  void assemble() override { Token::assemble(); }
 
 private:
 };

@@ -9,7 +9,7 @@ class Stringz : public Token
 {
 public:
   explicit Stringz(std::string t)
-    : Token(std::move(t), Requirements(1, { Token_Match(Token_Type::STRING) }))
+    : Token(std::move(t), Requirements(1, { Match(Token_Type::STRING) }))
   {}
 
   Stringz(const Stringz&) = default;
@@ -21,6 +21,8 @@ public:
   ~Stringz() override = default;
 
   Token_Type tokenType() const final { return STRINGZ; }
+
+  void assemble() override { Token::assemble(); }
 
 private:
 };

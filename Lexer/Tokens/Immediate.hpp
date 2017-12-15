@@ -28,6 +28,8 @@ public:
     value = static_cast<uint16_t>(-value);
   }
 
+  void assemble() override { Token::assemble(); }
+
 private:
   uint16_t value{};
 };

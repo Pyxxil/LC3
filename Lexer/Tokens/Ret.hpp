@@ -22,6 +22,8 @@ public:
 
   Token_Type tokenType() const final { return RET; }
 
+  void assemble() override { Token::assemble(); }
+
 private:
 };
 }

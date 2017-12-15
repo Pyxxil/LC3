@@ -1,9 +1,11 @@
 #ifndef TOKEN_HPP
 #define TOKEN_HPP
 
+#include <assert.h>
 #include <string>
 #include <vector>
 
+#include "Algorithm.hpp"
 #include "Debug.hpp"
 
 namespace Lexer {
@@ -64,59 +66,59 @@ const std::string TokenTypeString[] = {
 #endif
 };
 
-class Token_Match
+class Match
 {
 public:
-  Token_Match() = default;
-  explicit Token_Match(Token_Type t)
+  Match() = default;
+  explicit Match(Token_Type t)
     : matches({ t })
   {}
 
-  Token_Match(const Token_Match&) = default;
-  Token_Match(Token_Match&&) noexcept = default;
+  Match(const Match&) = default;
+  Match(Match&&) noexcept = default;
 
-  Token_Match& operator=(const Token_Match&) = default;
-  Token_Match& operator=(Token_Match&&) noexcept = default;
+  Match& operator=(const Match&) = default;
+  Match& operator=(Match&&) noexcept = default;
 
-  ~Token_Match() = default;
+  ~Match() = default;
 
-  friend std::ostream& operator<<(std::ostream& os, const Token_Match& t)
+  friend std::ostream& operator<<(std::ostream& os, const Match& t)
   {
-    for (auto it = t.matches.cbegin(); it < t.matches.cend(); ++it) {
-      if (it != t.matches.cbegin()) {
-        os << " | ";
-      }
-      os << TokenTypeString[*it] << '(' << *it << ')';
-    }
+    Algorithm::enumerate(
+      t.matches.cbegin(), t.matches.cend(), [&os](auto&& token, size_t idx) {
+        if (0 == idx) {
+          os << " | ";
+        }
+        os << TokenTypeString[token] << '(' << token << ')';
+      });
 
     return os;
   }
 
-  Token_Match& operator|(const Token_Match& t)
+  Match& operator|(const Match& t)
   {
     for (auto&& match : t.matches) {
       matches.push_back(match);
     }
     return *this;
   }
-  Token_Match& operator|(Token_Type t)
+  Match& operator|(Token_Type t)
   {
     matches.push_back(t);
     return *this;
   }
 
-  bool operator&(const Token_Match& t)
+  bool operator&(const Match& t)
   {
     for (auto&& match : t.matches) {
-      for (auto&& m : matches) {
-        if (match == m) {
-          return true;
-        }
+      if (*this & match) {
+        return true;
       }
     }
 
     return false;
   }
+
   bool operator&(Token_Type t)
   {
     for (auto&& match : matches) {
@@ -140,7 +142,7 @@ class Requirements
 public:
   Requirements() = default;
   explicit Requirements(std::size_t _min,
-                        std::vector<Token_Match> operands = {},
+                        std::vector<Match> operands = {},
                         std::size_t _max = 0)
     : min(_min)
     , max(_min)
@@ -149,6 +151,8 @@ public:
     if (_min > _max) {
       max = _min;
     }
+
+    assert(arguments.size() >= min && arguments.size() <= max);
   }
 
   Requirements(const Requirements&) = default;
@@ -163,16 +167,15 @@ public:
 
   const auto& argument_reqs() const { return arguments; }
 
-  std::vector<std::shared_ptr<Token>> consume(
-    const std::vector<std::shared_ptr<Token>>& tokens,
-    std::size_t& index);
+  std::vector<Token*> consume(const std::vector<Token*>& tokens,
+                              std::size_t& index);
 
   bool are_satisfied() const { return satisfied; }
 
 private:
-  std::size_t min{};
-  std::size_t max{};
-  std::vector<Token_Match> arguments{};
+  std::size_t min;
+  std::size_t max;
+  std::vector<Match> arguments;
   bool satisfied = false;
 };
 
@@ -190,7 +193,12 @@ public:
   Token& operator=(const Token&) = default;
   Token& operator=(Token&&) noexcept = default;
 
-  virtual ~Token() = default;
+  virtual ~Token()
+  {
+    for (auto operand : operands) {
+      delete operand;
+    }
+  }
 
   const auto& getToken() const { return token; }
 
@@ -199,6 +207,7 @@ public:
   auto& getRequirements() { return requirements; }
 
   virtual void assemble() {}
+
   virtual void negate() {}
 
 protected:
@@ -206,7 +215,7 @@ protected:
 
 private:
   Requirements requirements;
-  std::vector<std::unique_ptr<Token>> operands{};
+  std::vector<Token*> operands{};
 };
 
 /*! Consume tokens from the tokens the lexer contains according to our
@@ -219,11 +228,15 @@ private:
  * @param index The starting index into those tokens (this is updated)
  * @return The consumed tokens
  */
-std::vector<std::shared_ptr<Token>>
-Requirements::consume(const std::vector<std::shared_ptr<Token>>& tokens,
-                      std::size_t& index)
+std::vector<Token*>
+Requirements::consume(const std::vector<Token*>& tokens, std::size_t& index)
 {
-  std::vector<std::shared_ptr<Token>> consumed;
+  std::vector<Token*> consumed;
+  if (0 == min) {
+    debug("Trying to consume for a token which takes no operands");
+    return consumed;
+  }
+
   if (tokens.size() <= index + min) {
     debug("Not enough tokens (" << min << " > " << (tokens.size() - index - 1)
                                 << ')');
@@ -256,7 +269,7 @@ operator<<(std::ostream& os, const Token& t)
 {
   return os << t.getToken();
 }
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

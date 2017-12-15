@@ -3,6 +3,7 @@
 
 #include <array>
 #include <functional>
+#include <string>
 
 #include "Debug.hpp"
 
@@ -10,7 +11,7 @@ namespace Lexer {
 class Line
 {
 public:
-  explicit Line(const std::string& t_line)
+  explicit Line(std::string_view t_line)
     : m_line(t_line)
   {}
 
@@ -44,9 +45,11 @@ public:
   char next()
   {
     const auto c = peek();
+
     if (0 != c) {
       ++m_index;
     }
+
     return c;
   }
 
@@ -81,7 +84,7 @@ public:
     while (!at_end()) {
       if (needle == peek()) {
         if (ignores[m_ignores](*this, needle)) {
-          return ++m_index;
+          return m_index++;
         }
       }
       skip();
@@ -163,7 +166,6 @@ private:
   size_t m_ignores{};
 
   const std::array<std::function<bool(const Line&, char)>, 2> ignores{
-    // Not strictly needed, but it doesn't hurt.
     [](const Line&, char) -> bool { return true; },
     [](const Line& l, char) -> bool { return l.at(l.index() - 1) != '\\'; }
   };

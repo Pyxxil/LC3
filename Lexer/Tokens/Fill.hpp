@@ -9,8 +9,7 @@ class Fill : public Token
 {
 public:
   explicit Fill(std::string t)
-    : Token(std::move(t),
-            Requirements(1, { Token_Match(Token_Type::IMMEDIATE) }))
+    : Token(std::move(t), Requirements(1, { Match(Token_Type::IMMEDIATE) }))
   {}
 
   Fill(const Fill&) = default;
@@ -22,6 +21,8 @@ public:
   ~Fill() override = default;
 
   Token_Type tokenType() const final { return FILL; }
+
+  void assemble() override { Token::assemble(); }
 
 private:
 };

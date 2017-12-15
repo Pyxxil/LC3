@@ -9,8 +9,7 @@ class Trap : public Token
 {
 public:
   explicit Trap(std::string t)
-    : Token(std::move(t),
-            Requirements(1, { Token_Match(Token_Type::IMMEDIATE) }))
+    : Token(std::move(t), Requirements(1, { Match(Token_Type::IMMEDIATE) }))
   {}
 
   Trap(const Trap&) = default;
@@ -22,6 +21,8 @@ public:
   ~Trap() override = default;
 
   Token_Type tokenType() const final { return TRAP; }
+
+  void assemble() override { Token::assemble(); }
 
 private:
 };
