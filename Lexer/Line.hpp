@@ -8,15 +8,11 @@
 #include "Debug.hpp"
 
 namespace Lexer {
-class Line
-{
+class Line {
 public:
-  explicit Line(std::string_view t_line)
-    : m_line(t_line)
-  {}
+  explicit Line(std::string_view t_line) : m_line(t_line) {}
 
-  enum IGNORES
-  {
+  enum IGNORES {
     RESET = 0,
     ESCAPE_SEQUENCE = 1,
   };
@@ -25,8 +21,7 @@ public:
    *
    * @param to_ignore The things to ignore.
    */
-  void ignore(size_t to_ignore)
-  {
+  void ignore(size_t to_ignore) {
     m_ignores = (RESET == to_ignore) ? 0 : m_ignores | to_ignore;
   }
 
@@ -42,8 +37,7 @@ public:
    * @return The character read if we're not at the end of the string, 0
    * otherwise.
    */
-  char next()
-  {
+  char next() {
     const auto c = peek();
 
     if (0 != c) {
@@ -62,9 +56,7 @@ public:
    *
    * @param func The function to call to check if we should stop.
    */
-  template<typename Func>
-  void skip_while(Func&& func)
-  {
+  template <typename Func> void skip_while(Func &&func) {
     while (!at_end()) {
       if (!func(peek())) {
         return;
@@ -79,8 +71,7 @@ public:
    *
    * @return The index of the character, or -1 if it wasn't found
    */
-  size_t find_next(char needle)
-  {
+  size_t find_next(char needle) {
     while (!at_end()) {
       if (needle == peek()) {
         if (ignores[m_ignores](*this, needle)) {
@@ -101,9 +92,7 @@ public:
    *
    * @returns The index of the character if pred is ever true, -1 otherwise.
    */
-  template<typename Func>
-  size_t find_if(Func&& func)
-  {
+  template <typename Func> size_t find_if(Func &&func) {
     while (!at_end()) {
       if (func(peek())) {
         return m_index;
@@ -122,8 +111,7 @@ public:
    *
    * @return The substring in the line.
    */
-  std::string substr(size_t begin, size_t end) const
-  {
+  std::string substr(size_t begin, size_t end) const {
     if (end == -1u) {
       return m_line.substr(begin);
     }
@@ -143,33 +131,30 @@ public:
    *
    * @return The character at the index
    */
-  inline char at(size_t index) const
-  {
+  inline char at(size_t index) const {
     return static_cast<char>((index >= m_line.length()) ? 0 : (*this)[index]);
   }
 
   inline char operator[](size_t index) const { return m_line[index]; }
 
-  const Line& operator>>(char& c)
-  {
+  const Line &operator>>(char &c) {
     c = next();
     return *this;
   }
 
   inline size_t index() const { return m_index; }
 
-  const std::string& line() const { return m_line; }
+  const std::string &line() const { return m_line; }
 
 private:
   std::string m_line{};
   size_t m_index{};
   size_t m_ignores{};
 
-  const std::array<std::function<bool(const Line&, char)>, 2> ignores{
-    [](const Line&, char) -> bool { return true; },
-    [](const Line& l, char) -> bool { return l.at(l.index() - 1) != '\\'; }
-  };
+  const std::array<std::function<bool(const Line &, char)>, 2> ignores{
+      [](const Line &, char) -> bool { return true; },
+      [](const Line &l, char) -> bool { return l.at(l.index() - 1) != '\\'; }};
 };
-}
+} // namespace Lexer
 
 #endif

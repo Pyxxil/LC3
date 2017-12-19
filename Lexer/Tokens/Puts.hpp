@@ -5,18 +5,15 @@
 
 namespace Lexer {
 namespace Token {
-class Puts : public Token
-{
+class Puts : public Token {
 public:
-  explicit Puts(std::string t)
-    : Token(std::move(t))
-  {}
+  explicit Puts(std::string t) : Token(std::move(t)) {}
 
-  Puts(const Puts&) = default;
-  Puts(Puts&&) noexcept = default;
+  Puts(const Puts &) = default;
+  Puts(Puts &&) noexcept = default;
 
-  Puts& operator=(const Puts&) = default;
-  Puts& operator=(Puts&&) noexcept = default;
+  Puts &operator=(const Puts &) = default;
+  Puts &operator=(Puts &&) noexcept = default;
 
   ~Puts() override = default;
 
@@ -26,7 +23,7 @@ public:
 
 private:
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

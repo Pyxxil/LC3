@@ -5,28 +5,22 @@
 
 namespace Lexer {
 namespace Token {
-class Br : public Token
-{
+class Br : public Token {
 public:
   Br(std::string t, bool n, bool z, bool p)
-    : Token(std::move(t),
-            Requirements(
-              1,
-              { Match(Token_Type::LABEL) | Match(Token_Type::IMMEDIATE) }))
-    , N(n)
-    , Z(z)
-    , P(p)
-  {
+      : Token(std::move(t), Requirements(1, {Match(Token_Type::LABEL) |
+                                             Match(Token_Type::IMMEDIATE)})),
+        N(n), Z(z), P(p) {
     (void)N;
     (void)Z;
     (void)P;
   }
 
-  Br(const Br&) = default;
-  Br(Br&&) noexcept = default;
+  Br(const Br &) = default;
+  Br(Br &&) noexcept = default;
 
-  Br& operator=(const Br&) = default;
-  Br& operator=(Br&&) noexcept = default;
+  Br &operator=(const Br &) = default;
+  Br &operator=(Br &&) noexcept = default;
 
   ~Br() override = default;
 
@@ -39,7 +33,7 @@ private:
   bool Z;
   bool P;
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

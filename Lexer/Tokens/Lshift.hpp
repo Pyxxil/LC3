@@ -5,21 +5,17 @@
 
 namespace Lexer {
 namespace Token {
-class Lshift : public Token
-{
+class Lshift : public Token {
 public:
   explicit Lshift(std::string t)
-    : Token(std::move(t),
-            Requirements(
-              2,
-              { Match(Token_Type::REGISTER), Match(Token_Type::IMMEDIATE) }))
-  {}
+      : Token(std::move(t), Requirements(2, {Match(Token_Type::REGISTER),
+                                             Match(Token_Type::IMMEDIATE)})) {}
 
-  Lshift(const Lshift&) = default;
-  Lshift(Lshift&&) noexcept = default;
+  Lshift(const Lshift &) = default;
+  Lshift(Lshift &&) noexcept = default;
 
-  Lshift& operator=(const Lshift&) = default;
-  Lshift& operator=(Lshift&&) noexcept = default;
+  Lshift &operator=(const Lshift &) = default;
+  Lshift &operator=(Lshift &&) noexcept = default;
 
   ~Lshift() override = default;
 
@@ -29,7 +25,7 @@ public:
 
 private:
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

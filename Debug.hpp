@@ -1,12 +1,15 @@
 #ifndef DEBUG_HPP
 #define DEBUG_HPP
 
-#ifndef NDEBUG
-#include <iostream>
-#define debug(x)                                                               \
-  std::cerr << "DEBUG: " << __FILE__ << ": " << __LINE__ << ": "               \
-            << __FUNCTION__ << ": " << x << '\n'
-#else
-#define debug(_)
-#endif
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#include "spdlog/spdlog.h"
+#pragma GCC diagnostic pop
+
+#include "spdlog/fmt/ostr.h"
+
+namespace Debug {
+auto console = spdlog::stdout_color_mt("console");
+}
+
 #endif

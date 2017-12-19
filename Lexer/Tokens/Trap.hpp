@@ -5,18 +5,16 @@
 
 namespace Lexer {
 namespace Token {
-class Trap : public Token
-{
+class Trap : public Token {
 public:
   explicit Trap(std::string t)
-    : Token(std::move(t), Requirements(1, { Match(Token_Type::IMMEDIATE) }))
-  {}
+      : Token(std::move(t), Requirements(1, {Match(Token_Type::IMMEDIATE)})) {}
 
-  Trap(const Trap&) = default;
-  Trap(Trap&&) noexcept = default;
+  Trap(const Trap &) = default;
+  Trap(Trap &&) noexcept = default;
 
-  Trap& operator=(const Trap&) = default;
-  Trap& operator=(Trap&&) noexcept = default;
+  Trap &operator=(const Trap &) = default;
+  Trap &operator=(Trap &&) noexcept = default;
 
   ~Trap() override = default;
 
@@ -26,7 +24,7 @@ public:
 
 private:
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

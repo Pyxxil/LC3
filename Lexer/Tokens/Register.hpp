@@ -5,19 +5,17 @@
 
 namespace Lexer {
 namespace Token {
-class Register : public Token
-{
+class Register : public Token {
 public:
   explicit Register(std::string s)
-    : Token(std::move(s), Requirements())
-    , reg(static_cast<size_t>(s[1] - 0x30))
-  {}
+      : Token(std::move(s), Requirements()),
+        reg(static_cast<size_t>(s[1] - 0x30)) {}
 
-  Register(const Register&) = default;
-  Register(Register&&) noexcept = default;
+  Register(const Register &) = default;
+  Register(Register &&) noexcept = default;
 
-  Register& operator=(const Register&) = default;
-  Register& operator=(Register&&) noexcept = default;
+  Register &operator=(const Register &) = default;
+  Register &operator=(Register &&) noexcept = default;
 
   ~Register() override = default;
 
@@ -28,7 +26,7 @@ public:
 private:
   size_t reg{};
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

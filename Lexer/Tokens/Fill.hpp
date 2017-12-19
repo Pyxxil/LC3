@@ -5,18 +5,16 @@
 
 namespace Lexer {
 namespace Token {
-class Fill : public Token
-{
+class Fill : public Token {
 public:
   explicit Fill(std::string t)
-    : Token(std::move(t), Requirements(1, { Match(Token_Type::IMMEDIATE) }))
-  {}
+      : Token(std::move(t), Requirements(1, {Match(Token_Type::IMMEDIATE)})) {}
 
-  Fill(const Fill&) = default;
-  Fill(Fill&&) noexcept = default;
+  Fill(const Fill &) = default;
+  Fill(Fill &&) noexcept = default;
 
-  Fill& operator=(const Fill&) = default;
-  Fill& operator=(Fill&&) noexcept = default;
+  Fill &operator=(const Fill &) = default;
+  Fill &operator=(Fill &&) noexcept = default;
 
   ~Fill() override = default;
 
@@ -26,7 +24,7 @@ public:
 
 private:
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

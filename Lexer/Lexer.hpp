@@ -13,43 +13,38 @@
 #include "Tokenizer.hpp"
 
 namespace Lexer {
-class Lexer
-{
+class Lexer {
 public:
   Lexer() = default;
 
-  Lexer(const Lexer&) = default;
-  Lexer(Lexer&&) = default;
+  Lexer(const Lexer &) = default;
+  Lexer(Lexer &&) = default;
 
-  Lexer& operator=(const Lexer&) = default;
-  Lexer& operator=(Lexer&&) = default;
+  Lexer &operator=(const Lexer &) = default;
+  Lexer &operator=(Lexer &&) = default;
 
-  ~Lexer()
-  {
-    for (Token::Token* token : tokens) {
+  ~Lexer() {
+    for (Token::Token *token : tokens) {
       delete token;
     }
   }
 
-  Lexer& operator<<(Token::Token* t)
-  {
+  Lexer &operator<<(Token::Token *t) {
     tokens.emplace_back(t);
     return *this;
   }
 
-  Lexer& operator<<(std::string_view s)
-  {
-    debug("Passed in line '" << s << '\'');
-    auto&& l_tokens = Tokenizer::tokenize_line(Line(s));
-    for (auto&& token : l_tokens) {
-      tokens.emplace_back(std::move(token));
+  Lexer &operator<<(std::string_view s) {
+    Debug::console->debug("Passed in line '{}'", s);
+    auto &&l_tokens = Tokenizer::tokenize_line(Line(s));
+    for (auto &&token : l_tokens) {
+      tokens.emplace_back(token);
     }
     return *this;
   }
 
-  void for_each(std::function<void(const Token::Token&)> f)
-  {
-    for (auto&& t : tokens) {
+  void for_each(const std::function<void(const Token::Token &)> &f) {
+    for (auto &&t : tokens) {
       f(*t);
     }
   }
@@ -57,18 +52,18 @@ public:
   /*! Lex the current tokens
    *
    */
-  void lex()
-  {
-    debug("Tokens size: " << tokens.size());
+  void lex() {
+    Debug::console->debug("Tokens size: {}", tokens.size());
     for (idx = 0; idx < tokens.size(); ++idx) {
-      debug("Found token " << tokens[idx]->getToken());
-      auto& requirements = tokens[idx]->getRequirements();
-      for (auto& token : requirements.consume(tokens, idx)) {
-        debug("Consumed - " << token->getToken());
+      Debug::console->debug("Found token {}", tokens[idx]->getToken());
+      auto &requirements = tokens[idx]->getRequirements();
+      for (auto &token : requirements.consume(tokens, idx)) {
+        (void) token;
+        Debug::console->debug("Consumed - {}", token->getToken());
       }
       if (!requirements.are_satisfied()) {
-        debug("Did not satisfy requirements for token "
-              << tokens[idx]->getToken());
+        Debug::console->debug("Did not satisfy requirements for token {}",
+              tokens[idx]->getToken());
       }
     }
   }
@@ -80,9 +75,8 @@ public:
    * @return The consumed tokens if there are enough of them, otherwise an empty
    * vector.
    */
-  auto consume_range(std::size_t begin, std::size_t end)
-  {
-    std::vector<Token::Token*> consumed;
+  auto consume_range(std::size_t begin, std::size_t end) {
+    std::vector<Token::Token *> consumed;
 
     if (idx + begin > tokens.size()) {
       return consumed;
@@ -101,21 +95,20 @@ public:
    * @return The consumed tokens if there are enough of them, otherwise an empty
    * vector
    */
-  auto consume(std::size_t count)
-  {
+  auto consume(std::size_t count) {
     if (idx + count > tokens.size()) {
       // Should this be handled here, or inside the caller?
-      return std::vector<Token::Token*>();
+      return std::vector<Token::Token *>();
     }
 
     return consume_range(count, count);
   }
 
-  std::vector<Token::Token*> tokens{};
+  std::vector<Token::Token *> tokens{};
 
 private:
-  std::size_t idx{ 0 };
+  std::size_t idx{0};
 };
-}
+} // namespace Lexer
 
 #endif

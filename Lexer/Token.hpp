@@ -1,7 +1,7 @@
 #ifndef TOKEN_HPP
 #define TOKEN_HPP
 
-#include <assert.h>
+#include <cassert>
 #include <string>
 #include <vector>
 
@@ -10,8 +10,7 @@
 
 namespace Lexer {
 
-enum Token_Type
-{
+enum Token_Type {
   NONE = 0,
   ADD,
   AND,
@@ -55,62 +54,65 @@ enum Token_Type
 #endif
 };
 
-const std::string TokenTypeString[] = {
-  "NONE",    "ADD",     "AND",  "BR",   "NOT",      "JMP",       "JSR",
-  "JSRR",    "LD",      "LEA",  "LDI",  "LDR",      "ST",        "STI",
-  "STR",     "TRAP",    "HALT", "PUTS", "PUTSP",    "PUTC",      "GETC",
-  "OUT",     "IN",      "RTI",  "RET",  "REGISTER", "IMMEDIATE", "STRING",
-  "LABEL",   "STRINGZ", "FILL", "BLKW", "ORIG",     "END",
+const char *TokenTypeString[] = {
+    "NONE",    "ADD",     "AND",  "BR",   "NOT",      "JMP",       "JSR",
+    "JSRR",    "LD",      "LEA",  "LDI",  "LDR",      "ST",        "STI",
+    "STR",     "TRAP",    "HALT", "PUTS", "PUTSP",    "PUTC",      "GETC",
+    "OUT",     "IN",      "RTI",  "RET",  "REGISTER", "IMMEDIATE", "STRING",
+    "LABEL",   "STRINGZ", "FILL", "BLKW", "ORIG",     "END",
 #ifdef ADDONS
-  "INCLUDE", "LSHIFT",  "SET",  "NEG",  "SUB"
+    "INCLUDE", "LSHIFT",  "SET",  "NEG",  "SUB"
 #endif
 };
 
-class Match
-{
+class Match {
 public:
   Match() = default;
-  explicit Match(Token_Type t)
-    : matches({ t })
-  {}
+  explicit Match(Token_Type t) : matches({t}) {}
 
-  Match(const Match&) = default;
-  Match(Match&&) noexcept = default;
+  Match(const Match &) = default;
+  Match(Match &&) noexcept = default;
 
-  Match& operator=(const Match&) = default;
-  Match& operator=(Match&&) noexcept = default;
+  Match &operator=(const Match &) = default;
+  Match &operator=(Match &&) noexcept = default;
 
   ~Match() = default;
 
-  friend std::ostream& operator<<(std::ostream& os, const Match& t)
-  {
-    Algorithm::enumerate(
-      t.matches.cbegin(), t.matches.cend(), [&os](auto&& token, size_t idx) {
-        if (0 == idx) {
-          os << " | ";
-        }
-        os << TokenTypeString[token] << '(' << token << ')';
-      });
+  friend std::ostream &operator<<(std::ostream &os, const Match &t) {
+    using namespace Algorithm;
+    enumerate(t.matches.cbegin(), t.matches.cend(),
+              [&os, &t](auto &&token, size_t idx) {
+                if (0 == idx) {
+                  if (t.matches.size() > 1) {
+                    os << "one of (";
+                  }
+                } else {
+                  os << ", ";
+                }
+
+                os << TokenTypeString[token] << '(' << token << ')';
+
+                if (t.matches.size() > 1 && idx == t.matches.size() - 1) {
+                  os << ')';
+                }
+              });
 
     return os;
   }
 
-  Match& operator|(const Match& t)
-  {
-    for (auto&& match : t.matches) {
+  Match &operator|(const Match &t) {
+    for (auto &&match : t.matches) {
       matches.push_back(match);
     }
     return *this;
   }
-  Match& operator|(Token_Type t)
-  {
+  Match &operator|(Token_Type t) {
     matches.push_back(t);
     return *this;
   }
 
-  bool operator&(const Match& t)
-  {
-    for (auto&& match : t.matches) {
+  bool operator&(const Match &t) {
+    for (auto &&match : t.matches) {
       if (*this & match) {
         return true;
       }
@@ -119,9 +121,8 @@ public:
     return false;
   }
 
-  bool operator&(Token_Type t)
-  {
-    for (auto&& match : matches) {
+  bool operator&(Token_Type t) {
+    for (auto &&match : matches) {
       if (match == t) {
         return true;
       }
@@ -137,17 +138,12 @@ private:
 namespace Token {
 class Token;
 
-class Requirements
-{
+class Requirements {
 public:
   Requirements() = default;
-  explicit Requirements(std::size_t _min,
-                        std::vector<Match> operands = {},
+  explicit Requirements(std::size_t _min, std::vector<Match> operands = {},
                         std::size_t _max = 0)
-    : min(_min)
-    , max(_min)
-    , arguments(std::move(operands))
-  {
+      : min(_min), max(_min), arguments(std::move(operands)) {
     if (_min > _max) {
       max = _min;
     }
@@ -155,56 +151,52 @@ public:
     assert(arguments.size() >= min && arguments.size() <= max);
   }
 
-  Requirements(const Requirements&) = default;
-  Requirements(Requirements&&) noexcept = default;
+  Requirements(const Requirements &) = default;
+  Requirements(Requirements &&) noexcept = default;
 
-  Requirements& operator=(const Requirements&) = default;
-  Requirements& operator=(Requirements&&) noexcept = default;
+  Requirements &operator=(const Requirements &) = default;
+  Requirements &operator=(Requirements &&) noexcept = default;
 
   ~Requirements() = default;
 
   auto count() const { return min; }
 
-  const auto& argument_reqs() const { return arguments; }
+  const auto &argument_reqs() const { return arguments; }
 
-  std::vector<Token*> consume(const std::vector<Token*>& tokens,
-                              std::size_t& index);
+  std::vector<Token *> consume(const std::vector<Token *> &tokens,
+                               std::size_t &index);
 
   bool are_satisfied() const { return satisfied; }
 
 private:
-  std::size_t min;
-  std::size_t max;
+  std::size_t min{};
+  std::size_t max{};
   std::vector<Match> arguments;
   bool satisfied = false;
 };
 
-class Token
-{
+class Token {
 public:
   explicit Token(std::string t, Requirements r = Requirements())
-    : token(std::move(t))
-    , requirements(std::move(r))
-  {}
+      : token(std::move(t)), requirements(std::move(r)) {}
 
-  Token(const Token&) = default;
-  Token(Token&&) noexcept = default;
+  Token(const Token &) = default;
+  Token(Token &&) noexcept = default;
 
-  Token& operator=(const Token&) = default;
-  Token& operator=(Token&&) noexcept = default;
+  Token &operator=(const Token &) = default;
+  Token &operator=(Token &&) noexcept = default;
 
-  virtual ~Token()
-  {
+  virtual ~Token() {
     for (auto operand : operands) {
       delete operand;
     }
   }
 
-  const auto& getToken() const { return token; }
+  const auto &getToken() const { return token; }
 
   virtual Token_Type tokenType() const { return NONE; }
 
-  auto& getRequirements() { return requirements; }
+  auto &getRequirements() { return requirements; }
 
   virtual void assemble() {}
 
@@ -215,7 +207,7 @@ protected:
 
 private:
   Requirements requirements;
-  std::vector<Token*> operands{};
+  std::vector<Token *> operands{};
 };
 
 /*! Consume tokens from the tokens the lexer contains according to our
@@ -228,33 +220,34 @@ private:
  * @param index The starting index into those tokens (this is updated)
  * @return The consumed tokens
  */
-std::vector<Token*>
-Requirements::consume(const std::vector<Token*>& tokens, std::size_t& index)
-{
-  std::vector<Token*> consumed;
+std::vector<Token *> Requirements::consume(const std::vector<Token *> &tokens,
+                                           std::size_t &index) {
+  std::vector<Token *> consumed;
   if (0 == min) {
-    debug("Trying to consume for a token which takes no operands");
+    Debug::console->debug(
+        "Trying to consume for a token which takes no operands");
     return consumed;
   }
 
   if (tokens.size() <= index + min) {
-    debug("Not enough tokens (" << min << " > " << (tokens.size() - index - 1)
-                                << ')');
+    Debug::console->debug("Not enough tokens ({} > {})", min,
+                          (tokens.size() - index - 1));
     return consumed;
   }
 
   const auto starting_index = index;
   for (std::size_t idx = 0; idx < max && index + 1 < tokens.size(); ++idx) {
-    debug("Argument type required for this index is " << arguments[idx]);
+    Debug::console->debug("Argument type required for this index is {}",
+                          arguments[idx]);
     if (arguments[idx] & tokens[index + 1]->tokenType()) {
-      debug("Valid consumed token: "
-            << tokens[index + 1]->getToken() << ", with type "
-            << TokenTypeString[tokens[index + 1]->tokenType()]);
+      Debug::console->debug("Valid consumed token: {}, with type {}",
+                            tokens[index + 1]->getToken(),
+                            TokenTypeString[tokens[index + 1]->tokenType()]);
       consumed.emplace_back(tokens[++index]);
     } else {
-      debug("Invalid consumed token: "
-            << tokens[index + 1]->getToken() << ", with type "
-            << TokenTypeString[tokens[index + 1]->tokenType()]);
+      Debug::console->debug("Invalid consumed token: {}, with type {}",
+                            tokens[index + 1]->getToken(),
+                            TokenTypeString[tokens[index + 1]->tokenType()]);
       index = starting_index;
       return {};
     }
@@ -264,9 +257,7 @@ Requirements::consume(const std::vector<Token*>& tokens, std::size_t& index)
   return consumed;
 }
 
-std::ostream&
-operator<<(std::ostream& os, const Token& t)
-{
+std::ostream &operator<<(std::ostream &os, const Token &t) {
   return os << t.getToken();
 }
 } // namespace Token

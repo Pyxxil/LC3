@@ -5,18 +5,16 @@
 
 namespace Lexer {
 namespace Token {
-class Stringz : public Token
-{
+class Stringz : public Token {
 public:
   explicit Stringz(std::string t)
-    : Token(std::move(t), Requirements(1, { Match(Token_Type::STRING) }))
-  {}
+      : Token(std::move(t), Requirements(1, {Match(Token_Type::STRING)})) {}
 
-  Stringz(const Stringz&) = default;
-  Stringz(Stringz&&) noexcept = default;
+  Stringz(const Stringz &) = default;
+  Stringz(Stringz &&) noexcept = default;
 
-  Stringz& operator=(const Stringz&) = default;
-  Stringz& operator=(Stringz&&) noexcept = default;
+  Stringz &operator=(const Stringz &) = default;
+  Stringz &operator=(Stringz &&) noexcept = default;
 
   ~Stringz() override = default;
 
@@ -26,7 +24,7 @@ public:
 
 private:
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

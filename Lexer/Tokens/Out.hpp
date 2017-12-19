@@ -5,18 +5,15 @@
 
 namespace Lexer {
 namespace Token {
-class Out : public Token
-{
+class Out : public Token {
 public:
-  explicit Out(std::string t)
-    : Token(std::move(t))
-  {}
+  explicit Out(std::string t) : Token(std::move(t)) {}
 
-  Out(const Out&) = default;
-  Out(Out&&) noexcept = default;
+  Out(const Out &) = default;
+  Out(Out &&) noexcept = default;
 
-  Out& operator=(const Out&) = default;
-  Out& operator=(Out&&) noexcept = default;
+  Out &operator=(const Out &) = default;
+  Out &operator=(Out &&) noexcept = default;
 
   ~Out() override = default;
 
@@ -26,7 +23,7 @@ public:
 
 private:
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

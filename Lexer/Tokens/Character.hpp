@@ -6,25 +6,22 @@
 namespace Lexer {
 namespace Token {
 #ifdef ADDONS
-class Character : public Immediate
-{
+class Character : public Immediate {
 public:
-  explicit Character(std::string s)
-    : Immediate(std::move(s))
-  {}
+  explicit Character(std::string s) : Immediate(std::move(s)) {}
 
-  Character(const Character&) = default;
-  Character(Character&&) noexcept = default;
+  Character(const Character &) = default;
+  Character(Character &&) noexcept = default;
 
-  Character& operator=(const Character&) = default;
-  Character& operator=(Character&&) noexcept = default;
+  Character &operator=(const Character &) = default;
+  Character &operator=(Character &&) noexcept = default;
 
   ~Character() override = default;
 
 private:
 };
 #endif
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

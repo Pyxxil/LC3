@@ -9,111 +9,91 @@
 #include "Debug.hpp"
 
 #include "Callback.hpp"
+#include "Diagnostic.hpp"
 
-static const std::string Anonymous_Callback{ "Anonymous Callback" };
+static const char Anonymous_Callback[] = "Anonymous Callback";
 
 namespace Notification {
 
-enum class NOTIFY_EVENT
-{
+enum class NOTIFY_EVENT {
   DIAGNOSTIC,
 };
 
-template<NOTIFY_EVENT T>
-class Notifier
-{
-public:
-  explicit Notifier<T>(Notification::Callback c)
-    : callback(std::move(c))
-  {}
-  explicit Notifier<T>(Notification::Callback_Func_t f)
-    : callback(Anonymous_Callback, std::move(f))
-  {}
-
-  Notifier<T>(const Notifier<T>& other) = default;
-  Notifier<T>(Notifier<T>&& other) noexcept = default;
-
-  Notifier<T>& operator=(const Notifier<T>& other) = default;
-  Notifier<T>& operator=(Notifier<T>&& other) noexcept = default;
-
-  ~Notifier<T>() = default;
-
-  void notify() const;
-
-private:
-  Notification::Callback callback;
-};
-
-template<NOTIFY_EVENT T>
-class Notification_Wrapper
-{
+template <NOTIFY_EVENT T> class Notification_Wrapper {
 public:
   Notification_Wrapper<T>() = default;
 
-  Notification_Wrapper<T>(const Notification_Wrapper<T>&) = default;
-  Notification_Wrapper<T>(Notification_Wrapper<T>&&) noexcept = default;
+  Notification_Wrapper<T>(const Notification_Wrapper<T> &) = default;
+  Notification_Wrapper<T>(Notification_Wrapper<T> &&) noexcept = default;
 
-  Notification_Wrapper<T>& operator=(const Notification_Wrapper<T>&) = default;
-  Notification_Wrapper<T>& operator=(Notification_Wrapper<T>&&) noexcept =
-    default;
+  Notification_Wrapper<T> &operator=(const Notification_Wrapper<T> &) = default;
+  Notification_Wrapper<T> &
+  operator=(Notification_Wrapper<T> &&) noexcept = default;
 
   ~Notification_Wrapper() = default;
 
-  Notification_Wrapper& operator<<(Notification::Notifier<T> t)
-  {
-    notifications.emplace_back(t);
+  /*! Add a diagnostic to the queue.
+   *
+   */
+  Notification_Wrapper &operator<<(Diagnostics::Diagnostic diagnostic) {
+    emplace(std::move(diagnostic));
     return *this;
   }
 
-  void for_each(std::function<void(const Notification::Notifier<T>&)> f) const
-  {
-    for (auto&& notification : notifications) {
-      f(notification);
+  /*! Add a callback to the queue.
+   *
+   * All callbacks will, before being added, have the past diagnostics
+   * thrown at them so they can catch up.
+   *
+   * @param callback The callback to add
+   */
+  Notification_Wrapper &operator<<(Callback callback) {
+    if (callback.wants_previous()) {
+      for_each(callback);
+    }
+
+    callbacks.emplace_back(std::move(callback));
+    return *this;
+  }
+
+  void for_each(std::function<void(const Diagnostics::Diagnostic &)> f) const {
+    for (auto &&diagnostic : diagnostics) {
+      f(diagnostic);
     }
   }
 
-  void notify_all()
-  {
-    for_each([](auto&& n) { n.notify(); });
+  void notify_all(bool force_updates = false) {
+    if (force_updates) {
+      for (const auto &callback : callbacks) {
+        callback(diagnostics.back());
+      }
+    } else {
+      for (const auto &callback : callbacks) {
+        if (callback.wants_updates()) {
+          callback(diagnostics.back());
+        }
+      }
+    }
   }
 
-  void notify_all_and_clear()
-  {
-    notify_all();
-    notifications.clear();
+  void notify_all_and_clear() {
+    notify_all(true);
+    callbacks.clear();
+    diagnostics.clear();
   }
 
 private:
-  std::vector<Notification::Notifier<T>> notifications{};
+  void emplace(Diagnostics::Diagnostic diagnostic) {
+    diagnostics.emplace_back(std::move(diagnostic));
+    notify_all();
+  }
+
+  std::vector<Notification::Callback> callbacks{};
+  std::vector<Diagnostics::Diagnostic> diagnostics{};
 };
 
-template<>
-void
-Notifier<NOTIFY_EVENT::DIAGNOSTIC>::notify() const
-{
-  callback();
-}
+Notification_Wrapper<NOTIFY_EVENT::DIAGNOSTIC> diagnostic_notifications;
 
-template<NOTIFY_EVENT T>
-using Notification_t = Notification_Wrapper<T>;
-
-Notification_t<NOTIFY_EVENT::DIAGNOSTIC> diagnostic_notifications;
-
-template<NOTIFY_EVENT T>
-void add_notification(Notifier<T>);
-
-void
-add_notification(Notifier<NOTIFY_EVENT::DIAGNOSTIC> t)
-{
-  diagnostic_notifications << std::move(t);
-}
-
-template<Notification::NOTIFY_EVENT T>
-void
-add_callback(Notification::Callback c)
-{
-  Notification::add_notification(Notification::Notifier<T>(std::move(c)));
-}
-}
+} // namespace Notification
 
 #endif

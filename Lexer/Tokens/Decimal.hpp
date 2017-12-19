@@ -5,24 +5,21 @@
 
 namespace Lexer {
 namespace Token {
-class Decimal : public Immediate
-{
+class Decimal : public Immediate {
 public:
-  explicit Decimal(std::string s)
-    : Immediate(std::move(s))
-  {}
+  explicit Decimal(std::string s) : Immediate(std::move(s)) {}
 
-  Decimal(const Decimal&) = default;
-  Decimal(Decimal&&) noexcept = default;
+  Decimal(const Decimal &) = default;
+  Decimal(Decimal &&) noexcept = default;
 
-  Decimal& operator=(const Decimal&) = default;
-  Decimal& operator=(Decimal&&) noexcept = default;
+  Decimal &operator=(const Decimal &) = default;
+  Decimal &operator=(Decimal &&) noexcept = default;
 
   ~Decimal() override = default;
 
 private:
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

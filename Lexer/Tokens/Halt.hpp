@@ -5,18 +5,15 @@
 
 namespace Lexer {
 namespace Token {
-class Halt : public Token
-{
+class Halt : public Token {
 public:
-  explicit Halt(std::string t)
-    : Token(std::move(t))
-  {}
+  explicit Halt(std::string t) : Token(std::move(t)) {}
 
-  Halt(const Halt&) = default;
-  Halt(Halt&&) noexcept = default;
+  Halt(const Halt &) = default;
+  Halt(Halt &&) noexcept = default;
 
-  Halt& operator=(const Halt&) = default;
-  Halt& operator=(Halt&&) noexcept = default;
+  Halt &operator=(const Halt &) = default;
+  Halt &operator=(Halt &&) noexcept = default;
 
   ~Halt() override = default;
 
@@ -26,7 +23,7 @@ public:
 
 private:
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

@@ -5,22 +5,19 @@
 
 namespace Lexer {
 namespace Token {
-class St : public Token
-{
+class St : public Token {
 public:
   explicit St(std::string t)
-    : Token(std::move(t),
-            Requirements(
-              2,
-              { Match(Token_Type::REGISTER),
-                Match(Token_Type::LABEL) | Match(Token_Type::IMMEDIATE) }))
-  {}
+      : Token(std::move(t),
+              Requirements(2, {Match(Token_Type::REGISTER),
+                               Match(Token_Type::LABEL) |
+                                   Match(Token_Type::IMMEDIATE)})) {}
 
-  St(const St&) = default;
-  St(St&&) noexcept = default;
+  St(const St &) = default;
+  St(St &&) noexcept = default;
 
-  St& operator=(const St&) = default;
-  St& operator=(St&&) noexcept = default;
+  St &operator=(const St &) = default;
+  St &operator=(St &&) noexcept = default;
 
   ~St() override = default;
 
@@ -30,7 +27,7 @@ public:
 
 private:
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

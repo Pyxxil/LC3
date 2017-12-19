@@ -5,22 +5,18 @@
 
 namespace Lexer {
 namespace Token {
-class Ldr : public Token
-{
+class Ldr : public Token {
 public:
   explicit Ldr(std::string t)
-    : Token(std::move(t),
-            Requirements(3,
-                         { Match(Token_Type::REGISTER),
-                           Match(Token_Type::REGISTER),
-                           Match(Token_Type::IMMEDIATE) }))
-  {}
+      : Token(std::move(t), Requirements(3, {Match(Token_Type::REGISTER),
+                                             Match(Token_Type::REGISTER),
+                                             Match(Token_Type::IMMEDIATE)})) {}
 
-  Ldr(const Ldr&) = default;
-  Ldr(Ldr&&) noexcept = default;
+  Ldr(const Ldr &) = default;
+  Ldr(Ldr &&) noexcept = default;
 
-  Ldr& operator=(const Ldr&) = default;
-  Ldr& operator=(Ldr&&) noexcept = default;
+  Ldr &operator=(const Ldr &) = default;
+  Ldr &operator=(Ldr &&) noexcept = default;
 
   ~Ldr() override = default;
 
@@ -30,7 +26,7 @@ public:
 
 private:
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

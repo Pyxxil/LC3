@@ -5,24 +5,21 @@
 
 namespace Lexer {
 namespace Token {
-class Hexadecimal : public Immediate
-{
+class Hexadecimal : public Immediate {
 public:
-  explicit Hexadecimal(std::string s)
-    : Immediate(std::move(s))
-  {}
+  explicit Hexadecimal(std::string s) : Immediate(std::move(s)) {}
 
-  Hexadecimal(const Hexadecimal&) = default;
-  Hexadecimal(Hexadecimal&&) noexcept = default;
+  Hexadecimal(const Hexadecimal &) = default;
+  Hexadecimal(Hexadecimal &&) noexcept = default;
 
-  Hexadecimal& operator=(const Hexadecimal&) = default;
-  Hexadecimal& operator=(Hexadecimal&&) noexcept = default;
+  Hexadecimal &operator=(const Hexadecimal &) = default;
+  Hexadecimal &operator=(Hexadecimal &&) noexcept = default;
 
   ~Hexadecimal() override = default;
 
 private:
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

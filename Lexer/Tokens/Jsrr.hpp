@@ -5,18 +5,16 @@
 
 namespace Lexer {
 namespace Token {
-class Jsrr : public Token
-{
+class Jsrr : public Token {
 public:
   explicit Jsrr(std::string t)
-    : Token(std::move(t), Requirements(1, { Match(Token_Type::REGISTER) }))
-  {}
+      : Token(std::move(t), Requirements(1, {Match(Token_Type::REGISTER)})) {}
 
-  Jsrr(const Jsrr&) = default;
-  Jsrr(Jsrr&&) noexcept = default;
+  Jsrr(const Jsrr &) = default;
+  Jsrr(Jsrr &&) noexcept = default;
 
-  Jsrr& operator=(const Jsrr&) = default;
-  Jsrr& operator=(Jsrr&&) noexcept = default;
+  Jsrr &operator=(const Jsrr &) = default;
+  Jsrr &operator=(Jsrr &&) noexcept = default;
 
   ~Jsrr() override = default;
 
@@ -26,7 +24,7 @@ public:
 
 private:
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

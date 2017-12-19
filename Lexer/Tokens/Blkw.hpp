@@ -5,18 +5,16 @@
 
 namespace Lexer {
 namespace Token {
-class Blkw : public Token
-{
+class Blkw : public Token {
 public:
   explicit Blkw(std::string t)
-    : Token(std::move(t), Requirements(1, { Match(Token_Type::IMMEDIATE) }))
-  {}
+      : Token(std::move(t), Requirements(1, {Match(Token_Type::IMMEDIATE)})) {}
 
-  Blkw(const Blkw&) = default;
-  Blkw(Blkw&&) noexcept = default;
+  Blkw(const Blkw &) = default;
+  Blkw(Blkw &&) noexcept = default;
 
-  Blkw& operator=(const Blkw&) = default;
-  Blkw& operator=(Blkw&&) noexcept = default;
+  Blkw &operator=(const Blkw &) = default;
+  Blkw &operator=(Blkw &&) noexcept = default;
 
   ~Blkw() override = default;
 
@@ -26,7 +24,7 @@ public:
 
 private:
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif

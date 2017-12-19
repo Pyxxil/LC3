@@ -5,33 +5,43 @@
 #include <string>
 #include <vector>
 
+#include "Diagnostic.hpp"
+
 namespace Notification {
 
-using Name_t = std::string;
-using Callback_Func_t = std::function<void(const Name_t&)>;
+using Callback_Name_t = std::string;
+using Callback_Func_t = std::function<void(const Callback_Name_t &,
+                                           const Diagnostics::Diagnostic &)>;
 
-class Callback
-{
+class Callback {
 public:
-  Callback(Name_t t_name, Callback_Func_t f)
-    : callback(std::make_pair<Name_t, Callback_Func_t>(std::move(t_name),
-                                                       std::move(f)))
-  {}
-  Callback(const Callback& c) = default;
-  Callback(Callback&& c) noexcept = default;
+  Callback(Callback_Name_t t_name, Callback_Func_t f, bool want_prev = true,
+           bool update = true)
+      : callback(std::make_pair<Callback_Name_t, Callback_Func_t>(
+            std::move(t_name), std::move(f))),
+        want_previous(want_prev), update_on_each(update) {}
+  Callback(const Callback &c) = default;
+  Callback(Callback &&c) noexcept = default;
 
-  Callback& operator=(const Callback& c) = default;
-  Callback& operator=(Callback&& c) noexcept = default;
+  Callback &operator=(const Callback &c) = default;
+  Callback &operator=(Callback &&c) noexcept = default;
 
   ~Callback() = default;
 
-  void operator()() const { callback.second(name()); }
+  void operator()(const Diagnostics::Diagnostic &diagnostic) const {
+    callback.second(name(), diagnostic);
+  }
 
-  const Name_t& name() const { return callback.first; }
+  const Callback_Name_t &name() const { return callback.first; }
+
+  bool wants_previous() const { return want_previous; }
+  bool wants_updates() const { return update_on_each; }
 
 private:
-  std::pair<Name_t, Callback_Func_t> callback;
+  std::pair<Callback_Name_t, Callback_Func_t> callback;
+  bool want_previous;
+  bool update_on_each;
 };
-}
+} // namespace Notification
 
 #endif

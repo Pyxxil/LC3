@@ -5,24 +5,21 @@
 
 namespace Lexer {
 namespace Token {
-class Binary : public Immediate
-{
+class Binary : public Immediate {
 public:
-  explicit Binary(std::string s)
-    : Immediate(std::move(s))
-  {}
+  explicit Binary(std::string s) : Immediate(std::move(s)) {}
 
-  Binary(const Binary&) = default;
-  Binary(Binary&&) noexcept = default;
+  Binary(const Binary &) = default;
+  Binary(Binary &&) noexcept = default;
 
-  Binary& operator=(const Binary&) = default;
-  Binary& operator=(Binary&&) noexcept = default;
+  Binary &operator=(const Binary &) = default;
+  Binary &operator=(Binary &&) noexcept = default;
 
   ~Binary() override = default;
 
 private:
 };
-}
-}
+} // namespace Token
+} // namespace Lexer
 
 #endif
