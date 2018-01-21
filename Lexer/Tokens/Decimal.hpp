@@ -16,8 +16,6 @@ public:
   Decimal &operator=(Decimal &&) noexcept = default;
 
   ~Decimal() override = default;
-
-private:
 };
 } // namespace Token
 } // namespace Lexer

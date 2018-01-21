@@ -7,11 +7,34 @@
 
 #include "Diagnostic.hpp"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#include "spdlog/fmt/ostr.h"
+#pragma GCC diagnostic pop
+
+#include "spdlog/spdlog.h"
+
 namespace Notification {
 
 using Callback_Name_t = std::string;
 using Callback_Func_t = std::function<void(const Callback_Name_t &,
                                            const Diagnostics::Diagnostic &)>;
+
+class CallbackLogger {
+public:
+  static auto &get() { return logger; }
+
+protected:
+  CallbackLogger() {
+    // logger->set_level(spdlog::level::info);
+    // logger->set_pattern("%v");
+  }
+
+  static std::shared_ptr<spdlog::logger> logger;
+};
+
+std::shared_ptr<spdlog::logger> CallbackLogger::logger =
+    spdlog::stdout_color_st("logger");
 
 class Callback {
 public:
@@ -36,6 +59,14 @@ public:
 
   bool wants_previous() const { return want_previous; }
   bool wants_updates() const { return update_on_each; }
+
+  template <typename... Args> void warn(const char *fmt, Args &... args) {
+    Notification::CallbackLogger::get()->warn(fmt, args...);
+  }
+
+  template <typename... Args> void error(const char *fmt, Args &... args) {
+    Notification::CallbackLogger::get()->error(fmt, args...);
+  }
 
 private:
   std::pair<Callback_Name_t, Callback_Func_t> callback;

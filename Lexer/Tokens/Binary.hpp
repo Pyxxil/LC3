@@ -16,8 +16,6 @@ public:
   Binary &operator=(Binary &&) noexcept = default;
 
   ~Binary() override = default;
-
-private:
 };
 } // namespace Token
 } // namespace Lexer

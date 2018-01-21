@@ -7,6 +7,7 @@
 
 #include "Algorithm.hpp"
 #include "Debug.hpp"
+#include "spdlog/fmt/fmt.h"
 
 namespace Lexer {
 
@@ -54,14 +55,46 @@ enum Token_Type {
 #endif
 };
 
-const char *TokenTypeString[] = {
-    "NONE",    "ADD",     "AND",  "BR",   "NOT",      "JMP",       "JSR",
-    "JSRR",    "LD",      "LEA",  "LDI",  "LDR",      "ST",        "STI",
-    "STR",     "TRAP",    "HALT", "PUTS", "PUTSP",    "PUTC",      "GETC",
-    "OUT",     "IN",      "RTI",  "RET",  "REGISTER", "IMMEDIATE", "STRING",
-    "LABEL",   "STRINGZ", "FILL", "BLKW", "ORIG",     "END",
+const char *TokenTypeString[] = {"INVALID",
+                                 "Instruction ADD",
+                                 "Instruction AND",
+                                 "Instruction BR",
+                                 "Instruction NOT",
+                                 "Instruction JMP",
+                                 "Instruction JSR",
+                                 "Instruction JSRR",
+                                 "Instruction LD",
+                                 "Instruction LEA",
+                                 "Instruction LDI",
+                                 "Instruction LDR",
+                                 "Instruction ST",
+                                 "Instruction STI",
+                                 "Instruction STR",
+                                 "Instruction TRAP",
+                                 "Trap HALT",
+                                 "Trap PUTS",
+                                 "Trap PUTSP",
+                                 "Trap PUTC",
+                                 "Trap GETC",
+                                 "Trap OUT",
+                                 "Trap IN",
+                                 "Instruction RTI",
+                                 "Pseudo Op RET",
+                                 "REGISTER",
+                                 "IMMEDIATE",
+                                 "STRING",
+                                 "LABEL",
+                                 "Directive .STRINGZ",
+                                 "Directive .FILL",
+                                 "Directive .BLKW",
+                                 "Directive .ORIG",
+                                 "Directive .END",
 #ifdef ADDONS
-    "INCLUDE", "LSHIFT",  "SET",  "NEG",  "SUB"
+                                 "Directive .INCLUDE",
+                                 "LSHIFT",
+                                 "Directive .SET",
+                                 "Directive .NEG",
+                                 "Directive .SUB"
 #endif
 };
 
@@ -81,7 +114,7 @@ public:
   friend std::ostream &operator<<(std::ostream &os, const Match &t) {
     using namespace Algorithm;
     enumerate(t.matches.cbegin(), t.matches.cend(),
-              [&os, &t](auto &&token, size_t idx) {
+              [&os, &t](auto &&token_type, size_t idx) {
                 if (0 == idx) {
                   if (t.matches.size() > 1) {
                     os << "one of (";
@@ -90,7 +123,7 @@ public:
                   os << ", ";
                 }
 
-                os << TokenTypeString[token] << '(' << token << ')';
+                os << TokenTypeString[token_type] << '(' << token_type << ')';
 
                 if (t.matches.size() > 1 && idx == t.matches.size() - 1) {
                   os << ')';
@@ -164,21 +197,21 @@ public:
   const auto &argument_reqs() const { return arguments; }
 
   std::vector<Token *> consume(const std::vector<Token *> &tokens,
-                               std::size_t &index);
+                               std::size_t index);
 
   bool are_satisfied() const { return satisfied; }
 
 private:
   std::size_t min{};
   std::size_t max{};
-  std::vector<Match> arguments;
+  std::vector<Match> arguments{};
   bool satisfied = false;
 };
 
 class Token {
 public:
   explicit Token(std::string t, Requirements r = Requirements())
-      : token(std::move(t)), requirements(std::move(r)) {}
+      : token(std::move(t)), m_requirements(std::move(r)) {}
 
   Token(const Token &) = default;
   Token(Token &&) noexcept = default;
@@ -187,16 +220,42 @@ public:
   Token &operator=(Token &&) noexcept = default;
 
   virtual ~Token() {
-    for (auto operand : operands) {
+    for (auto operand : m_operands) {
       delete operand;
     }
   }
 
-  const auto &getToken() const { return token; }
+  void compile_ast() {
+    ast = fmt::format("  {0}( '{1}' ) : {{", TokenTypeString[tokenType()],
+                      get_token());
+    for (const auto op_token : operands()) {
+      ast += fmt::format("\n    {0}( '{1}' )",
+                         TokenTypeString[op_token->tokenType()],
+                         op_token->get_token());
+    }
+    ast += fmt::format("{0} }}\n", !operands().empty() ? "\n " : "");
+    ast_compiled = true;
+  }
+
+  const std::string &AST() {
+    if (!ast_compiled)
+      compile_ast();
+
+    return ast;
+  }
+
+  virtual const std::string &get_token() const { return token; }
 
   virtual Token_Type tokenType() const { return NONE; }
 
-  auto &getRequirements() { return requirements; }
+  Requirements &requirements() { return m_requirements; }
+
+  const std::vector<Token *> &operands() const { return m_operands; }
+
+  void add_operand(Token *operand) {
+    ast_compiled = false;
+    m_operands.emplace_back(operand);
+  }
 
   virtual void assemble() {}
 
@@ -206,8 +265,10 @@ protected:
   std::string token;
 
 private:
-  Requirements requirements;
-  std::vector<Token *> operands{};
+  Requirements m_requirements;
+  std::vector<Token *> m_operands{};
+  std::string ast{};
+  bool ast_compiled{false};
 };
 
 /*! Consume tokens from the tokens the lexer contains according to our
@@ -221,34 +282,31 @@ private:
  * @return The consumed tokens
  */
 std::vector<Token *> Requirements::consume(const std::vector<Token *> &tokens,
-                                           std::size_t &index) {
+                                           std::size_t index) {
   std::vector<Token *> consumed;
   if (0 == min) {
-    Debug::console->debug(
-        "Trying to consume for a token which takes no operands");
+    DEBUG("Trying to consume for a token which takes no operands", "");
     return consumed;
   }
 
   if (tokens.size() <= index + min) {
-    Debug::console->debug("Not enough tokens ({} > {})", min,
-                          (tokens.size() - index - 1));
+    DEBUG("Not enough tokens ({} > {})", min, tokens.size() - index - 1);
     return consumed;
   }
 
-  const auto starting_index = index;
-  for (std::size_t idx = 0; idx < max && index + 1 < tokens.size(); ++idx) {
-    Debug::console->debug("Argument type required for this index is {}",
-                          arguments[idx]);
-    if (arguments[idx] & tokens[index + 1]->tokenType()) {
-      Debug::console->debug("Valid consumed token: {}, with type {}",
-                            tokens[index + 1]->getToken(),
-                            TokenTypeString[tokens[index + 1]->tokenType()]);
-      consumed.emplace_back(tokens[++index]);
+  const std::size_t end = index + max;
+  for (std::size_t idx = index, arg_index = 0;
+       idx < end && idx + 1 < tokens.size(); ++idx, ++arg_index) {
+    DEBUG("Argument type required for this index is {}", arguments[arg_index]);
+    if (arguments[arg_index] & tokens[idx + 1]->tokenType()) {
+      DEBUG("Valid consumed token: {}, with type {}",
+            tokens[idx + 1]->get_token(),
+            TokenTypeString[tokens[idx + 1]->tokenType()]);
+      consumed.emplace_back(tokens[idx + 1]);
     } else {
-      Debug::console->debug("Invalid consumed token: {}, with type {}",
-                            tokens[index + 1]->getToken(),
-                            TokenTypeString[tokens[index + 1]->tokenType()]);
-      index = starting_index;
+      DEBUG("Invalid consumed token: {}, with type {}",
+            tokens[idx + 1]->get_token(),
+            TokenTypeString[tokens[idx + 1]->tokenType()]);
       return {};
     }
   }
@@ -257,8 +315,8 @@ std::vector<Token *> Requirements::consume(const std::vector<Token *> &tokens,
   return consumed;
 }
 
-std::ostream &operator<<(std::ostream &os, const Token &t) {
-  return os << t.getToken();
+template <typename OStream> OStream &operator<<(OStream &os, const Token &t) {
+  return os << t.get_token();
 }
 } // namespace Token
 } // namespace Lexer

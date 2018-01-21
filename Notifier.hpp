@@ -17,6 +17,8 @@ namespace Notification {
 
 enum class NOTIFY_EVENT {
   DIAGNOSTIC,
+  ERROR,
+  WARNING,
 };
 
 template <NOTIFY_EVENT T> class Notification_Wrapper {
@@ -62,6 +64,12 @@ public:
     }
   }
 
+  void notify_for_each() const {
+    for (const auto &callback : callbacks) {
+      for_each(callback);
+    }
+  }
+
   void notify_all(bool force_updates = false) {
     if (force_updates) {
       for (const auto &callback : callbacks) {
@@ -85,7 +93,7 @@ public:
 private:
   void emplace(Diagnostics::Diagnostic diagnostic) {
     diagnostics.emplace_back(std::move(diagnostic));
-    notify_all();
+    // notify_all();
   }
 
   std::vector<Notification::Callback> callbacks{};
@@ -93,6 +101,8 @@ private:
 };
 
 Notification_Wrapper<NOTIFY_EVENT::DIAGNOSTIC> diagnostic_notifications;
+Notification_Wrapper<NOTIFY_EVENT::ERROR> error_notifications;
+Notification_Wrapper<NOTIFY_EVENT::WARNING> warning_notifications;
 
 } // namespace Notification
 

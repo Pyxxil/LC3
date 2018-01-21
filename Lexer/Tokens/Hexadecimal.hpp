@@ -16,8 +16,6 @@ public:
   Hexadecimal &operator=(Hexadecimal &&) noexcept = default;
 
   ~Hexadecimal() override = default;
-
-private:
 };
 } // namespace Token
 } // namespace Lexer

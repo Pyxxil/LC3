@@ -5,6 +5,7 @@
 #include "Callback.hpp"
 #include "Notifier.hpp"
 
+#include "File.hpp"
 #include "Lexer/Lexer.hpp"
 #include "Lexer/Line.hpp"
 #include "Lexer/Token.hpp"
@@ -12,80 +13,87 @@
 
 #include "spdlog/spdlog.h"
 
+#include <string_view>
+
 #if __APPLE__
-#define TEST_FILE_PATH "/Users/pyxxil/Sync/Projects/LC3"
+#define TEST_FILE_PATH "/Users/pyxxil/Sync/Projects/LC3/Examples"
 #elif __linux__
-#define TEST_FILE_PATH "/home/pyxxil/Sync/Projects/LC3"
+#define TEST_FILE_PATH "/home/pyxxil/Sync/Projects/LC3/Examples"
 #endif
 
 int main(int argc, char **argv) {
   (void)argc;
   (void)argv;
 
-#ifndef NDEBUG
-  spdlog::set_level(spdlog::level::debug);
-#endif
+  using namespace std::literals; // For string_view literals
+  using namespace Lexer::Token;
 
-  Notification::Callback c("Test",
-                           [](auto &&name, auto &&diagnostic) {
-                             std::cout << name << ": Hello World!\n";
-                             std::cout << " - " << diagnostic << '\n';
-                           },
-                           false, false);
-  Notification::diagnostic_notifications << c;
+  spdlog::set_pattern("%v");
+
+  Notification::Callback errors("Test",
+                                [&errors](auto &&, auto &&diagnostic) {
+                                  errors.error("Error: {}", diagnostic);
+                                },
+                                false, false);
+  Notification::error_notifications << errors;
+
+  Notification::Callback warnings("Test",
+                                  [&warnings](auto &&, auto &&diagnostic) {
+                                    warnings.warn("Warning: {}", diagnostic);
+                                  },
+                                  false, false);
+  Notification::warning_notifications << warnings;
 
   Notification::diagnostic_notifications.for_each(
       [](auto &&diagnostic) { std::cout << diagnostic << '\n'; });
 
-  Lexer::Lexer lexer;
+  // Lexer::Lexer lexer;
 
-  lexer << new Lexer::Token::Add("Add") << new Lexer::Token::Register("R1")
-        << new Lexer::Token::Register("R2") << new Lexer::Token::Immediate("10")
+  // lexer
+  //     << Add("Add") << Register("R1") << Register("R2") << Immediate("10")
 
-        << new Lexer::Token::Add("ADD") << new Lexer::Token::Register("R3")
-        << new Lexer::Token::Register("R1") << new Lexer::Token::Register("R2")
+  //     << Add("ADD") << Register("R3") << Register("R1") << Register("R2")
 
-        << "\tAdd R1 R2 '\n'; Yay for comments!"
-        << "\"Hello\" \"\\\"\" \""
-        << "'H'  'Hello'  '\n'"
-        << "Jmp R7 JSR  LABEL JSRR R2 NOT R2 ,, R3 TEST:.FILL, -x300 AND R1, R2"
-        << new Lexer::Token::Immediate("144") << "\"Unterminated string";
+  //     << "\tAdd R1 R2 '\n'; Yay for comments!"sv
+  //     << "\"Hello\" \"\\\"\" \""sv
+  //     << "'H'  'Hello'  '\n'"sv
+  //     << "Jmp R7 JSR  LABEL JSRR R2 NOT R2 ,, R3 TEST:.FILL, -x300 AND R1, R2
+  //     "sv
+  //     << Immediate("144") << "\"Unterminated string"sv;
 
-  std::string line;
-  std::ifstream test{TEST_FILE_PATH "/LC3/Examples/Test.asm"};
-  while (std::getline(test, line)) {
-    lexer << line;
+  auto ast_console = spdlog::stdout_color_mt("ast_console");
+  ast_console->set_level(spdlog::level::info);
+  ast_console->set_pattern("%v");
+
+  // lexer.lex();
+
+  // Notification::warning_notifications.notify_all(true);
+
+  // if (lexer.okay()) {
+  //   std::cout << lexer;
+  // } else {
+  //   Notification::error_notifications.notify_all(true);
+  // }
+
+  // lexer.clear();
+
+  for (auto &&file :
+       {TEST_FILE_PATH "/Test.asm", TEST_FILE_PATH "/Fibonacci.asm",
+        TEST_FILE_PATH "/Recursive_Fibonacci.asm",
+        TEST_FILE_PATH "/Compare.asm", TEST_FILE_PATH "/input.asm",
+        TEST_FILE_PATH "/Multi_Word_Addition.asm"}) {
+    Lexer::Lexer lexer(Lexer::File{file});
+
+    lexer.lex();
+
+    Notification::warning_notifications.notify_for_each();
+
+    if (lexer.okay()) {
+      ast_console->info("{}\n", lexer);
+    } else {
+      Notification::error_notifications.notify_for_each();
+    }
   }
-
-  std::ifstream f{TEST_FILE_PATH "/Examples/Fibonacci.asm"};
-  while (std::getline(f, line)) {
-    lexer << line;
-  }
-  std::ifstream z{TEST_FILE_PATH "/Examples/Recursive_Fibonacci.asm"};
-  while (std::getline(z, line)) {
-    lexer << line;
-  }
-  std::ifstream v{TEST_FILE_PATH "/Examples/Compare.asm"};
-  while (std::getline(v, line)) {
-    lexer << line;
-  }
-  std::ifstream e{TEST_FILE_PATH "/Examples/input.asm"};
-  while (std::getline(e, line)) {
-    lexer << line;
-  }
-  std::ifstream a{TEST_FILE_PATH "/Examples/Multi_Word_Addition.asm"};
-  while (std::getline(a, line)) {
-    lexer << line;
-  }
-
-  lexer.lex();
-
-  for (auto &&t : lexer.tokens) {
-    std::cout << "Token: " << t->getToken()
-              << ", Type: " << Lexer::TokenTypeString[t->tokenType()] << '\n';
-  }
-
-  Notification::diagnostic_notifications.notify_all_and_clear();
 
   return 0;
 }

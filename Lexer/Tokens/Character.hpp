@@ -18,7 +18,28 @@ public:
 
   ~Character() override = default;
 
+  const std::string &get_token() const override {
+    if (character.empty()) {
+      switch (token.front()) {
+      case '\0':
+        character = "\\0";
+        break;
+      case '\n':
+        character = "\\n";
+        break;
+      case '\t':
+        character = "\\t";
+        break;
+      default:
+        character.push_back(token.front());
+        break;
+      }
+    }
+    return character;
+  }
+
 private:
+  mutable std::string character{};
 };
 #endif
 } // namespace Token
