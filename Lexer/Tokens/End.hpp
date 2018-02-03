@@ -7,7 +7,9 @@ namespace Lexer {
 namespace Token {
 class End : public Token {
 public:
-  explicit End(std::string t) : Token(std::move(t)) {}
+  explicit End(std::string t, size_t tLine, size_t tColumn,
+               const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile) {}
 
   End(const End &) = default;
   End(End &&) noexcept = default;
@@ -15,9 +17,9 @@ public:
   End &operator=(const End &) = default;
   End &operator=(End &&) noexcept = default;
 
-  ~End() override = default;
+  TokenType tokenType() const final { return END; }
 
-  Token_Type tokenType() const final { return END; }
+  word memoryRequired() const override { return 1_word; }
 
 private:
 };

@@ -5,7 +5,7 @@
 
 #include "../Debug.hpp"
 
-#include "Diagnostic.hpp"
+#include "../Diagnostic.hpp"
 #include "Line.hpp"
 #include "Token.hpp"
 #include "Tokens.hpp"
@@ -15,11 +15,11 @@ namespace Tokenizer {
 class Tokenizer;
 }
 } // namespace Lexer
-extern void throw_error(Lexer::Tokenizer::Tokenizer *, Diagnostics::Diagnostic);
-extern void throw_warning(Lexer::Tokenizer::Tokenizer *,
-                          Diagnostics::Diagnostic);
+extern void throwError(Lexer::Tokenizer::Tokenizer *, Diagnostics::Diagnostic);
+extern void throwWarning(Lexer::Tokenizer::Tokenizer *,
+                         Diagnostics::Diagnostic);
 
-static constexpr size_t hashed_letters[] = {
+static constexpr size_t hashedLetters[] = {
     100363, 99989, 97711, 97151, 92311, 80147, 82279, 72997,
     66457,  65719, 70957, 50262, 48407, 51151, 41047, 39371,
     35401,  37039, 28697, 27791, 20201, 21523, 6449,  4813,
@@ -51,9 +51,9 @@ static constexpr size_t hash(const std::string_view &string) {
     return 0;
   }
 
-  const size_t first_character = static_cast<size_t>(toUpper(string.front()));
+  const size_t firstCharacter = static_cast<size_t>(toUpper(string.front()));
 
-  if (first_character != '.' && !isAlpha(first_character)) {
+  if (firstCharacter != '.' && !isAlpha(firstCharacter)) {
     // Basically, we don't really want something that's likely to be an
     // immediate value, or a label (less likely to be caught here, but may as
     // well try).
@@ -63,16 +63,16 @@ static constexpr size_t hash(const std::string_view &string) {
 
     for (const char character : string) {
       const size_t as_hashed{
-          hashed_letters[(static_cast<size_t>(toUpper(character)) - 0x41u) &
-                         0x1F]};
-      hashed = (hashed * as_hashed) ^ (first_character * as_hashed);
+          hashedLetters[(static_cast<size_t>(toUpper(character)) - 0x41u) &
+                        0x1F]};
+      hashed = (hashed * as_hashed) ^ (firstCharacter * as_hashed);
     }
 
     return hashed;
   }
 }
 
-static bool is_valid_binary_literal(const std::string_view &s) {
+static bool isValidBinaryLiteral(const std::string_view &s) {
   if (s.size() == 1) {
     return false;
   }
@@ -82,7 +82,7 @@ static bool is_valid_binary_literal(const std::string_view &s) {
                        [](auto &&c) { return '0' == c || '1' == c; });
   }
 
-  if (s.size() > 2) {
+  if (s.size() > 2 && 'B' == toUpper(s[1])) {
     return std::all_of(s.cbegin() + 2, s.cend(),
                        [](auto &&c) { return '0' == c || '1' == c; });
   }
@@ -90,7 +90,7 @@ static bool is_valid_binary_literal(const std::string_view &s) {
   return false;
 }
 
-static bool is_valid_hexadecimal_literal(const std::string_view &s) {
+static bool isValidHexadecimalLiteral(const std::string_view &s) {
   if (s.size() == 1) {
     return false;
   }
@@ -106,16 +106,30 @@ static bool is_valid_hexadecimal_literal(const std::string_view &s) {
   return false;
 }
 
-static inline bool is_valid_octal_literal(const std::string_view &s) {
+static inline bool isValidOctalLiteral(const std::string_view &s) {
   return std::all_of(s.cbegin(), s.cend(),
                      [](auto &&c) { return c <= 0x37 && c >= 0x30; });
 }
 
-static inline bool is_valid_decimal_literal(const std::string_view &s) {
+static inline bool isValidDecimalLiteral(const std::string_view &s) {
+  if ('#' == s.front()) {
+    DEBUG("Decimal literal has leading '{}'", '#');
+    if (s.length() < 2) {
+      DEBUG("Decimal literal is too small ('{}')", s.length());
+      return false;
+    } else if (s[1] == '-') {
+      if (s.length() < 3) {
+        DEBUG("Decimal literal is too small ('{}')", s.length());
+        return false;
+      }
+      return std::all_of(s.cbegin() + 2, s.cend(), ::isdigit);
+    }
+    return std::all_of(s.cbegin() + 1, s.cend(), ::isdigit);
+  }
   return std::all_of(s.cbegin(), s.cend(), ::isdigit);
 }
 
-static bool is_valid_label(const std::string_view &s) {
+static bool isValidLabel(const std::string_view &s) {
   if ('.' == s.front()) {
     return std::all_of(s.cbegin() + 1, s.cend(),
                        [](auto &&c) { return std::isalnum(c) || '_' == c; });
@@ -131,36 +145,105 @@ class Lexer;
 namespace Tokenizer {
 class Tokenizer {
 public:
-  Tokenizer(Lexer *t_lexer, File *t_file) : m_lexer(t_lexer), file(t_file) {}
+  Tokenizer(Lexer &t_lexer, File &t_file) : m_lexer(t_lexer), file(t_file) {}
 
-  Token::Token *tokenize_immediate(const std::string &s) {
+  std::unique_ptr<Token::Token> tokenizeImmediate(const std::string &s) {
+    // We know this is going to be negative, as this is only ever called when
+    // the next character on the line is a '-'.
     switch (s.front()) {
     case '\'':
       break;
     case '0':
       if (s.size() > 1) {
-        if ('X' == toUpper(s[1]) && is_valid_hexadecimal_literal(s)) {
-          return new Token::Hexadecimal(s);
-        } else if ('B' == toUpper(s[1]) && is_valid_binary_literal(s)) {
-          return new Token::Binary(s);
+        if ('X' == toUpper(s[1]) && isValidHexadecimalLiteral(s)) {
+          auto hex = std::make_unique<Token::Hexadecimal>(
+              s, file.position().line(), file.position().column(), file.name(),
+              true);
+          if (hex->isTooBig()) {
+            throwError(
+                this,
+                Diagnostics::Diagnostic(
+                    std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                        file.position().column() - s.length(), s.length(),
+                        file.line()),
+                    fmt::format(
+                        "Hexadecimal literal is too big to fit inside 16 bits"),
+                    file.name(), file.position().line()));
+            return std::make_unique<Token::Token>(s, file.position().line(),
+                                                  file.position().column(),
+                                                  file.name());
+          }
+          return std::move(hex);
+        } else if ('B' == toUpper(s[1]) && isValidBinaryLiteral(s)) {
+          auto bin = std::make_unique<Token::Binary>(s, file.position().line(),
+                                                     file.position().column(),
+                                                     file.name(), true);
+          if (bin->isTooBig()) {
+            throwError(
+                this,
+                Diagnostics::Diagnostic(
+                    std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                        file.position().column() - s.length(), s.length(),
+                        file.line()),
+                    fmt::format(
+                        "Binary literal is too big to fit inside 16 bits"),
+                    file.name(), file.position().line()));
+            return std::make_unique<Token::Token>(s, file.position().line(),
+                                                  file.position().column(),
+                                                  file.name());
+          }
+          return std::move(bin);
         }
-        if (is_valid_octal_literal(s)) {
-          return new Token::Octal(s);
+#ifdef ADDONS
+        if (isValidOctalLiteral(s)) {
+          auto oct = std::make_unique<Token::Octal>(s, file.position().line(),
+                                                    file.position().column(),
+                                                    file.name(), true);
+          if (oct->isTooBig()) {
+            throwError(
+                this, Diagnostics::Diagnostic(
+                          std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                              file.position().column() - s.length(), s.length(),
+                              file.line()),
+                          fmt::format(
+                              "Octal literal is too big to fit inside 16 bits"),
+                          file.name(), file.position().line()));
+            return std::make_unique<Token::Token>(s, file.position().line(),
+                                                  file.position().column(),
+                                                  file.name());
+          }
+          return std::move(oct);
         }
-        throw_error(this,
-                    Diagnostics::Diagnostic(
-                        std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                            file->position().column() - s.length(), s.length(),
-                            file->line()),
-                        fmt::format("Invalid immediate literal {}", s),
-                        file->name(), file->position().line()));
+#endif
+        throwError(this,
+                   Diagnostics::Diagnostic(
+                       std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                           file.position().column() - s.length(), s.length(),
+                           file.line()),
+                       fmt::format("Invalid immediate literal {}", s),
+                       file.name(), file.position().line()));
       }
       break;
     case 'b':
       [[fallthrough]];
     case 'B':
-      if (is_valid_binary_literal(s)) {
-        return new Token::Binary(s);
+      if (isValidBinaryLiteral(s)) {
+        auto bin = std::make_unique<Token::Binary>(s, file.position().line(),
+                                                   file.position().column(),
+                                                   file.name(), true);
+        if (bin->isTooBig()) {
+          throwError(this,
+                     Diagnostics::Diagnostic(
+                         std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                             file.position().column() - s.length(), s.length(),
+                             file.line()),
+                         fmt::format(
+                             "Binary literal is too big to fit inside 16 bits"),
+                         file.name(), file.position().line()));
+          return std::make_unique<Token::Token>(
+              s, file.position().line(), file.position().column(), file.name());
+        }
+        return std::move(bin);
       } else {
         DEBUG("Expected Binary literal, but found {}", s);
       }
@@ -168,17 +251,33 @@ public:
     case 'x':
       [[fallthrough]];
     case 'X':
-      if (is_valid_hexadecimal_literal(s)) {
-        return new Token::Hexadecimal(s);
+      if (isValidHexadecimalLiteral(s)) {
+        auto hex = std::make_unique<Token::Hexadecimal>(
+            s, file.position().line(), file.position().column(), file.name(),
+            true);
+        if (hex->isTooBig()) {
+          throwError(
+              this,
+              Diagnostics::Diagnostic(
+                  std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                      file.position().column() - s.length(), s.length(),
+                      file.line()),
+                  fmt::format(
+                      "Hexadecimal literal is too big to fit inside 16 bits"),
+                  file.name(), file.position().line()));
+          return std::make_unique<Token::Token>(
+              s, file.position().line(), file.position().column(), file.name());
+        }
+        return std::move(hex);
       } else {
-        throw_error(
+        throwError(
             this,
             Diagnostics::Diagnostic(
                 std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                    file->position().column() - s.length(), s.length(),
-                    file->line()),
+                    file.position().column() - s.length(), s.length(),
+                    file.line()),
                 fmt::format("Expected Hexadecimal literal, but found {}", s),
-                file->name(), file->position().line()));
+                file.name(), file.position().line()));
       }
       break;
     case '1':
@@ -198,58 +297,86 @@ public:
     case '8':
       [[fallthrough]];
     case '9':
-      if (is_valid_decimal_literal(s)) {
-        return new Token::Decimal(s);
+      if (isValidDecimalLiteral(s)) {
+        auto decimal = std::make_unique<Token::Decimal>(
+            s, file.position().line(), file.position().column(), file.name(),
+            true);
+        if (decimal->isTooBig()) {
+          throwError(
+              this, Diagnostics::Diagnostic(
+                        std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                            file.position().column() - s.length(), s.length(),
+                            file.line()),
+                        fmt::format(
+                            "Decimal literal is too big to fit inside 16 bits"),
+                        file.name(), file.position().line()));
+          return std::make_unique<Token::Token>(
+              s, file.position().line(), file.position().column(), file.name());
+        }
+        return std::move(decimal);
       } else {
-        throw_error(
-            this, Diagnostics::Diagnostic(
-                      std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                          file->position().column() - s.length(), s.length(),
-                          file->line()),
-                      fmt::format("Expected Decimal literal, but found {}", s),
-                      file->name(), file->position().line()));
+        throwError(this,
+                   Diagnostics::Diagnostic(
+                       std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                           file.position().column() - s.length(), s.length(),
+                           file.line()),
+                       fmt::format("Expected Decimal literal, but found {}", s),
+                       file.name(), file.position().line()));
       }
       break;
     default:
       break;
     }
 
-    return new Token::Token(s);
+    return std::make_unique<Token::Token>(
+        s, file.position().line(), file.position().column(), file.name());
   }
 
-  Token::Token *tokenize_directive(const std::string &s) {
+  std::unique_ptr<Token::Token> tokenizeDirective(const std::string &s) {
     if (const auto _hash = hash(s); _hash > 0) {
       switch (_hash) {
 #ifdef ADDONS
-      case ::hash("INCLUDE"):
-        return new Token::Include(s);
-      case ::hash("SET"):
-        return new Token::Set(s);
-      case ::hash("LSHIFT"):
-        return new Token::Lshift(s);
-      case ::hash("NEG"):
-        return new Token::Neg(s);
-      case ::hash("SUB"):
-        return new Token::Sub(s);
+      case ::hash(".INCLUDE"):
+        return std::make_unique<Token::Include>(
+            s, file.position().line(), file.position().column(), file.name());
+      case ::hash(".SET"):
+        return std::make_unique<Token::Set>(
+            s, file.position().line(), file.position().column(), file.name());
+      case ::hash(".LSHIFT"):
+        return std::make_unique<Token::Lshift>(
+            s, file.position().line(), file.position().column(), file.name());
+      case ::hash(".NEG"):
+        return std::make_unique<Token::Neg>(
+            s, file.position().line(), file.position().column(), file.name());
+      case ::hash(".SUB"):
+        return std::make_unique<Token::Sub>(
+            s, file.position().line(), file.position().column(), file.name());
 #endif
-      case ::hash("ORIG"):
-        return new Token::Orig(s);
-      case ::hash("END"):
-        return new Token::End(s);
-      case ::hash("STRINGZ"):
-        return new Token::Stringz(s);
-      case ::hash("FILL"):
-        return new Token::Fill(s);
-      case ::hash("BLKW"):
-        return new Token::Blkw(s);
+      case ::hash(".ORIG"):
+        return std::make_unique<Token::Orig>(
+            s, file.position().line(), file.position().column(), file.name());
+      case ::hash(".END"):
+        return std::make_unique<Token::End>(
+            s, file.position().line(), file.position().column(), file.name());
+      case ::hash(".STRINGZ"):
+        return std::make_unique<Token::Stringz>(
+            s, file.position().line(), file.position().column(), file.name());
+      case ::hash(".FILL"):
+        return std::make_unique<Token::Fill>(
+            s, file.position().line(), file.position().column(), file.name());
+      case ::hash(".BLKW"):
+        return std::make_unique<Token::Blkw>(
+            s, file.position().line(), file.position().column(), file.name());
       }
     }
 
-    if (is_valid_label(s)) {
-      return new Token::Label(s);
+    if (isValidLabel(s)) {
+      return std::make_unique<Token::Label>(
+          s, file.position().line(), file.position().column(), file.name());
     }
 
-    return new Token::Token(s);
+    return std::make_unique<Token::Token>(
+        s, file.position().line(), file.position().column(), file.name());
   }
 
   /*! Tokenize a single word
@@ -257,55 +384,80 @@ public:
    * @param s The word to tokenize
    * @return The token the word corresponds to
    */
-  Token::Token *tokenize(const std::string &s) {
+  std::unique_ptr<Token::Token> tokenize(const std::string &s) {
     if (const auto _hash = hash(s); _hash > 0) {
       switch (_hash) {
       case ::hash("ADD"):
-        return new Token::Add(s);
+        return std::make_unique<Token::Add>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("AND"):
-        return new Token::And(s);
+        return std::make_unique<Token::And>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("NOT"):
-        return new Token::Not(s);
+        return std::make_unique<Token::Not>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("RET"):
-        return new Token::Ret(s);
+        return std::make_unique<Token::Ret>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("JMP"):
-        return new Token::Jmp(s);
+        return std::make_unique<Token::Jmp>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("JSR"):
-        return new Token::Jsr(s);
+        return std::make_unique<Token::Jsr>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("JSRR"):
-        return new Token::Jsrr(s);
+        return std::make_unique<Token::Jsrr>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("LD"):
-        return new Token::Ld(s);
+        return std::make_unique<Token::Ld>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("LEA"):
-        return new Token::Lea(s);
+        return std::make_unique<Token::Lea>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("LDI"):
-        return new Token::Ldi(s);
+        return std::make_unique<Token::Ldi>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("LDR"):
-        return new Token::Ldr(s);
+        return std::make_unique<Token::Ldr>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("ST"):
-        return new Token::St(s);
+        return std::make_unique<Token::St>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("STR"):
-        return new Token::Str(s);
+        return std::make_unique<Token::Str>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("STI"):
-        return new Token::Sti(s);
+        return std::make_unique<Token::Sti>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("TRAP"):
-        return new Token::Trap(s);
+        return std::make_unique<Token::Trap>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("PUTS"):
-        return new Token::Puts(s);
+        return std::make_unique<Token::Puts>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("PUTSP"):
-        return new Token::Putsp(s);
+        return std::make_unique<Token::Putsp>(
+            s, file.position().line(), file.position().column(), file.name());
 
       case ::hash("PUTC"):
         [[fallthrough]];
       case ::hash("OUT"):
-        return new Token::Out(s);
+        return std::make_unique<Token::Out>(
+            s, file.position().line(), file.position().column(), file.name());
+
+      case ::hash("GETC"):
+        return std::make_unique<Token::Getc>(
+            s, file.position().line(), file.position().column(), file.name());
 
       case ::hash("IN"):
-        return new Token::In(s);
+        return std::make_unique<Token::In>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("HALT"):
-        return new Token::Halt(s);
+        return std::make_unique<Token::Halt>(
+            s, file.position().line(), file.position().column(), file.name());
       case ::hash("RTI"):
-        return new Token::Rti(s);
+        return std::make_unique<Token::Rti>(
+            s, file.position().line(), file.position().column(), file.name());
 
       case ::hash("BR"):
         [[fallthrough]];
@@ -320,29 +472,43 @@ public:
       case ::hash("BRPNZ"):
         [[fallthrough]];
       case ::hash("BRPZN"):
-        return new Token::Br(s, true, true, true);
+        return std::make_unique<Token::Br>(
+            s, true, true, true, file.position().line(),
+            file.position().column(), file.name());
 
       case ::hash("BRN"):
-        return new Token::Br(s, true, false, false);
+        return std::make_unique<Token::Br>(
+            s, true, false, false, file.position().line(),
+            file.position().column(), file.name());
       case ::hash("BRZ"):
-        return new Token::Br(s, false, true, false);
+        return std::make_unique<Token::Br>(
+            s, false, true, false, file.position().line(),
+            file.position().column(), file.name());
       case ::hash("BRP"):
-        return new Token::Br(s, false, false, true);
+        return std::make_unique<Token::Br>(
+            s, false, false, true, file.position().line(),
+            file.position().column(), file.name());
 
       case ::hash("BRNZ"):
         [[fallthrough]];
       case ::hash("BRZN"):
-        return new Token::Br(s, true, true, false);
+        return std::make_unique<Token::Br>(
+            s, true, true, false, file.position().line(),
+            file.position().column(), file.name());
 
       case ::hash("BRNP"):
         [[fallthrough]];
       case ::hash("BRPN"):
-        return new Token::Br(s, true, false, true);
+        return std::make_unique<Token::Br>(
+            s, true, false, true, file.position().line(),
+            file.position().column(), file.name());
 
       case ::hash("BRZP"):
         [[fallthrough]];
       case ::hash("BRPZ"):
-        return new Token::Br(s, false, true, true);
+        return std::make_unique<Token::Br>(
+            s, false, true, true, file.position().line(),
+            file.position().column(), file.name());
 
       case ::hash("R0"):
         [[fallthrough]];
@@ -359,100 +525,103 @@ public:
       case ::hash("R6"):
         [[fallthrough]];
       case ::hash("R7"):
-        return new Token::Register(s);
+        return std::make_unique<Token::Register>(
+            s, file.position().line(), file.position().column(), file.name());
       default:
         break;
       }
     }
 
-    if (is_valid_octal_literal(s)) {
-      return new Token::Octal(s);
+#ifdef ADDONS
+    if (isValidOctalLiteral(s)) {
+      return std::make_unique<Token::Octal>(
+          s, file.position().line(), file.position().column(), file.name());
+    }
+#endif
+
+    if (isValidDecimalLiteral(s)) {
+      return std::make_unique<Token::Decimal>(
+          s, file.position().line(), file.position().column(), file.name());
     }
 
-    if (is_valid_decimal_literal(s)) {
-      return new Token::Decimal(s);
+    if (isValidHexadecimalLiteral(s)) {
+      return std::make_unique<Token::Hexadecimal>(
+          s, file.position().line(), file.position().column(), file.name());
     }
 
-    if (is_valid_hexadecimal_literal(s)) {
-      return new Token::Hexadecimal(s);
+    if (isValidBinaryLiteral(s)) {
+      return std::make_unique<Token::Binary>(
+          s, file.position().line(), file.position().column(), file.name());
     }
 
-    if (is_valid_binary_literal(s)) {
-      return new Token::Binary(s);
+    if (isValidLabel(s)) {
+      return std::make_unique<Token::Label>(
+          s, file.position().line(), file.position().column(), file.name());
     }
 
-    if (is_valid_label(s)) {
-      return new Token::Label(s);
-    }
-
-    throw_error(this, Diagnostics::Diagnostic(
-                          std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                              file->position().column() - s.length(),
-                              s.length(), file->line()),
-                          fmt::format("Invalid token: {}", s), file->name(),
-                          file->position().line()));
-    return new Token::Token(s);
+    throwError(this, Diagnostics::Diagnostic(
+                         std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                             file.position().column() - s.length(), s.length(),
+                             file.line()),
+                         fmt::format("Invalid token: {}", s), file.name(),
+                         file.position().line()));
+    return std::make_unique<Token::Token>(
+        s, file.position().line(), file.position().column(), file.name());
   }
 
   void extraneous(const char character) {
-    throw_warning(this,
-                  Diagnostics::Diagnostic(
-                      std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                          file->position().column(), 0, file->line()),
-                      fmt::format("Extraneous '{}' found.", character),
-                      file->name(), file->position().line()));
+    throwWarning(this, Diagnostics::Diagnostic(
+                           std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                               file.position().column(), 0, file.line()),
+                           fmt::format("Extraneous '{}' found.", character),
+                           file.name(), file.position().line()));
   }
 
-  std::vector<Token::Token *> tokenize_line(Line line) {
-    std::vector<Token::Token *> l_tokens{};
+  std::vector<std::unique_ptr<Token::Token>> tokenizeLine(Line line) {
+    std::vector<std::unique_ptr<Token::Token>> lTokens{};
     char terminator{};
 
-    while (!line.at_end()) {
+    while (!line.atEnd()) {
       line.skip_while([](auto &&c) -> bool { return std::isspace(c); });
       const auto token_start = line.index();
       const auto token_end = line.find_if(
           [](auto &&c) -> bool { return !(std::isalnum(c) || '_' == c); });
 
-      file->set_column(token_end);
+      file.setColumn(token_start);
 
       DEBUG("Starting with index at {}", token_start);
       DEBUG("Token ends with index at {}", token_end);
 
       if (auto &&token = line.substr(token_start, token_end);
           0 == token.size()) {
-        file->set_column(line.index());
         switch (const auto next = line.next(); next) {
         case '.': {
           terminator = '\0';
           // Now we tokenize a directive
-          const auto dir_start = line.index();
-          token = line.substr(dir_start, line.find_if([](auto &&c) -> bool {
+          // const auto dir_start = line.index();
+          token = line.substr(token_end, line.find_if([](auto &&c) -> bool {
             return !(std::isalnum(c));
           }));
-          file->set_column(line.index());
           DEBUG("Found token '{}'", token);
-          l_tokens.emplace_back(tokenize_directive(token));
-          DEBUG(" - With type ", TokenTypeString[l_tokens.back()->tokenType()]);
+          lTokens.emplace_back(tokenizeDirective(token));
+          DEBUG(" - With type ", lTokens.back()->tokenType());
           break;
         }
         case '-': { // Negative immediate (hopefully)
           terminator = '\0';
-          const auto imm_start = line.index();
-          token = line.substr(imm_start, line.find_if([](auto &&c) -> bool {
+          token = line.substr(line.index(), line.find_if([](auto &&c) -> bool {
             return !(std::isalnum(c));
           }));
-          file->set_column(line.index() - 1);
           if (token.size() > 0) {
-            auto &&t = tokenize_immediate(token);
-            t->negate();
-            l_tokens.emplace_back(std::move(t));
+            auto &&t = tokenizeImmediate(token);
+            lTokens.emplace_back(std::move(t));
           } else {
-            throw_error(
-                this, Diagnostics::Diagnostic(
-                          std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                              file->position().column(), 0, file->line()),
-                          "Extraneous '-' found.", file->name(),
-                          file->position().line()));
+            throwError(this,
+                       Diagnostics::Diagnostic(
+                           std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                               file.position().column(), 0, file.line()),
+                           "Extraneous '-' found.", file.name(),
+                           file.position().line()));
           }
           break;
         }
@@ -461,14 +630,14 @@ public:
           if (',' == terminator || ':' == terminator) {
             extraneous(next);
           } else if (':' == next) {
-            if (l_tokens.size() > 0 &&
-                l_tokens.back()->tokenType() != Token_Type::LABEL) {
+            if (lTokens.size() > 0 &&
+                lTokens.back()->tokenType() != TokenType::LABEL) {
               extraneous(next);
             }
           } else if (',' == next) {
-            if (l_tokens.size() == 0 ||
-                (l_tokens.back()->tokenType() != Token_Type::REGISTER &&
-                 l_tokens.back()->tokenType() != Token_Type::IMMEDIATE)) {
+            if (lTokens.size() == 0 ||
+                (lTokens.back()->tokenType() != TokenType::REGISTER &&
+                 lTokens.back()->tokenType() != TokenType::IMMEDIATE)) {
               extraneous(next);
             }
           }
@@ -480,85 +649,119 @@ public:
           line.ignore(Line::ESCAPE_SEQUENCE);
           const auto begin = line.index();
           const auto end = line.find_next(next);
-          file->set_column(line.index());
           line.ignore(Line::RESET);
           if (-1u == end) {
-            throw_error(
-                this, Diagnostics::Diagnostic(
-                          std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                              begin - 1, line.index() - begin, file->line()),
-                          "Unterminated string/character literal", file->name(),
-                          file->position().line()));
+            throwError(this,
+                       Diagnostics::Diagnostic(
+                           std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                               file.position().column(), line.index() - begin,
+                               file.line()),
+                           fmt::format("Unterminated {} literal",
+#ifdef ADDONS
+                                       next == '"' ? "String" : "Character"
+#else
+                                       "String"
+#endif
+                                       ),
+                           file.name(), file.position().line()));
           } else if ('"' == next) {
             auto &&str = line.substr(begin, end);
             DEBUG("Found string \"{}\"", str);
-            l_tokens.emplace_back(new Token::String(str));
+            lTokens.emplace_back(std::make_unique<Token::String>(
+                str, file.position().line(), begin, file.name()));
           } else if ('\'' == next) {
+            auto &&character = line.substr(begin, end);
 #ifdef ADDONS
-            if (auto &&character = line.substr(begin, end);
-                character.size() > 1 && '\\' != character.front()) {
-              throw_error(
+            if (character.size() > 1 && '\\' != character.front()) {
+              throwError(
                   this,
                   Diagnostics::Diagnostic(
                       std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                          file->position().column() - character.length(),
-                          character.length(), file->line()),
+                          begin - 1, character.length(), file.line()),
                       fmt::format("Invalid character literal '{}'", character),
-                      file->name(), file->position().line()));
+                      file.name(), file.position().line()));
             } else {
               DEBUG("Found character '{}'", character);
-              l_tokens.emplace_back(new Token::Character(character));
+              lTokens.emplace_back(std::make_unique<Token::Character>(
+                  character, file.position().line(), file.position().column(),
+                  file.name()));
             }
 #else
-            throw_error(
-                this, Diagnostics::Diagnostic(
-                          std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                              file->position().column() - s.length(),
-                              s.length(), file->line()),
-                          "Found character literal, but Addons aren't "
-                          "enabled",
-                          file->name(), file->position().line()));
+            throwError(this,
+                       Diagnostics::Diagnostic(
+                           std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                               begin - 1, character.length() + 1, file.line()),
+                           "Found character literal, but Addons aren't "
+                           "enabled",
+                           file.name(), file.position().line()));
 #endif
           }
           break;
         }
         case ';':
+#ifdef KEEP_COMMENTS
+          lTokens.emplace_back(std::make_unique<Token::Comment>(
+              line.substr(line.index(), -1), file.position().line(),
+              file.position().column(), file.name()));
+#endif
           line.skip_while([](auto &&) -> bool { return true; });
           break;
         case '/': // Both mean a comment (though, technically, a '//' is a
           // comment, but '/' is not used for anything.)
-          file->set_column(line.index() - 1);
+          file.setColumn(line.index() - 1);
           if ('/' != line.next()) {
-            throw_warning(
+            throwWarning(
                 this, Diagnostics::Diagnostic(
                           std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                              file->position().column(), 0, file->line()),
+                              file.position().column(), 0, file.line()),
                           "Found '/', acting as if it's supposed to be '//'",
-                          file->name(), file->position().line()));
+                          file.name(), file.position().line()));
           }
+#ifdef KEEP_COMMENTS
+          lTokens.emplace_back(std::make_unique<Token::Comment>(
+              line.substr(line.index(), -1), file.position().line(),
+              file.position().column(), file.name()));
+#endif
           line.skip_while([](auto &&) -> bool { return true; });
           break;
+        case '#': {
+          token = line.substr(token_start, line.find_if([](auto &&c) {
+            return !(std::isdigit(c) || '-' == c);
+          }));
+          DEBUG("Attempting to check Decimal literal string '{}'", token);
+          if (isValidDecimalLiteral(token)) {
+            auto decimal = std::make_unique<Token::Decimal>(
+                token, file.position().line(), file.position().column(),
+                file.name());
+            lTokens.emplace_back(std::move(decimal));
+          } else {
+            lTokens.emplace_back(std::make_unique<Token::Token>(
+                token, file.position().line(), file.position().column(),
+                file.name()));
+          }
+          break;
+        }
         default:
           terminator = '\0';
           break;
         }
       } else {
         DEBUG("Found token '{}'", token);
-        l_tokens.emplace_back(tokenize(token));
-        DEBUG(" - With type {}", TokenTypeString[l_tokens.back()->tokenType()]);
+        lTokens.emplace_back(tokenize(token));
+        DEBUG(" - With type {}", lTokens.back()->tokenType());
         terminator = '\0';
       }
     }
 
-    return l_tokens;
+    return lTokens;
   }
 
-  Lexer *lexer() const { return m_lexer; }
+  Lexer &lexer() const { return m_lexer; }
 
 private:
-  Lexer *m_lexer;
-  File *file;
-};
+  Lexer &m_lexer;
+  File &file;
+}; // namespace Tokenizer
 } // namespace Tokenizer
 } // namespace Lexer
 

@@ -7,10 +7,10 @@ namespace Lexer {
 namespace Token {
 class Neg : public Token {
 public:
-  explicit Neg(std::string t)
-      : Token(std::move(t),
+  Neg(std::string t, size_t tLine, size_t tColumn, const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile,
               Requirements(
-                  1, {Match(Token_Type::REGISTER), Match(Token_Type::REGISTER)},
+                  1, {Match(TokenType::REGISTER), Match(TokenType::REGISTER)},
                   3)) {}
 
   Neg(const Neg &) = default;
@@ -19,13 +19,11 @@ public:
   Neg &operator=(const Neg &) = default;
   Neg &operator=(Neg &&) noexcept = default;
 
-  ~Neg() override = default;
-
-  Token_Type tokenType() const final { return NEG; }
+  TokenType tokenType() const final { return NEG; }
 
   void assemble() override { Token::assemble(); }
 
-private:
+  word memoryRequired() const override { return 2_words; }
 };
 } // namespace Token
 } // namespace Lexer

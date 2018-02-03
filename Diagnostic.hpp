@@ -15,8 +15,9 @@ public:
     if (!t_context.empty()) {
       highlighter = std::string(m_column, ' ');
       highlighter.push_back('^');
-      highlighter += std::string(length, '~');
-      highlighter += std::string(context.length() - (length + m_column), ' ');
+      if (length > 0) {
+        highlighter += std::string(length, '~');
+      }
     }
   }
 
@@ -42,7 +43,7 @@ public:
   explicit Diagnostic(std::unique_ptr<DiagnosticHighlighter> highlighter,
                       std::string t_message, const std::string &file_name,
                       std::size_t at_line)
-      : m_highlighter(std::move(highlighter)), message(std::move(t_message)),
+      : mHighlighter(std::move(highlighter)), message(std::move(t_message)),
         file(file_name), line(at_line) {}
 
   Diagnostic(const Diagnostic &) = default;
@@ -54,14 +55,14 @@ public:
   template <typename OStream>
   friend OStream &operator<<(OStream &os, const Diagnostic &diagnostic) {
     os << diagnostic.file << ':' << diagnostic.line << ':'
-       << diagnostic.m_highlighter->column() << ": " << diagnostic.message
+       << diagnostic.mHighlighter->column() << ": " << diagnostic.message
        << '\n'
-       << *diagnostic.m_highlighter;
+       << *diagnostic.mHighlighter;
     return os;
   }
 
 private:
-  std::unique_ptr<DiagnosticHighlighter> m_highlighter;
+  std::unique_ptr<DiagnosticHighlighter> mHighlighter;
   std::string message;
   std::string file;
   std::size_t line;

@@ -7,7 +7,8 @@ namespace Lexer {
 namespace Token {
 class Putsp : public Token {
 public:
-  explicit Putsp(std::string t) : Token(std::move(t)) {}
+  Putsp(std::string t, size_t tLine, size_t tColumn, const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile) {}
 
   Putsp(const Putsp &) = default;
   Putsp(Putsp &&) noexcept = default;
@@ -15,13 +16,11 @@ public:
   Putsp &operator=(const Putsp &) = default;
   Putsp &operator=(Putsp &&) noexcept = default;
 
-  ~Putsp() override = default;
-
-  Token_Type tokenType() const final { return PUTSP; }
+  TokenType tokenType() const final { return PUTSP; }
 
   void assemble() override { Token::assemble(); }
 
-private:
+  word memoryRequired() const override { return 1_word; }
 };
 } // namespace Token
 } // namespace Lexer

@@ -7,9 +7,11 @@ namespace Lexer {
 namespace Token {
 class Br : public Token {
 public:
-  Br(std::string t, bool n, bool z, bool p)
-      : Token(std::move(t), Requirements(1, {Match(Token_Type::LABEL) |
-                                             Match(Token_Type::IMMEDIATE)})),
+  Br(std::string t, bool n, bool z, bool p, size_t tLine, size_t tColumn,
+     const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile,
+              Requirements(
+                  1, {Match(TokenType::LABEL) | Match(TokenType::IMMEDIATE)})),
         N(n), Z(z), P(p) {
     (void)N;
     (void)Z;
@@ -22,11 +24,11 @@ public:
   Br &operator=(const Br &) = default;
   Br &operator=(Br &&) noexcept = default;
 
-  ~Br() override = default;
-
-  Token_Type tokenType() const final { return BR; }
+  TokenType tokenType() const final { return BR; }
 
   void assemble() override { Token::assemble(); }
+
+  word memoryRequired() const override { return 1_word; }
 
 private:
   bool N;

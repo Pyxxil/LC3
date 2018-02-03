@@ -3,13 +3,16 @@
 
 #include "Token.hpp"
 
+#include "Immediate.hpp"
+
 namespace Lexer {
 namespace Token {
 class Lshift : public Token {
 public:
-  explicit Lshift(std::string t)
-      : Token(std::move(t), Requirements(2, {Match(Token_Type::REGISTER),
-                                             Match(Token_Type::IMMEDIATE)})) {}
+  Lshift(std::string t, size_t tLine, size_t tColumn, const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile,
+              Requirements(2, {Match(TokenType::REGISTER),
+                               Match(TokenType::IMMEDIATE)})) {}
 
   Lshift(const Lshift &) = default;
   Lshift(Lshift &&) noexcept = default;
@@ -17,14 +20,15 @@ public:
   Lshift &operator=(const Lshift &) = default;
   Lshift &operator=(Lshift &&) noexcept = default;
 
-  ~Lshift() override = default;
-
-  Token_Type tokenType() const final { return LSHIFT; }
+  TokenType tokenType() const final { return LSHIFT; }
 
   void assemble() override { Token::assemble(); }
 
-private:
-};
+  word memoryRequired() const override {
+    return static_cast<word>(
+        static_cast<Immediate *>(operands().back().get())->value());
+  }
+}; // namespace Token
 } // namespace Token
 } // namespace Lexer
 

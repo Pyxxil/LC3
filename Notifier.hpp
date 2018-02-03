@@ -59,7 +59,7 @@ public:
   }
 
   void for_each(std::function<void(const Diagnostics::Diagnostic &)> f) const {
-    for (auto &&diagnostic : diagnostics) {
+    for (const auto &diagnostic : diagnostics) {
       f(diagnostic);
     }
   }
@@ -85,8 +85,7 @@ public:
   }
 
   void notify_all_and_clear() {
-    notify_all(true);
-    callbacks.clear();
+    notify_for_each();
     diagnostics.clear();
   }
 

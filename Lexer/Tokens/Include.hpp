@@ -7,8 +7,9 @@ namespace Lexer {
 namespace Token {
 class Include : public Token {
 public:
-  explicit Include(std::string t)
-      : Token(std::move(t), Requirements(1, {Match(Token_Type::STRING)})) {}
+  Include(std::string t, size_t tLine, size_t tColumn, const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile,
+              Requirements(1, {Match(TokenType::STRING)})) {}
 
   Include(const Include &) = default;
   Include(Include &&) noexcept = default;
@@ -16,11 +17,9 @@ public:
   Include &operator=(const Include &) = default;
   Include &operator=(Include &&) noexcept = default;
 
-  ~Include() override = default;
+  TokenType tokenType() const final { return INCLUDE; }
 
-  Token_Type tokenType() const final { return INCLUDE; }
-
-private:
+  word memoryRequired() const override { return 1_word; }
 };
 } // namespace Token
 } // namespace Lexer

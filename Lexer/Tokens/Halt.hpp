@@ -7,7 +7,9 @@ namespace Lexer {
 namespace Token {
 class Halt : public Token {
 public:
-  explicit Halt(std::string t) : Token(std::move(t)) {}
+  explicit Halt(std::string t, size_t tLine, size_t tColumn,
+                const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile) {}
 
   Halt(const Halt &) = default;
   Halt(Halt &&) noexcept = default;
@@ -15,11 +17,11 @@ public:
   Halt &operator=(const Halt &) = default;
   Halt &operator=(Halt &&) noexcept = default;
 
-  ~Halt() override = default;
-
-  Token_Type tokenType() const final { return HALT; }
+  TokenType tokenType() const final { return HALT; }
 
   void assemble() override { Token::assemble(); }
+
+  word memoryRequired() const override { return 1_word; }
 
 private:
 };

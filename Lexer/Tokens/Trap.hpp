@@ -7,8 +7,9 @@ namespace Lexer {
 namespace Token {
 class Trap : public Token {
 public:
-  explicit Trap(std::string t)
-      : Token(std::move(t), Requirements(1, {Match(Token_Type::IMMEDIATE)})) {}
+  Trap(std::string t, size_t tLine, size_t tColumn, const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile,
+              Requirements(1, {Match(TokenType::IMMEDIATE)})) {}
 
   Trap(const Trap &) = default;
   Trap(Trap &&) noexcept = default;
@@ -16,11 +17,11 @@ public:
   Trap &operator=(const Trap &) = default;
   Trap &operator=(Trap &&) noexcept = default;
 
-  ~Trap() override = default;
-
-  Token_Type tokenType() const final { return TRAP; }
+  TokenType tokenType() const final { return TRAP; }
 
   void assemble() override { Token::assemble(); }
+
+  word memoryRequired() const override { return 1_word; }
 
 private:
 };

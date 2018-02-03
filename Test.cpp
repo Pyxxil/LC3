@@ -28,6 +28,7 @@ int main(int argc, char **argv) {
   using namespace std::literals; // For string_view literals
   using namespace Lexer::Token;
 
+  spdlog::set_level(spdlog::level::debug);
   spdlog::set_pattern("%v");
 
   Notification::Callback errors("Test",
@@ -77,11 +78,13 @@ int main(int argc, char **argv) {
 
   // lexer.clear();
 
-  for (auto &&file :
-       {TEST_FILE_PATH "/Test.asm", TEST_FILE_PATH "/Fibonacci.asm",
-        TEST_FILE_PATH "/Recursive_Fibonacci.asm",
-        TEST_FILE_PATH "/Compare.asm", TEST_FILE_PATH "/input.asm",
-        TEST_FILE_PATH "/Multi_Word_Addition.asm"}) {
+  for (auto &&file : {
+           "Test.asm", // TEST_FILE_PATH "/Fibonacci.asm",
+                       // TEST_FILE_PATH "/Recursive_Fibonacci.asm",
+           // TEST_FILE_PATH "/Compare.asm", TEST_FILE_PATH "/input.asm",
+           // TEST_FILE_PATH "/Multi_Word_Addition.asm"
+           // TEST_FILE_PATH "/Features.asm"
+       }) {
     Lexer::Lexer lexer(Lexer::File{file});
 
     lexer.lex();

@@ -7,8 +7,10 @@ namespace Lexer {
 namespace Token {
 class Orig : public Token {
 public:
-  explicit Orig(std::string t)
-      : Token(std::move(t), Requirements(1, {Match(Token_Type::IMMEDIATE)})) {}
+  explicit Orig(std::string t, size_t tLine, size_t tColumn,
+                const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile,
+              Requirements(1, {Match(TokenType::IMMEDIATE)})) {}
 
   Orig(const Orig &) = default;
   Orig(Orig &&) noexcept = default;
@@ -16,13 +18,11 @@ public:
   Orig &operator=(const Orig &) = default;
   Orig &operator=(Orig &&) noexcept = default;
 
-  ~Orig() override = default;
-
-  Token_Type tokenType() const final { return ORIG; }
+  TokenType tokenType() const final { return ORIG; }
 
   void assemble() override { Token::assemble(); }
 
-private:
+  word memoryRequired() const override { return 1_word; }
 };
 } // namespace Token
 } // namespace Lexer

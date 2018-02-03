@@ -8,7 +8,7 @@ namespace Lexer {
 class Position {
 public:
   Position(std::size_t column = 0, std::size_t line = 0)
-      : m_column(column), m_line(line) {}
+      : mColumn(column), mLine(line) {}
 
   Position(const Position &other) = default;
   Position(Position &&other) noexcept = default;
@@ -18,23 +18,25 @@ public:
 
   ~Position() = default;
 
-  std::size_t column() const { return m_column; }
-  std::size_t line() const { return m_line; }
+  std::size_t column() const { return mColumn; }
+  std::size_t line() const { return mLine; }
 
-  void inc_column() { ++m_column; }
-  void set_column(std::size_t column) { m_column = column; }
-  void inc_line() { ++m_line; }
+  void incColumn() { ++mColumn; }
+  void setColumn(std::size_t column) { mColumn = column; }
+  void incLine() { ++mLine; }
 
 private:
-  std::size_t m_column;
-  std::size_t m_line;
+  std::size_t mColumn;
+  std::size_t mLine;
 };
 
 class File {
 public:
   File() = default;
   explicit File(std::string file_name)
-      : m_file_name(std::move(file_name)), m_file(m_file_name) {}
+      : mFileName(std::move(file_name)), mFile() {
+    mFile.open(mFileName);
+  }
 
   File(const File &other) = default;
   File(File &&other) = default;
@@ -44,31 +46,36 @@ public:
 
   ~File() = default;
 
-  const std::string &name() const { return m_file_name; }
-  const Position &position() const { return m_position; }
+  const std::string &name() const { return mFileName; }
+  const Position &position() const { return mPosition; }
   std::string line() const {
     if (lines.size() <= position().line() - 1)
       return "";
     return lines[position().line() - 1];
   }
 
-  void set_column(std::size_t column) { m_position.set_column(column); }
+  void setColumn(std::size_t column) { mPosition.setColumn(column); }
 
-  bool next_line() {
-    m_position.inc_line();
-    std::string current_line;
-    if (std::getline(m_file, current_line)) {
-      lines.emplace_back(current_line);
+  bool nextLine() {
+    mPosition.incLine();
+    std::string currentLine;
+    if (std::getline(mFile, currentLine)) {
+      lines.emplace_back(currentLine);
       return true;
     }
     return false;
   }
-  void next_column() { m_position.inc_column(); }
+  void nextColumn() { mPosition.incColumn(); }
+  const std::string& line(size_t l) const {
+    return lines[l];
+  }
+
+  bool isFailure() const { return mFile.fail() || !mFile.is_open(); }
 
 private:
-  std::string m_file_name;
-  std::ifstream m_file;
-  Position m_position{};
+  std::string mFileName;
+  std::ifstream mFile;
+  Position mPosition{};
   std::vector<std::string> lines;
 };
 } // namespace Lexer

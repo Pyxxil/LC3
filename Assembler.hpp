@@ -1,10 +1,17 @@
 #ifndef ASSEMBLER_HPP
 #define ASSEMBLER_HPP
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
 #include "cxxopts.hpp"
+#pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 #include "spdlog/spdlog.h"
 
 #include "Lexer/Lexer.hpp"
+#include "Lexer/Parser.hpp"
 
 // Options:
 //  - Change Verbosity
@@ -16,7 +23,7 @@
 class Assembler {
 public:
   Assembler(int argc, char **argv)
-      : argument_count(argc), argument_values(argv),
+      : argumentCount(argc), argumentValues(argv),
         options("LC3AS", "An assembler for the LC3 Assembly language") {
     parse_options();
   }
@@ -25,7 +32,7 @@ public:
     options.positional_help("<assembly files>");
     options.add_options()("h,help", "Print this help message")(
         "print-ast",
-        "Print the syntx tree for how the assembler parsed the code")(
+        "Print the syntax tree for how the assembler parsed the code")(
         "e,error",
         "Treat warnings as errors")("files", "The files to assemble",
                                     cxxopts::value<std::vector<std::string>>())(
@@ -35,12 +42,17 @@ public:
   }
 
   int assemble() {
+    using Lexer::File;
+    using Lexer::Lexer;
+    using Parser::Parser;
+    using namespace Notification;
+
     try {
       options.parse_positional("files");
-      auto parsed = options.parse(argument_count, argument_values);
+      auto parsed = options.parse(argumentCount, argumentValues);
 
       if (parsed["help"].as<bool>()) {
-        std::cerr << options.help() << '\n';
+        std::cout << options.help() << '\n';
         return 0;
       }
 
@@ -56,49 +68,55 @@ public:
       ast_console->set_pattern("%v");
 
       auto &&files = parsed["files"].as<std::vector<std::string>>();
-      const bool do_print_ast = parsed["print-ast"].as<bool>();
-      const bool warnings_as_errors = parsed["error"].as<bool>();
-      const bool dont_display_warnings = parsed["no-warn"].as<bool>();
+      const bool weShouldPrintAST = parsed["print-ast"].as<bool>();
+      const bool weShouldTreatWarningsAsErrors = parsed["error"].as<bool>();
+      const bool weShouldntDisplayWarnings = parsed["no-warn"].as<bool>();
+      const bool weShouldBeQuiet = parsed["quiet"].as<bool>();
 
-      if (!parsed["quiet"].as<bool>()) {
-        Notification::Callback errors("Test",
-                                      [&errors](auto &&, auto &&diagnostic) {
-                                        errors.error("Error: {}", diagnostic);
-                                      },
-                                      false, false);
+      if (!weShouldBeQuiet) {
+        Callback errors("LC3AS",
+                        [&errors](auto &&, auto &&diagnostic) {
+                          errors.error("Error: {}", diagnostic);
+                        },
+                        false, false);
 
-        Notification::Callback warnings(
-            "Test",
-            [&warnings, warnings_as_errors,
-             dont_display_warnings](auto &&, auto &&diagnostic) {
-              if (warnings_as_errors) {
+        Callback warnings(
+            "LC3AS",
+            [&warnings, weShouldTreatWarningsAsErrors,
+             weShouldntDisplayWarnings](auto &&, auto &&diagnostic) {
+              if (weShouldTreatWarningsAsErrors) {
                 warnings.error("Error: {}", diagnostic);
-              } else if (!dont_display_warnings) {
+              } else if (!weShouldntDisplayWarnings) {
                 warnings.warn("Warning: {}", diagnostic);
               }
             },
             false, false);
-        Notification::error_notifications << errors;
-        Notification::warning_notifications << warnings;
+        error_notifications << errors;
+        warning_notifications << warnings;
       }
 
+      int retValue = 0;
+
       for (auto &file : files) {
-        Lexer::Lexer lexer(Lexer::File{file}, warnings_as_errors);
+        Lexer lexer(File{file}, weShouldTreatWarningsAsErrors);
 
         lexer.lex();
 
-        Notification::warning_notifications.notify_for_each();
+        if (weShouldPrintAST) {
+          ast_console->info("{}\n", lexer);
+        }
+
+        warning_notifications.notify_all_and_clear();
 
         if (lexer.okay()) {
-          if (do_print_ast) {
-            ast_console->info("{}\n", lexer);
-          }
+          Parser parser(std::move(lexer.tokens));
         } else {
-          Notification::error_notifications.notify_for_each();
+          retValue = 1;
+          error_notifications.notify_all_and_clear();
         }
       }
 
-      return 0;
+      return retValue;
     } catch (const cxxopts::OptionParseException &e) {
       std::cerr << e.what() << '\n' << options.help();
       return 1;
@@ -106,9 +124,8 @@ public:
   }
 
 private:
-  int argument_count;
-  char **argument_values;
-  bool failed{false};
+  int argumentCount;
+  char **argumentValues;
   cxxopts::Options options;
 };
 

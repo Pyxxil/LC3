@@ -57,7 +57,7 @@ public:
    * @param func The function to call to check if we should stop.
    */
   template <typename Func> void skip_while(Func &&func) {
-    while (!at_end()) {
+    while (!atEnd()) {
       if (!func(peek())) {
         return;
       }
@@ -72,7 +72,7 @@ public:
    * @return The index of the character, or -1 if it wasn't found
    */
   size_t find_next(char needle) {
-    while (!at_end()) {
+    while (!atEnd()) {
       if (needle == peek()) {
         if (ignores[m_ignores](*this, needle)) {
           return m_index++;
@@ -93,7 +93,7 @@ public:
    * @returns The index of the character if pred is ever true, -1 otherwise.
    */
   template <typename Func> size_t find_if(Func &&func) {
-    while (!at_end()) {
+    while (!atEnd()) {
       if (func(peek())) {
         return m_index;
       }
@@ -123,7 +123,7 @@ public:
    *
    * @return true if we have reached the end of the string, otherwise false.
    */
-  inline bool at_end() const { return m_index >= m_line.length(); }
+  inline bool atEnd() const { return m_index >= m_line.length(); }
 
   /*! Return the character at a specified index (doesn't do bounds checking)
    *

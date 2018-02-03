@@ -7,8 +7,9 @@ namespace Lexer {
 namespace Token {
 class Stringz : public Token {
 public:
-  explicit Stringz(std::string t)
-      : Token(std::move(t), Requirements(1, {Match(Token_Type::STRING)})) {}
+  Stringz(std::string t, size_t tLine, size_t tColumn, const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile,
+              Requirements(1, {Match(TokenType::STRING)})) {}
 
   Stringz(const Stringz &) = default;
   Stringz(Stringz &&) noexcept = default;
@@ -16,11 +17,13 @@ public:
   Stringz &operator=(const Stringz &) = default;
   Stringz &operator=(Stringz &&) noexcept = default;
 
-  ~Stringz() override = default;
-
-  Token_Type tokenType() const final { return STRINGZ; }
+  TokenType tokenType() const final { return STRINGZ; }
 
   void assemble() override { Token::assemble(); }
+
+  word memoryRequired() const override {
+    return static_cast<word>(operands().size());
+  }
 
 private:
 };

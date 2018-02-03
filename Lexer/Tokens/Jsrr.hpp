@@ -7,8 +7,10 @@ namespace Lexer {
 namespace Token {
 class Jsrr : public Token {
 public:
-  explicit Jsrr(std::string t)
-      : Token(std::move(t), Requirements(1, {Match(Token_Type::REGISTER)})) {}
+  explicit Jsrr(std::string t, size_t tLine, size_t tColumn,
+                const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile,
+              Requirements(1, {Match(TokenType::REGISTER)})) {}
 
   Jsrr(const Jsrr &) = default;
   Jsrr(Jsrr &&) noexcept = default;
@@ -16,11 +18,11 @@ public:
   Jsrr &operator=(const Jsrr &) = default;
   Jsrr &operator=(Jsrr &&) noexcept = default;
 
-  ~Jsrr() override = default;
-
-  Token_Type tokenType() const final { return JSRR; }
+  TokenType tokenType() const final { return JSRR; }
 
   void assemble() override { Token::assemble(); }
+
+  word memoryRequired() const override { return 1_word; }
 
 private:
 };

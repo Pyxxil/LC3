@@ -7,11 +7,12 @@ namespace Lexer {
 namespace Token {
 class Lea : public Token {
 public:
-  explicit Lea(std::string t)
-      : Token(std::move(t),
-              Requirements(2, {Match(Token_Type::REGISTER),
-                               Match(Token_Type::LABEL) |
-                                   Match(Token_Type::IMMEDIATE)})) {}
+  explicit Lea(std::string t, size_t tLine, size_t tColumn,
+               const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile,
+              Requirements(2, {Match(TokenType::REGISTER),
+                               Match(TokenType::LABEL) |
+                                   Match(TokenType::IMMEDIATE)})) {}
 
   Lea(const Lea &) = default;
   Lea(Lea &&) noexcept = default;
@@ -19,11 +20,11 @@ public:
   Lea &operator=(const Lea &) = default;
   Lea &operator=(Lea &&) noexcept = default;
 
-  ~Lea() override = default;
-
-  Token_Type tokenType() const final { return LEA; }
+  TokenType tokenType() const final { return LEA; }
 
   void assemble() override { Token::assemble(); }
+
+  word memoryRequired() const override { return 1_word; }
 
 private:
 };

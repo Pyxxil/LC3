@@ -7,7 +7,9 @@ namespace Lexer {
 namespace Token {
 class Immediate : public Token {
 public:
-  explicit Immediate(std::string t) : Token(std::move(t)) {}
+  explicit Immediate(std::string t, size_t tLine, size_t tColumn,
+                     const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile) {}
 
   Immediate(const Immediate &) = default;
   Immediate(Immediate &&) noexcept = default;
@@ -15,19 +17,14 @@ public:
   Immediate &operator=(const Immediate &) = default;
   Immediate &operator=(Immediate &&) noexcept = default;
 
-  ~Immediate() override = default;
-
-  Token_Type tokenType() const final { return IMMEDIATE; }
-
-  void negate() final {
-    token = "-" + token;
-    value = static_cast<uint16_t>(-value);
-  }
+  TokenType tokenType() const final { return IMMEDIATE; }
 
   void assemble() override { Token::assemble(); }
 
-private:
-  uint16_t value{};
+  int16_t value() const { return mValue; }
+
+protected:
+  int16_t mValue{};
 };
 } // namespace Token
 } // namespace Lexer

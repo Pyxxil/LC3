@@ -7,9 +7,12 @@ namespace Lexer {
 namespace Token {
 class Not : public Token {
 public:
-  explicit Not(std::string t)
-      : Token(std::move(t), Requirements(2, {Match(Token_Type::REGISTER),
-                                             Match(Token_Type::REGISTER)})) {}
+  explicit Not(std::string t, size_t tLine, size_t tColumn,
+               const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile,
+              Requirements(
+                  1, {Match(TokenType::REGISTER), Match(TokenType::REGISTER)},
+                  2)) {}
 
   Not(const Not &) = default;
   Not(Not &&) noexcept = default;
@@ -17,11 +20,11 @@ public:
   Not &operator=(const Not &) = default;
   Not &operator=(Not &&) noexcept = default;
 
-  ~Not() override = default;
-
-  Token_Type tokenType() const final { return NOT; }
+  TokenType tokenType() const final { return NOT; }
 
   void assemble() override { Token::assemble(); }
+
+  word memoryRequired() const override { return 1_word; }
 
 private:
 };

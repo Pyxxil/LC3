@@ -7,8 +7,14 @@ namespace Lexer {
 namespace Token {
 class Blkw : public Token {
 public:
-  explicit Blkw(std::string t)
-      : Token(std::move(t), Requirements(1, {Match(Token_Type::IMMEDIATE)})) {}
+  explicit Blkw(std::string t, size_t tLine, size_t tColumn,
+                const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile,
+              Requirements(
+                  1,
+                  {Match(TokenType::IMMEDIATE),
+                   Match(TokenType::IMMEDIATE) | Match(TokenType::LABEL)},
+                  2)) {}
 
   Blkw(const Blkw &) = default;
   Blkw(Blkw &&) noexcept = default;
@@ -16,13 +22,9 @@ public:
   Blkw &operator=(const Blkw &) = default;
   Blkw &operator=(Blkw &&) noexcept = default;
 
-  ~Blkw() override = default;
-
-  Token_Type tokenType() const final { return BLKW; }
+  TokenType tokenType() const final { return BLKW; }
 
   void assemble() override { Token::assemble(); }
-
-private:
 };
 } // namespace Token
 } // namespace Lexer

@@ -9,6 +9,7 @@
 #include "Tokens/Decimal.hpp"
 #include "Tokens/End.hpp"
 #include "Tokens/Fill.hpp"
+#include "Tokens/Getc.hpp"
 #include "Tokens/Halt.hpp"
 #include "Tokens/Hexadecimal.hpp"
 #include "Tokens/In.hpp"
@@ -43,6 +44,10 @@
 #include "Tokens/Lshift.hpp"
 #include "Tokens/Neg.hpp"
 #include "Tokens/Sub.hpp"
+#endif
+
+#ifdef KEEP_COMMENTS
+#include "Tokens/Comment.hpp"
 #endif
 
 #endif

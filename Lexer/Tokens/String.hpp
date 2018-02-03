@@ -7,7 +7,8 @@ namespace Lexer {
 namespace Token {
 class String : public Token {
 public:
-  explicit String(std::string s) : Token(std::move(s), Requirements()) {}
+  String(std::string s, size_t tLine, size_t tColumn, const std::string &tFile)
+      : Token(std::move(s), tLine, tColumn, tFile, Requirements()) {}
 
   String(const String &) = default;
   String(String &&) noexcept = default;
@@ -15,12 +16,11 @@ public:
   String &operator=(const String &) = default;
   String &operator=(String &&) noexcept = default;
 
-  ~String() override = default;
+  TokenType tokenType() const final { return STRING; }
 
-  Token_Type tokenType() const final { return STRING; }
-
-  const std::string &get_token() const override {
+  const std::string &getToken() const override {
     if (string.empty()) {
+      string.push_back('"');
       for (const auto c : token) {
         switch (c) {
         case '\n':
@@ -34,6 +34,7 @@ public:
           break;
         }
       }
+      string.push_back('"');
     }
     return string;
   }

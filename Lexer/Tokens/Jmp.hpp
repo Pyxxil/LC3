@@ -7,8 +7,10 @@ namespace Lexer {
 namespace Token {
 class Jmp : public Token {
 public:
-  explicit Jmp(std::string t)
-      : Token(std::move(t), Requirements(1, {Match(Token_Type::REGISTER)})) {}
+  explicit Jmp(std::string t, size_t tLine, size_t tColumn,
+               const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile,
+              Requirements(1, {Match(TokenType::REGISTER)})) {}
 
   Jmp(const Jmp &) = default;
   Jmp(Jmp &&) noexcept = default;
@@ -16,11 +18,11 @@ public:
   Jmp &operator=(const Jmp &) = default;
   Jmp &operator=(Jmp &&) noexcept = default;
 
-  ~Jmp() override = default;
-
-  Token_Type tokenType() const final { return JMP; }
+  TokenType tokenType() const final { return JMP; }
 
   void assemble() override { Token::assemble(); }
+
+  word memoryRequired() const override { return 1_word; }
 
 private:
 };

@@ -7,7 +7,9 @@ namespace Lexer {
 namespace Token {
 class In : public Token {
 public:
-  explicit In(std::string t) : Token(std::move(t)) {}
+  explicit In(std::string t, size_t tLine, size_t tColumn,
+              const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile) {}
 
   In(const In &) = default;
   In(In &&) noexcept = default;
@@ -15,11 +17,11 @@ public:
   In &operator=(const In &) = default;
   In &operator=(In &&) noexcept = default;
 
-  ~In() override = default;
-
-  Token_Type tokenType() const final { return IN; }
+  TokenType tokenType() const final { return IN; }
 
   void assemble() override { Token::assemble(); }
+
+  word memoryRequired() const override { return 1_word; }
 
 private:
 };

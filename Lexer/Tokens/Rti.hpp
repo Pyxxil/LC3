@@ -7,7 +7,8 @@ namespace Lexer {
 namespace Token {
 class Rti : public Token {
 public:
-  explicit Rti(std::string t) : Token(std::move(t)) {}
+  Rti(std::string t, size_t tLine, size_t tColumn, const std::string &tFile)
+      : Token(std::move(t), tLine, tColumn, tFile) {}
 
   Rti(const Rti &) = default;
   Rti(Rti &&) noexcept = default;
@@ -15,13 +16,11 @@ public:
   Rti &operator=(const Rti &) = default;
   Rti &operator=(Rti &&) noexcept = default;
 
-  ~Rti() override = default;
-
-  Token_Type tokenType() const final { return RTI; }
+  TokenType tokenType() const final { return RTI; }
 
   void assemble() override { Token::assemble(); }
 
-private:
+  word memoryRequired() const override { return 1_word; }
 };
 } // namespace Token
 } // namespace Lexer

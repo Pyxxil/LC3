@@ -8,7 +8,11 @@ namespace Token {
 #ifdef ADDONS
 class Character : public Immediate {
 public:
-  explicit Character(std::string s) : Immediate(std::move(s)) {}
+  Character(std::string s, size_t tLine, size_t tColumn,
+            const std::string &tFile)
+      : Immediate(std::move(s), tLine, tColumn, tFile) {
+    mValue = static_cast<int16_t>(token.front());
+  }
 
   Character(const Character &) = default;
   Character(Character &&) noexcept = default;
@@ -16,10 +20,9 @@ public:
   Character &operator=(const Character &) = default;
   Character &operator=(Character &&) noexcept = default;
 
-  ~Character() override = default;
-
-  const std::string &get_token() const override {
+  const std::string &getToken() const override {
     if (character.empty()) {
+      character.push_back('\'');
       switch (token.front()) {
       case '\0':
         character = "\\0";
@@ -34,6 +37,7 @@ public:
         character.push_back(token.front());
         break;
       }
+      character.push_back('\'');
     }
     return character;
   }
