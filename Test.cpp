@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
 
     Notification::warning_notifications.notify_for_each();
 
-    if (lexer.okay()) {
+    if (lexer.isOkay()) {
       ast_console->info("{}\n", lexer);
     } else {
       Notification::error_notifications.notify_for_each();

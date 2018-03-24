@@ -22,6 +22,11 @@ public:
     bool originSeen{false};
     bool endSeen{false};
 
+    if (mTokens.front()->tokenType() != Lexer::TokenType::ORIG) {
+      error();
+      return;
+    }
+
     for (auto &token : mTokens) {
       switch (token->tokenType()) {
 #ifdef ADDONS
@@ -47,7 +52,10 @@ public:
         if (!originSeen) {
           error();
         } else if (endSeen) {
-          warning();
+          Notification::error_notifications << Diagnostics::Diagnostic(
+              std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                  token->column(), token->getToken().length(), ""),
+              "Extra .END directive found.", token->file(), token->line());
         } else {
           word memoryRequired = token->memoryRequired();
           if (memoryRequired == -1) {
@@ -61,8 +69,10 @@ public:
     }
   }
 
-  void error() {}
+  void error() { ++errorCount; }
   void warning() {}
+
+  const auto &tokens() const { return mTokens; }
 
   bool isOkay() const { return errorCount == 0; }
 

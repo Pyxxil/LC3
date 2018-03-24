@@ -36,6 +36,13 @@ public:
   explicit File(std::string file_name)
       : mFileName(std::move(file_name)), mFile() {
     mFile.open(mFileName);
+
+    if (!isFailure()) {
+      std::string line;
+      while (std::getline(mFile, line)) {
+        lines.emplace_back(std::move(line));
+      }
+    }
   }
 
   File(const File &other) = default;
@@ -58,19 +65,15 @@ public:
 
   bool nextLine() {
     mPosition.incLine();
-    std::string currentLine;
-    if (std::getline(mFile, currentLine)) {
-      lines.emplace_back(currentLine);
-      return true;
-    }
-    return false;
+    return mPosition.line() < lines.size();
   }
+
   void nextColumn() { mPosition.incColumn(); }
   const std::string& line(size_t l) const {
     return lines[l];
   }
 
-  bool isFailure() const { return mFile.fail() || !mFile.is_open(); }
+  bool isFailure() const { return (mFile.fail() && lines.empty()) || !mFile.is_open(); }
 
 private:
   std::string mFileName;

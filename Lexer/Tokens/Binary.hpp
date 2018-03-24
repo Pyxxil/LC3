@@ -26,7 +26,6 @@ public:
           isNegative
               ? -static_cast<int16_t>(std::bitset<16>(immediate).to_ulong())
               : static_cast<int16_t>(std::bitset<16>(immediate).to_ulong());
-      return; // We're done here
     }
   }
 

@@ -15,10 +15,7 @@
 
 // Options:
 //  - Change Verbosity
-//  - Print Help
-//  - Print AST (of sorts)
 //  - Stop on first error
-//  - Report Warnings as Errors
 
 class Assembler {
 public:
@@ -108,8 +105,22 @@ public:
 
         warning_notifications.notify_all_and_clear();
 
-        if (lexer.okay()) {
+        if (lexer.isOkay()) {
           Parser parser(std::move(lexer.tokens));
+
+          parser.parse();
+
+          warning_notifications.notify_all_and_clear();
+          if (parser.isOkay()) {
+            // Do nothing yet
+          } else {
+            error_notifications.notify_all_and_clear();
+          }
+
+          //for (auto &&token : parser.tokens()) {
+          //  std::cout << token->getToken() << " requires "
+          //            << token->memoryRequired() << " memory addresses\n";
+          //}
         } else {
           retValue = 1;
           error_notifications.notify_all_and_clear();

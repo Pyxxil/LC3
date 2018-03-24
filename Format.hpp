@@ -102,7 +102,7 @@ public:
 
         Notification::warning_notifications.notify_for_each();
 
-        if (lexer.okay()) {
+        if (lexer.isOkay()) {
           ast_console->info("{}\n", lexer);
           std::ofstream formatFile(file + ".formatted");
           auto &&tokens = lexer.tokens;

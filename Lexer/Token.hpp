@@ -331,11 +331,38 @@ Requirements::consume(std::vector<std::unique_ptr<Token>> &tokens,
   std::vector<std::unique_ptr<Token>> consumed;
   if (0 == min) {
     DEBUG("Trying to consume for a token which takes no operands", "");
+    satisfied = true;
     return consumed;
   }
 
   if (tokens.size() <= index + min) {
     DEBUG("Not enough tokens ({} > {})", min, tokens.size() - index - 1);
+    return consumed;
+  }
+
+  if (max == -1u) {
+    // Need to match at least one of the tokens
+    if (!(arguments[0] & tokens[index + 1]->tokenType())) {
+      auto &&token = tokens[index + 1];
+      Notification::error_notifications << Diagnostics::Diagnostic(
+          std::make_unique<Diagnostics::DiagnosticHighlighter>(
+              token->column(), token->getToken().length() - 1,
+              file.line(token->line() - 1)),
+          fmt::format("Expected {}, but found '{}' (with type {})",
+                      arguments[0], token->getToken(), token->tokenType()),
+          token->file(), token->line());
+      return consumed;
+    }
+
+    consumed.emplace_back(std::move(tokens[index + 1]));
+
+    size_t idx = index + 2;
+    while (idx < tokens.size() && arguments[0] & tokens[idx]->tokenType()) {
+      DEBUG("Found token {}", tokens[idx]->getToken());
+      consumed.emplace_back(std::move(tokens[idx++]));
+    }
+
+    satisfied = true;
     return consumed;
   }
 
@@ -358,7 +385,7 @@ Requirements::consume(std::vector<std::unique_ptr<Token>> &tokens,
           std::make_unique<Diagnostics::DiagnosticHighlighter>(
               token->column(), token->getToken().length() - 1,
               file.line(token->line() - 1)),
-          fmt::format("Expected {}, but found {} (with type {})",
+          fmt::format("Expected {}, but found '{}' (with type {})",
                       arguments[arg_index], token->getToken(),
                       token->tokenType()),
           token->file(), token->line());

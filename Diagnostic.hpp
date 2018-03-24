@@ -9,32 +9,32 @@ namespace Diagnostics {
 
 class DiagnosticHighlighter {
 public:
-  DiagnosticHighlighter(std::size_t at_column, std::size_t t_length,
-                        const std::string &t_context)
-      : context(t_context), m_column(at_column), length(t_length) {
-    if (!t_context.empty()) {
-      highlighter = std::string(m_column, ' ');
-      highlighter.push_back('^');
-      if (length > 0) {
-        highlighter += std::string(length, '~');
+  DiagnosticHighlighter(std::size_t tColumn, std::size_t tLength,
+                        const std::string &tContext)
+      : mContext(tContext), mColumn(tColumn), mLength(tLength) {
+    if (!mContext.empty()) {
+      mHighlighter = std::string(column(), ' ');
+      mHighlighter.push_back('^');
+      if (length() > 0) {
+        mHighlighter += std::string(length(), '~');
       }
     }
   }
 
-  std::size_t column() const { return m_column; }
+  std::size_t column() const { return mColumn; }
+  std::size_t length() const { return mLength; }
 
   template <typename OStream>
   friend OStream &operator<<(OStream &os,
                              const DiagnosticHighlighter &Highlighter) {
-    return os << Highlighter.context << '\n' << Highlighter.highlighter;
+    return os << Highlighter.mContext << '\n' << Highlighter.mHighlighter;
   }
 
 protected:
-  std::string highlighter{};
-  std::string context;
-  std::size_t line;
-  std::size_t m_column;
-  std::size_t length;
+  std::string mHighlighter{};
+  std::string mContext;
+  std::size_t mColumn;
+  std::size_t mLength;
 };
 
 class Diagnostic {

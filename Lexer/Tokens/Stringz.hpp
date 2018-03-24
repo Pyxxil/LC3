@@ -1,6 +1,8 @@
 #ifndef TOKEN_STRINGZ_HPP
 #define TOKEN_STRINGZ_HPP
 
+#include <numeric>
+
 #include "Token.hpp"
 
 namespace Lexer {
@@ -9,7 +11,7 @@ class Stringz : public Token {
 public:
   Stringz(std::string t, size_t tLine, size_t tColumn, const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile,
-              Requirements(1, {Match(TokenType::STRING)})) {}
+              Requirements(1, {Match(STRING)}, -1u)) {}
 
   Stringz(const Stringz &) = default;
   Stringz(Stringz &&) noexcept = default;
@@ -22,7 +24,10 @@ public:
   void assemble() override { Token::assemble(); }
 
   word memoryRequired() const override {
-    return static_cast<word>(operands().size());
+    return static_cast<word>(std::accumulate(
+        operands().begin(), operands().end(), 0, [](int sum, auto &&str) {
+          return sum + str->Token::getToken().length() + 1;
+        }));
   }
 
 private:

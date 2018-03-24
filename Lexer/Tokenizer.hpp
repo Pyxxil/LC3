@@ -246,6 +246,13 @@ public:
         return std::move(bin);
       } else {
         DEBUG("Expected Binary literal, but found {}", s);
+        throwError(this,
+                   Diagnostics::Diagnostic(
+                       std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                           file.position().column() - s.length(), s.length(),
+                           file.line()),
+                       "Expected a binary literal here", file.name(),
+                       file.position().line()));
       }
       break;
     case 'x':
@@ -651,24 +658,29 @@ public:
           const auto end = line.find_next(next);
           line.ignore(Line::RESET);
           if (-1u == end) {
+
+#ifdef ADDONS
+            const std::string unterminatedLiteral =
+                fmt::format("Unterminated {} literal",
+                            next == '"' ? "String" : "Character");
+#else
+            const std::string unterminatedLiteral =
+                "Unterminated String literal";
+#endif
             throwError(this,
                        Diagnostics::Diagnostic(
                            std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                               file.position().column(), line.index() - begin,
-                               file.line()),
-                           fmt::format("Unterminated {} literal",
-#ifdef ADDONS
-                                       next == '"' ? "String" : "Character"
-#else
-                                       "String"
-#endif
-                                       ),
-                           file.name(), file.position().line()));
+                               token_start, line.index() - begin, file.line()),
+                           unterminatedLiteral, file.name(),
+                           file.position().line()));
+            lTokens.emplace_back(std::make_unique<Token::Token>(
+                unterminatedLiteral, file.position().line(), token_start,
+                file.name()));
           } else if ('"' == next) {
             auto &&str = line.substr(begin, end);
             DEBUG("Found string \"{}\"", str);
             lTokens.emplace_back(std::make_unique<Token::String>(
-                str, file.position().line(), begin, file.name()));
+                str, file.position().line(), token_start, file.name()));
           } else if ('\'' == next) {
             auto &&character = line.substr(begin, end);
 #ifdef ADDONS
@@ -677,7 +689,7 @@ public:
                   this,
                   Diagnostics::Diagnostic(
                       std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                          begin - 1, character.length(), file.line()),
+                          token_start, character.length(), file.line()),
                       fmt::format("Invalid character literal '{}'", character),
                       file.name(), file.position().line()));
             } else {
@@ -698,15 +710,8 @@ public:
           }
           break;
         }
-        case ';':
-#ifdef KEEP_COMMENTS
-          lTokens.emplace_back(std::make_unique<Token::Comment>(
-              line.substr(line.index(), -1), file.position().line(),
-              file.position().column(), file.name()));
-#endif
-          line.skip_while([](auto &&) -> bool { return true; });
-          break;
-        case '/': // Both mean a comment (though, technically, a '//' is a
+        case '/':
+          // Both mean a comment (though, technically, a '//' is a
           // comment, but '/' is not used for anything.)
           file.setColumn(line.index() - 1);
           if ('/' != line.next()) {
@@ -717,6 +722,8 @@ public:
                           "Found '/', acting as if it's supposed to be '//'",
                           file.name(), file.position().line()));
           }
+        [[fallthrough]];
+        case ';':
 #ifdef KEEP_COMMENTS
           lTokens.emplace_back(std::make_unique<Token::Comment>(
               line.substr(line.index(), -1), file.position().line(),
@@ -730,10 +737,25 @@ public:
           }));
           DEBUG("Attempting to check Decimal literal string '{}'", token);
           if (isValidDecimalLiteral(token)) {
-            auto decimal = std::make_unique<Token::Decimal>(
+            auto &&decimal = std::make_unique<Token::Decimal>(
                 token, file.position().line(), file.position().column(),
                 file.name());
-            lTokens.emplace_back(std::move(decimal));
+            if (decimal->isTooBig()) {
+              throwError(
+                  this,
+                  Diagnostics::Diagnostic(
+                      std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                          token_start, decimal->getToken().length(),
+                          file.line()),
+                      fmt::format("Immediate literal requires more than 16 "
+                                  "bits to represent"),
+                      file.name(), file.position().line()));
+              lTokens.emplace_back(std::make_unique<Token::Token>(
+                  token, file.position().line(), file.position().column(),
+                  file.name()));
+            } else {
+              lTokens.emplace_back(std::move(decimal));
+            }
           } else {
             lTokens.emplace_back(std::make_unique<Token::Token>(
                 token, file.position().line(), file.position().column(),
@@ -747,8 +769,23 @@ public:
         }
       } else {
         DEBUG("Found token '{}'", token);
-        lTokens.emplace_back(tokenize(token));
-        DEBUG(" - With type {}", lTokens.back()->tokenType());
+        auto &&tToken = tokenize(token);
+        DEBUG(" - With type {}", tToken->tokenType());
+        if (tToken->tokenType() == TokenType::IMMEDIATE && tToken->isTooBig()) {
+          throwError(
+              this,
+              Diagnostics::Diagnostic(
+                  std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                      token_start, tToken->getToken().length(), file.line()),
+                  fmt::format("Immediate literal requires more than 16 "
+                              "bits to represent"),
+                  file.name(), file.position().line()));
+          lTokens.emplace_back(std::make_unique<Token::Token>(
+              token, file.position().line(), file.position().column(),
+              file.name()));
+        } else {
+          lTokens.emplace_back(std::move(tToken));
+        }
         terminator = '\0';
       }
     }

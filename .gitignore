@@ -91,10 +91,6 @@ Temporary Items
 *.app
 .idea/
 CMakeLists.txt
-cmake-build-debug/
-cmake-build-release/
 build/
 browser/
-cmake-build-default/
-cmake-build-minsizerel/
-cmake-build-relwithdebinfo/
+cmake-build-*

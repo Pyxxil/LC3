@@ -92,7 +92,7 @@ public:
     }
   }
 
-  bool okay() const { return mOkay; }
+  bool isOkay() const { return mOkay; }
   void error() {
     mOkay = false;
     ++errorCount;
@@ -137,6 +137,8 @@ public:
         // No need to push a diagnostic here, as Requirements::consume will push
         // the diagnostic for us.
         error();
+        ++idx; // Skip the next token, because otherwise it's likely that the
+               // below else if will error out twice for that token.
         continue;
       } else if (requirements.count() == 0 &&
                  !(requiresZero & tokens[idx]->tokenType())) {
@@ -164,7 +166,7 @@ public:
         Lexer lexer(File{fileName.substr(1, fileName.length() - 2)});
         lexer.lex();
 
-        if (mOkay = lexer.okay(); okay()) {
+        if (mOkay = lexer.isOkay(); mOkay) {
           for (auto &token : lexer.tokens) {
             _tokens.emplace_back(std::move(token));
           }
