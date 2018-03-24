@@ -5,6 +5,27 @@
 #include <vector>
 
 namespace Algorithm {
+template <class InputIterator, class T>
+T accumulate2d(InputIterator first, InputIterator last, T init) {
+  T sum = init;
+  for (; first != last; ++first) {
+    for (auto iter = first.begin(); iter != first.end(); ++iter) {
+      sum += *iter;
+    }
+  }
+  return sum;
+}
+template <class InputIterator, class T, class Function>
+T accumulate2d(InputIterator first, InputIterator last, T init, Function f) {
+  T sum = init;
+  for (; first != last; ++first) {
+    for (auto iter = first->begin(); iter != first->end(); ++iter) {
+      sum = f(sum, *iter);
+    }
+  }
+  return sum;
+}
+
 template <class InputIterator, class Function>
 Function enumerate(InputIterator first, InputIterator last, Function f) {
   for (size_t pos = 0; first != last; ++first, ++pos) {
