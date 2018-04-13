@@ -139,7 +139,6 @@ public:
         error();
         ++idx; // Skip the next token, because otherwise it's likely that the
                // below else if will error out twice for that token.
-        continue;
       } else if (requirements.count() == 0 &&
                  !(requiresZero & tokens[idx]->tokenType())) {
         const auto &tok = tokens[idx];
@@ -152,7 +151,6 @@ public:
                         *tok, tok->tokenType()),
             tok->file(), tok->line());
         error();
-        continue;
       }
     }
 

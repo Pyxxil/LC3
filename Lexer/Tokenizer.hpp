@@ -590,14 +590,15 @@ public:
 
     while (!line.atEnd()) {
       line.skip_while([](auto &&c) -> bool { return std::isspace(c); });
+
       const auto token_start = line.index();
       const auto token_end = line.find_if(
           [](auto &&c) -> bool { return !(std::isalnum(c) || '_' == c); });
 
       file.setColumn(token_start);
 
-      DEBUG("Starting with index at {}", token_start);
-      DEBUG("Token ends with index at {}", token_end);
+      DEBUG("Starting with index at {} and ending at {}", token_start,
+            token_end);
 
       if (auto &&token = line.substr(token_start, token_end);
           0 == token.size()) {
@@ -633,6 +634,7 @@ public:
           break;
         }
         case ',': // Just a seperator between operands, not required.
+          [[fallthrough]];
         case ':': // As above.
           if (',' == terminator || ':' == terminator) {
             extraneous(next);
@@ -650,7 +652,8 @@ public:
           }
           terminator = next;
           break;
-        case '"':    // string
+        case '"': // string
+          [[fallthrough]];
         case '\'': { // character
           terminator = '\0';
           line.ignore(Line::ESCAPE_SEQUENCE);
@@ -722,7 +725,7 @@ public:
                           "Found '/', acting as if it's supposed to be '//'",
                           file.name(), file.position().line()));
           }
-        [[fallthrough]];
+          [[fallthrough]];
         case ';':
 #ifdef KEEP_COMMENTS
           lTokens.emplace_back(std::make_unique<Token::Comment>(
