@@ -1,15 +1,39 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
+#include <map>
+
 #include "Lexer.hpp"
 #include "Tokens.hpp"
 
 namespace Parser {
-struct Label {
-  Label(const std::string &name, size_t address);
+struct Symbol {
+  Symbol() = default;
+  Symbol(const std::string &tName, size_t tAddress, const std::string &tFile,
+         size_t tColumn, size_t tLine)
+      : mName(tName), mAddress(tAddress), mFile(tFile), mColumn(tColumn),
+        mLine(tLine) {}
+
+  Symbol(const Symbol &) = default;
+  Symbol(Symbol &&) noexcept = default;
+
+  Symbol &operator=(const Symbol &) = default;
+  Symbol &operator=(Symbol &&) noexcept = default;
+
+  ~Symbol() = default;
+
+  const auto &name() const { return mName; }
+  const auto &file() const { return mFile; }
+
+  auto address() const { return mAddress; }
+  auto column() const { return mColumn; }
+  auto line() const { return mLine; }
 
   std::string mName;
   size_t mAddress;
+  std::string mFile;
+  size_t mColumn;
+  size_t mLine;
 };
 
 class Parser {
@@ -33,8 +57,61 @@ public:
       case Lexer::TokenType::INCLUDE:
         break;
 #endif
-      case Lexer::TokenType::LABEL:
+      case Lexer::TokenType::LABEL: {
+        if (!originSeen) {
+          error();
+          break;
+        } else if (endSeen) {
+          Notification::warning_notifications << Diagnostics::Diagnostic(
+              std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                  token->column(), token->getToken().length(), std::string{}),
+              "Label found after .END directive, ignoring.", token->file(),
+              token->line());
+          break;
+        }
+        for (auto &&[_, symbol] : mSymbols) {
+          if (symbol.address() == currentAddress) {
+            Notification::error_notifications << Diagnostics::Diagnostic(
+                std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                    token->column(), token->getToken().length(), std::string{}),
+                "Multiple labels found for address", token->file(),
+                token->line());
+            Notification::error_notifications << Diagnostics::Diagnostic(
+                std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                    symbol.column(), symbol.name().length(), std::string{}),
+                "Previous label found here", symbol.file(), symbol.line());
+          }
+        }
+
+        auto &&[symbol, inserted] = mSymbols.try_emplace(
+            token->getToken(),
+            Symbol(token->getToken(), currentAddress, token->file(),
+                   token->column(), token->line()));
+
+        if (!inserted) {
+          // TODO: Fix the way these are handled. At the moment, any errors
+          // TODO: thrown here from labels that have been included (from the
+          // TODO: same file) won't actually be useful due to the fact that it
+          // TODO: doesn't tell the user where the .include was found.
+          auto &&sym = symbol->second;
+          Notification::error_notifications
+              << Diagnostics::Diagnostic(
+                     std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                         token->column(), token->getToken().length(),
+                         std::string{}),
+                     "Multiple definitions of label", token->file(),
+                     token->line())
+              << Diagnostics::Diagnostic(
+                     std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                         sym.column(), sym.name().length(), std::string{}),
+                     "Previous definition found here", sym.file(), sym.line());
+        } else {
+          longestSymbolLength =
+              std::max(longestSymbolLength,
+                       static_cast<int>(token->getToken().length()));
+        }
         break;
+      }
       case Lexer::TokenType::ORIG:
         if (originSeen) {
           error();
@@ -52,9 +129,9 @@ public:
         if (!originSeen) {
           error();
         } else if (endSeen) {
-          Notification::error_notifications << Diagnostics::Diagnostic(
+          Notification::warning_notifications << Diagnostics::Diagnostic(
               std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                  token->column(), token->getToken().length(), ""),
+                  token->column(), token->getToken().length(), std::string{}),
               "Extra .END directive found.", token->file(), token->line());
         } else {
           word memoryRequired = token->memoryRequired();
@@ -73,12 +150,15 @@ public:
   void warning() {}
 
   const auto &tokens() const { return mTokens; }
+  const auto &symbols() const { return mSymbols; }
 
-  bool isOkay() const { return errorCount == 0; }
+  auto isOkay() const { return errorCount == 0; }
 
 private:
   std::vector<std::unique_ptr<Lexer::Token::Token>> mTokens;
+  std::map<std::string, Symbol> mSymbols{};
   size_t errorCount{0};
+  int longestSymbolLength{20};
 }; // namespace Parser
 } // namespace Parser
 

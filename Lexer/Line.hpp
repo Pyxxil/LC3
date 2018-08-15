@@ -30,14 +30,14 @@ public:
    * @return The next character in the line, unless we're at the end of the
    * line, in which case 0.
    */
-  inline char peek() const { return at(m_index); }
+  inline auto peek() const { return at(m_index); }
 
   /*! Retrieve the next character from the string
    *
    * @return The character read if we're not at the end of the string, 0
    * otherwise.
    */
-  char next() {
+  auto next() {
     const auto c = peek();
 
     if (0 != c) {
@@ -71,7 +71,7 @@ public:
    *
    * @return The index of the character, or -1 if it wasn't found
    */
-  size_t find_next(char needle) {
+  auto find_next(char needle) {
     while (!atEnd()) {
       if (needle == peek()) {
         if (ignores[m_ignores](*this, needle)) {
@@ -92,7 +92,7 @@ public:
    *
    * @returns The index of the character if pred is ever true, -1 otherwise.
    */
-  template <typename Func> size_t find_if(Func &&func) {
+  template <typename Func> auto find_if(Func &&func) {
     while (!atEnd()) {
       if (func(peek())) {
         return m_index;
@@ -111,7 +111,7 @@ public:
    *
    * @return The substring in the line.
    */
-  std::string substr(size_t begin, size_t end) const {
+  auto substr(size_t begin, size_t end) const {
     if (end == -1u) {
       return m_line.substr(begin);
     }
@@ -144,17 +144,19 @@ public:
 
   inline size_t index() const { return m_index; }
 
-  const std::string &line() const { return m_line; }
+  const auto &line() const { return m_line; }
 
 private:
   std::string m_line{};
   size_t m_index{};
   size_t m_ignores{};
 
-  const std::array<std::function<bool(const Line &, char)>, 2> ignores{
-      [](const Line &, char) -> bool { return true; },
-      [](const Line &l, char) -> bool { return l.at(l.index() - 1) != '\\'; }};
+  static const std::array<std::function<bool(const Line &, char)>, 2> ignores;
 };
+
+const std::array<std::function<bool(const Line &, char)>, 2> Line::ignores{
+    [](const Line &, char) -> bool { return true; },
+    [](const Line &l, char) -> bool { return l.at(l.index() - 1) != '\\'; }};
 } // namespace Lexer
 
 #endif

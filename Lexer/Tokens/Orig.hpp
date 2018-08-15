@@ -20,7 +20,15 @@ public:
 
   TokenType tokenType() const final { return ORIG; }
 
-  void assemble() override { Token::assemble(); }
+  void assemble(int16_t &programCounter, size_t width,
+                const std::string &symbol) override {
+    programCounter = static_cast<Immediate *>(operands()[0].get())->value();
+    setAssembled(AssembledToken(
+        programCounter,
+        fmt::format(
+            "(0000) {0:0>4X} {0:0>16b} ({1:d}) {2: <{3}s} .ORIG 0x{0:0>4X}",
+            programCounter, line(), symbol, width)));
+  }
 
   word memoryRequired() const override { return 1_word; }
 };

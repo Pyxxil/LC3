@@ -92,7 +92,6 @@ public:
 private:
   void emplace(Diagnostics::Diagnostic diagnostic) {
     diagnostics.emplace_back(std::move(diagnostic));
-    // notify_all();
   }
 
   std::vector<Notification::Callback> callbacks{};

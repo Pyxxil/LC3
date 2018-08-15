@@ -77,9 +77,10 @@ _Function after(size_t idx, InputIterator first, InputIterator last, Function s,
   return f;
 }
 
-template <class InputIterator, class Function> class Enumerator {
+template <class InputIterator> class Enumerator {
 public:
-  Enumerator(InputIterator f, InputIterator l) : m_first(f), m_last(l) {}
+  Enumerator(InputIterator f, InputIterator l)
+      : m_first{f}, m_last{l}, m_length{m_first - m_last} {}
 
   Enumerator(const Enumerator &) = default;
   Enumerator(Enumerator &&) noexcept = default;
@@ -89,26 +90,28 @@ public:
 
   ~Enumerator() = default;
 
-  Enumerator &nth(size_t idx, Function f) {
+  template <typename Function> Enumerator &nth(size_t idx, Function f) {
     (void)idx;
     (void)f;
     return *this;
   }
 
-  Enumerator &first(Function f) {
+  template <typename Function> Enumerator &first(Function f) {
     (void)f;
     return *this;
   }
 
-  Enumerator &every(size_t idx, Function f) {
-    (void)idx;
-    (void)f;
+  template <typename Function> Enumerator &every(size_t idx, Function f) {
+    for (InputIterator iter = m_first; iter < m_last; iter += idx) {
+      f(*iter);
+    }
     return *this;
   }
 
 private:
   InputIterator m_first;
   InputIterator m_last;
+  typename InputIterator::difference_type m_length;
 };
 } // namespace Algorithm
 

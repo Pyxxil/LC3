@@ -5,36 +5,21 @@
 #include <string>
 #include <vector>
 
+#include "Console.hpp"
 #include "Diagnostic.hpp"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
-#include "spdlog/fmt/ostr.h"
+#include "fmt/ostream.h"
 #pragma GCC diagnostic pop
 
-#include "spdlog/spdlog.h"
+#include "fmt/printf.h"
 
 namespace Notification {
 
 using Callback_Name_t = std::string;
 using Callback_Func_t = std::function<void(const Callback_Name_t &,
                                            const Diagnostics::Diagnostic &)>;
-
-class CallbackLogger {
-public:
-  static auto &get() { return logger; }
-
-protected:
-  CallbackLogger() {
-    // logger->set_level(spdlog::level::info);
-    // logger->set_pattern("%v");
-  }
-
-  static std::shared_ptr<spdlog::logger> logger;
-};
-
-std::shared_ptr<spdlog::logger> CallbackLogger::logger =
-    spdlog::stdout_color_st("logger");
 
 class Callback {
 public:
@@ -55,17 +40,17 @@ public:
     callback.second(name(), diagnostic);
   }
 
-  const Callback_Name_t &name() const { return callback.first; }
+  auto name() const -> const Callback_Name_t & { return callback.first; }
 
-  bool wants_previous() const { return want_previous; }
-  bool wants_updates() const { return update_on_each; }
+  auto wants_previous() const -> bool { return want_previous; }
+  auto wants_updates() const -> bool { return update_on_each; }
 
-  template <typename... Args> void warn(const char *fmt, Args &... args) {
-    Notification::CallbackLogger::get()->warn(fmt, args...);
+  template <typename... Args> void warn(const char *fmt, Args &&... args) {
+    fmt::print("{0:s}\n", fmt::format(fmt, args...));
   }
 
-  template <typename... Args> void error(const char *fmt, Args &... args) {
-    Notification::CallbackLogger::get()->error(fmt, args...);
+  template <typename... Args> void error(const char *fmt, Args &&... args) {
+    fmt::print("{0:s}\n", fmt::format(fmt, args...));
   }
 
 private:

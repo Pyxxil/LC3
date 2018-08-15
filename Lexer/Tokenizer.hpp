@@ -48,16 +48,15 @@ static constexpr size_t hash(const std::string_view &string) {
   if (string.length() > 8 || string.length() < 2) {
     // There are no registers, directives, or instructions which are longer than
     // 8 characters, or less than 2, so this string isn't one of them.
-    return 0;
+    return {};
   }
 
-  const size_t firstCharacter = static_cast<size_t>(toUpper(string.front()));
-
-  if (firstCharacter != '.' && !isAlpha(firstCharacter)) {
+  if (const size_t firstCharacter{static_cast<size_t>(toUpper(string.front()))};
+      firstCharacter != '.' && !isAlpha(firstCharacter)) {
     // Basically, we don't really want something that's likely to be an
     // immediate value, or a label (less likely to be caught here, but may as
     // well try).
-    return 0;
+    return {};
   } else {
     size_t hashed{37};
 
@@ -91,15 +90,27 @@ static bool isValidBinaryLiteral(const std::string_view &s) {
 }
 
 static bool isValidHexadecimalLiteral(const std::string_view &s) {
-  if (s.size() == 1) {
+  if (s.length() == 1) {
     return false;
   }
 
   if ('X' == toUpper(s.front())) {
+    if ('-' == s[1]) {
+      if (s.length() == 2) {
+        return false;
+      }
+      return std::all_of(s.cbegin() + 2, s.cend(), ::isxdigit);
+    }
     return std::all_of(s.cbegin() + 1, s.cend(), ::isxdigit);
   }
 
   if (s.size() > 2 && 'X' == toUpper(s[1])) {
+    if ('-' == s[2]) {
+      if (s.length() == 3) {
+        return false;
+      }
+      return std::all_of(s.cbegin() + 3, s.cend(), ::isxdigit);
+    }
     return std::all_of(s.cbegin() + 2, s.cend(), ::isxdigit);
   }
 
@@ -112,30 +123,24 @@ static inline bool isValidOctalLiteral(const std::string_view &s) {
 }
 
 static inline bool isValidDecimalLiteral(const std::string_view &s) {
+  size_t offset{0};
   if ('#' == s.front()) {
-    DEBUG("Decimal literal has leading '{}'", '#');
     if (s.length() < 2) {
-      DEBUG("Decimal literal is too small ('{}')", s.length());
       return false;
     } else if (s[1] == '-') {
       if (s.length() < 3) {
-        DEBUG("Decimal literal is too small ('{}')", s.length());
         return false;
       }
-      return std::all_of(s.cbegin() + 2, s.cend(), ::isdigit);
+      offset = 2;
+    } else {
+      offset = 1;
     }
-    return std::all_of(s.cbegin() + 1, s.cend(), ::isdigit);
   }
-  return std::all_of(s.cbegin(), s.cend(), ::isdigit);
+  return std::all_of(s.cbegin() + offset, s.cend(), ::isdigit);
 }
 
 static bool isValidLabel(const std::string_view &s) {
-  if ('.' == s.front()) {
-    return std::all_of(s.cbegin() + 1, s.cend(),
-                       [](auto &&c) { return std::isalnum(c) || '_' == c; });
-  }
-
-  return std::all_of(s.cbegin(), s.cend(),
+  return std::all_of('.' == s.front() ? s.cbegin() + 1 : s.cbegin(), s.cend(),
                      [](auto &&c) { return std::isalnum(c) || '_' == c; });
 }
 
@@ -150,15 +155,15 @@ public:
   std::unique_ptr<Token::Token> tokenizeImmediate(const std::string &s) {
     // We know this is going to be negative, as this is only ever called when
     // the next character on the line is a '-'.
-    switch (s.front()) {
+    switch (toUpper(s.front())) {
     case '\'':
       break;
     case '0':
       if (s.size() > 1) {
         if ('X' == toUpper(s[1]) && isValidHexadecimalLiteral(s)) {
-          auto hex = std::make_unique<Token::Hexadecimal>(
+          auto hex{std::make_unique<Token::Hexadecimal>(
               s, file.position().line(), file.position().column(), file.name(),
-              true);
+              true)};
           if (hex->isTooBig()) {
             throwError(
                 this,
@@ -175,9 +180,9 @@ public:
           }
           return std::move(hex);
         } else if ('B' == toUpper(s[1]) && isValidBinaryLiteral(s)) {
-          auto bin = std::make_unique<Token::Binary>(s, file.position().line(),
-                                                     file.position().column(),
-                                                     file.name(), true);
+          auto bin{std::make_unique<Token::Binary>(s, file.position().line(),
+                                                   file.position().column(),
+                                                   file.name(), true)};
           if (bin->isTooBig()) {
             throwError(
                 this,
@@ -196,9 +201,9 @@ public:
         }
 #ifdef ADDONS
         if (isValidOctalLiteral(s)) {
-          auto oct = std::make_unique<Token::Octal>(s, file.position().line(),
-                                                    file.position().column(),
-                                                    file.name(), true);
+          auto oct{std::make_unique<Token::Octal>(s, file.position().line(),
+                                                  file.position().column(),
+                                                  file.name(), true)};
           if (oct->isTooBig()) {
             throwError(
                 this, Diagnostics::Diagnostic(
@@ -224,13 +229,11 @@ public:
                        file.name(), file.position().line()));
       }
       break;
-    case 'b':
-      [[fallthrough]];
     case 'B':
       if (isValidBinaryLiteral(s)) {
-        auto bin = std::make_unique<Token::Binary>(s, file.position().line(),
-                                                   file.position().column(),
-                                                   file.name(), true);
+        auto bin{std::make_unique<Token::Binary>(s, file.position().line(),
+                                                 file.position().column(),
+                                                 file.name(), true)};
         if (bin->isTooBig()) {
           throwError(this,
                      Diagnostics::Diagnostic(
@@ -245,7 +248,7 @@ public:
         }
         return std::move(bin);
       } else {
-        DEBUG("Expected Binary literal, but found {}", s);
+        // DEBUG("Expected Binary literal, but found {}", s);
         throwError(this,
                    Diagnostics::Diagnostic(
                        std::make_unique<Diagnostics::DiagnosticHighlighter>(
@@ -255,13 +258,12 @@ public:
                        file.position().line()));
       }
       break;
-    case 'x':
-      [[fallthrough]];
     case 'X':
+      DEBUG("Found potential hex value {}", s);
       if (isValidHexadecimalLiteral(s)) {
-        auto hex = std::make_unique<Token::Hexadecimal>(
-            s, file.position().line(), file.position().column(), file.name(),
-            true);
+        auto hex{std::make_unique<Token::Hexadecimal>(s, file.position().line(),
+                                                      file.position().column(),
+                                                      file.name(), true)};
         if (hex->isTooBig()) {
           throwError(
               this,
@@ -305,9 +307,9 @@ public:
       [[fallthrough]];
     case '9':
       if (isValidDecimalLiteral(s)) {
-        auto decimal = std::make_unique<Token::Decimal>(
-            s, file.position().line(), file.position().column(), file.name(),
-            true);
+        auto decimal{std::make_unique<Token::Decimal>(s, file.position().line(),
+                                                      file.position().column(),
+                                                      file.name(), true)};
         if (decimal->isTooBig()) {
           throwError(
               this, Diagnostics::Diagnostic(
@@ -340,7 +342,7 @@ public:
   }
 
   std::unique_ptr<Token::Token> tokenizeDirective(const std::string &s) {
-    if (const auto _hash = hash(s); _hash > 0) {
+    if (const auto _hash{hash(s)}; _hash > 0) {
       switch (_hash) {
 #ifdef ADDONS
       case ::hash(".INCLUDE"):
@@ -576,7 +578,7 @@ public:
         s, file.position().line(), file.position().column(), file.name());
   }
 
-  void extraneous(const char character) {
+  auto extraneous(char character) -> void {
     throwWarning(this, Diagnostics::Diagnostic(
                            std::make_unique<Diagnostics::DiagnosticHighlighter>(
                                file.position().column(), 0, file.line()),
@@ -591,18 +593,16 @@ public:
     while (!line.atEnd()) {
       line.skip_while([](auto &&c) -> bool { return std::isspace(c); });
 
-      const auto token_start = line.index();
-      const auto token_end = line.find_if(
-          [](auto &&c) -> bool { return !(std::isalnum(c) || '_' == c); });
+      const auto token_start{line.index()};
+      const auto token_end{line.find_if([](auto &&c) -> bool {
+        return !(std::isalnum(c) || '_' == c || '-' == c);
+      })};
 
       file.setColumn(token_start);
 
-      DEBUG("Starting with index at {} and ending at {}", token_start,
-            token_end);
-
-      if (auto &&token = line.substr(token_start, token_end);
+      if (auto &&token{line.substr(token_start, token_end)};
           0 == token.size()) {
-        switch (const auto next = line.next(); next) {
+        switch (const auto next{line.next()}; next) {
         case '.': {
           terminator = '\0';
           // Now we tokenize a directive
@@ -610,9 +610,7 @@ public:
           token = line.substr(token_end, line.find_if([](auto &&c) -> bool {
             return !(std::isalnum(c));
           }));
-          DEBUG("Found token '{}'", token);
           lTokens.emplace_back(tokenizeDirective(token));
-          DEBUG(" - With type ", lTokens.back()->tokenType());
           break;
         }
         case '-': { // Negative immediate (hopefully)
@@ -621,7 +619,7 @@ public:
             return !(std::isalnum(c));
           }));
           if (token.size() > 0) {
-            auto &&t = tokenizeImmediate(token);
+            auto &&t{tokenizeImmediate(token)};
             lTokens.emplace_back(std::move(t));
           } else {
             throwError(this,
@@ -657,18 +655,17 @@ public:
         case '\'': { // character
           terminator = '\0';
           line.ignore(Line::ESCAPE_SEQUENCE);
-          const auto begin = line.index();
-          const auto end = line.find_next(next);
+          const auto begin{line.index()};
+          const auto end{line.find_next(next)};
           line.ignore(Line::RESET);
           if (-1u == end) {
-
 #ifdef ADDONS
-            const std::string unterminatedLiteral =
+            const std::string unterminatedLiteral{
                 fmt::format("Unterminated {} literal",
-                            next == '"' ? "String" : "Character");
+                            next == '"' ? "String" : "Character")};
 #else
-            const std::string unterminatedLiteral =
-                "Unterminated String literal";
+            const std::string unterminatedLiteral(
+                "Unterminated String literal");
 #endif
             throwError(this,
                        Diagnostics::Diagnostic(
@@ -680,12 +677,11 @@ public:
                 unterminatedLiteral, file.position().line(), token_start,
                 file.name()));
           } else if ('"' == next) {
-            auto &&str = line.substr(begin, end);
-            DEBUG("Found string \"{}\"", str);
+            auto &&str{line.substr(begin, end)};
             lTokens.emplace_back(std::make_unique<Token::String>(
                 str, file.position().line(), token_start, file.name()));
           } else if ('\'' == next) {
-            auto &&character = line.substr(begin, end);
+            auto &&character{line.substr(begin, end)};
 #ifdef ADDONS
             if (character.size() > 1 && '\\' != character.front()) {
               throwError(
@@ -696,7 +692,6 @@ public:
                       fmt::format("Invalid character literal '{}'", character),
                       file.name(), file.position().line()));
             } else {
-              DEBUG("Found character '{}'", character);
               lTokens.emplace_back(std::make_unique<Token::Character>(
                   character, file.position().line(), file.position().column(),
                   file.name()));
@@ -738,11 +733,10 @@ public:
           token = line.substr(token_start, line.find_if([](auto &&c) {
             return !(std::isdigit(c) || '-' == c);
           }));
-          DEBUG("Attempting to check Decimal literal string '{}'", token);
           if (isValidDecimalLiteral(token)) {
-            auto &&decimal = std::make_unique<Token::Decimal>(
+            auto &&decimal{std::make_unique<Token::Decimal>(
                 token, file.position().line(), file.position().column(),
-                file.name());
+                file.name())};
             if (decimal->isTooBig()) {
               throwError(
                   this,
@@ -771,10 +765,8 @@ public:
           break;
         }
       } else {
-        DEBUG("Found token '{}'", token);
-        auto &&tToken = tokenize(token);
-        DEBUG(" - With type {}", tToken->tokenType());
-        if (tToken->tokenType() == TokenType::IMMEDIATE && tToken->isTooBig()) {
+        if (auto &&tToken{tokenize(token)};
+            tToken->tokenType() == TokenType::IMMEDIATE && tToken->isTooBig()) {
           throwError(
               this,
               Diagnostics::Diagnostic(

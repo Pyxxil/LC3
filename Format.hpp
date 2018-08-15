@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "cxxopts.hpp"
-#include "spdlog/spdlog.h"
+#include "fmt/printf.h"
 
 #include "Algorithm.hpp"
 #include "Lexer/Lexer.hpp"
@@ -67,32 +67,35 @@ public:
         return 1;
       }
 
-      spdlog::set_pattern("%v");
-
-      auto ast_console = spdlog::stdout_color_mt("ast_console");
-      ast_console->set_level(spdlog::level::info);
-      ast_console->set_pattern("%v");
-
       const bool dont_display_warnings = parsed["no-warn"].as<bool>();
       const bool use_spaces = parsed["spaces"].as<bool>();
       const bool align_comments = parsed["align-comments"].as<bool>();
 
       if (!parsed["quiet"].as<bool>()) {
-        Notification::Callback errors("LC3Format",
-                                      [&errors](auto &&, auto &&diagnostic) {
-                                        errors.error("Error: {}", diagnostic);
-                                      },
-                                      false, false);
-
-        Notification::Callback warnings(
-            "LC3Format",
-            [&warnings, dont_display_warnings](auto &&, auto &&diagnostic) {
-              if (!dont_display_warnings) {
-                warnings.warn("Warning: {}", diagnostic);
-              }
+        Notification::Callback errors(
+            "Test",
+            [&errors](auto &&, auto &&diagnostic) {
+              errors.error(
+                  "{}: {}",
+                  fmt::format("{0:s}{1:s}{2:s}",
+                              Console::Colour(Console::FOREGROUND_COLOUR::RED),
+                              "Error", Console::reset),
+                  diagnostic);
             },
             false, false);
         Notification::error_notifications << errors;
+
+        Notification::Callback warnings(
+            "Test",
+            [&warnings](auto &&, auto &&diagnostic) {
+              warnings.warn("{}: {}",
+                            fmt::format("{0:s}{1:s}{2:s}",
+                                        Console::Colour(
+                                            Console::FOREGROUND_COLOUR::YELLOW),
+                                        "Warning", Console::reset),
+                            diagnostic);
+            },
+            false, false);
         Notification::warning_notifications << warnings;
       }
 
@@ -102,72 +105,73 @@ public:
 
         Notification::warning_notifications.notify_for_each();
 
-        if (lexer.isOkay()) {
-          ast_console->info("{}\n", lexer);
-          std::ofstream formatFile(file + ".formatted");
-          auto &&tokens = lexer.tokens;
-
-          for (size_t index = 0; index < tokens.size(); ++index) {
-            const auto &token = tokens[index];
-#ifdef KEEP_COMMENTS
-            if (token->tokenType() == Lexer::TokenType::COMMENT) {
-              formatFile << "; " << token->getToken() << '\n';
-              continue;
-            }
-#endif
-
-            std::string line;
-
-            if (token->tokenType() == Lexer::TokenType::LABEL) {
-              line.push_back(':');
-              line = fmt::format("{}:", token->getToken());
-            } else if (token->tokenType() == Lexer::TokenType::ORIG ||
-                       token->tokenType() == Lexer::TokenType::END) {
-              line = fmt::format("\n{}", token->getToken());
-            } else {
-              line = fmt::format("    {}", token->getToken());
-            }
-
-            if (use_spaces) {
-              for (const auto &operand : token->operands()) {
-                line += fmt::format(" {}", operand->getToken());
-              }
-            } else {
-              Algorithm::enumerate(
-                  token->operands().cbegin(), token->operands().cend(),
-                  [&line](auto &&operand, auto idx) {
-                    if (idx > 0) {
-                      line += fmt::format(", {}", operand->getToken());
-                    } else {
-                      line += fmt::format(" {}", operand->getToken());
-                    }
-                  });
-            }
-
-#ifdef KEEP_COMMENTS
-            if (index + 1 < tokens.size() &&
-                tokens[index + 1]->tokenType() == Lexer::TokenType::COMMENT) {
-              if (align_comments && line.length() < 40) {
-                line += std::string(40 - line.length(), ' ');
-              }
-              const std::string &tokenString = tokens[++index]->getToken();
-              if (tokenString.empty()) {
-                line.push_back(';');
-              } else {
-                line += fmt::format(" ; {}", tokenString);
-              }
-            }
-#endif
-
-            if (token->tokenType() == Lexer::TokenType::ORIG ||
-                token->tokenType() == Lexer::TokenType::END) {
-              line.push_back('\n');
-            }
-
-            formatFile << line << '\n';
-          }
-        } else {
+        if (!lexer.isOkay()) {
           Notification::error_notifications.notify_for_each();
+          continue;
+        }
+
+        fmt::print("{}\n", lexer);
+        std::ofstream formatFile(file + ".formatted");
+        auto &&tokens = lexer.tokens;
+
+        for (size_t index = 0; index < tokens.size(); ++index) {
+          const auto &token = tokens[index];
+#ifdef KEEP_COMMENTS
+          if (token->tokenType() == Lexer::TokenType::COMMENT) {
+            formatFile << "; " << token->getToken() << '\n';
+            continue;
+          }
+#endif
+
+          std::string line;
+
+          if (token->tokenType() == Lexer::TokenType::LABEL) {
+            line.push_back(':');
+            line = fmt::format("{}:", token->getToken());
+          } else if (token->tokenType() == Lexer::TokenType::ORIG ||
+                     token->tokenType() == Lexer::TokenType::END) {
+            line = fmt::format("\n{}", token->getToken());
+          } else {
+            line = fmt::format("    {}", token->getToken());
+          }
+
+          if (use_spaces) {
+            for (const auto &operand : token->operands()) {
+              line += fmt::format(" {}", operand->getToken());
+            }
+          } else {
+            Algorithm::enumerate(
+                token->operands().cbegin(), token->operands().cend(),
+                [&line](auto &&operand, auto idx) {
+                  if (idx > 0) {
+                    line += fmt::format(", {}", operand->getToken());
+                  } else {
+                    line += fmt::format(" {}", operand->getToken());
+                  }
+                });
+          }
+
+#ifdef KEEP_COMMENTS
+          if (index + 1 < tokens.size() &&
+              tokens[index + 1]->tokenType() == Lexer::TokenType::COMMENT) {
+            if (align_comments && line.length() < 40) {
+              line += std::string(40 - line.length(), ' ');
+            }
+            const std::string &tokenString = tokens[++index]->getToken();
+            if (tokenString.empty()) {
+              line.push_back(';');
+            } else {
+              line += fmt::format(" ; {}", tokenString);
+            }
+          }
+#endif
+
+          if (token->tokenType() == Lexer::TokenType::ORIG ||
+              token->tokenType() == Lexer::TokenType::END) {
+            line.push_back('\n');
+          }
+
+          formatFile << line << '\n';
         }
       }
 

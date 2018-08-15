@@ -1,6 +1,6 @@
 #include "Format.hpp"
 
-int main(int argc, char **argv) {
+auto main(int argc, char **argv) -> int {
   Formatter::Formatter formatter(argc, argv);
   return formatter.format();
 }

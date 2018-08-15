@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <string_view>
 
 #include "Callback.hpp"
 #include "Notifier.hpp"
@@ -11,9 +12,7 @@
 #include "Lexer/Token.hpp"
 #include "Lexer/Tokens.hpp"
 
-#include "spdlog/spdlog.h"
-
-#include <string_view>
+#include "fmt/printf.h"
 
 #if __APPLE__
 #define TEST_FILE_PATH "/Users/pyxxil/Sync/Projects/LC3/Examples"
@@ -21,28 +20,34 @@
 #define TEST_FILE_PATH "/home/pyxxil/Sync/Projects/LC3/Examples"
 #endif
 
-int main(int argc, char **argv) {
-  (void)argc;
-  (void)argv;
-
+auto main(int, char **) -> int {
   using namespace std::literals; // For string_view literals
   using namespace Lexer::Token;
 
-  spdlog::set_level(spdlog::level::debug);
-  spdlog::set_pattern("%v");
-
-  Notification::Callback errors("Test",
-                                [&errors](auto &&, auto &&diagnostic) {
-                                  errors.error("Error: {}", diagnostic);
-                                },
-                                false, false);
+  Notification::Callback errors(
+      "Test",
+      [&errors](auto &&, auto &&diagnostic) {
+        errors.error(
+            "{}: {}",
+            fmt::format("{0:s}{1:s}{2:s}",
+                        Console::Colour(Console::FOREGROUND_COLOUR::RED),
+                        "Error", Console::reset),
+            diagnostic);
+      },
+      false, false);
   Notification::error_notifications << errors;
 
-  Notification::Callback warnings("Test",
-                                  [&warnings](auto &&, auto &&diagnostic) {
-                                    warnings.warn("Warning: {}", diagnostic);
-                                  },
-                                  false, false);
+  Notification::Callback warnings(
+      "Test",
+      [&warnings](auto &&, auto &&diagnostic) {
+        warnings.warn(
+            "{}: {}",
+            fmt::format("{0:s}{1:s}{2:s}",
+                        Console::Colour(Console::FOREGROUND_COLOUR::YELLOW),
+                        "Warning", Console::reset),
+            diagnostic);
+      },
+      false, false);
   Notification::warning_notifications << warnings;
 
   Notification::diagnostic_notifications.for_each(
@@ -61,10 +66,6 @@ int main(int argc, char **argv) {
   //     << "Jmp R7 JSR  LABEL JSRR R2 NOT R2 ,, R3 TEST:.FILL, -x300 AND R1, R2
   //     "sv
   //     << Immediate("144") << "\"Unterminated string"sv;
-
-  auto ast_console = spdlog::stdout_color_mt("ast_console");
-  ast_console->set_level(spdlog::level::info);
-  ast_console->set_pattern("%v");
 
   // lexer.lex();
 
@@ -92,7 +93,7 @@ int main(int argc, char **argv) {
     Notification::warning_notifications.notify_for_each();
 
     if (lexer.isOkay()) {
-      ast_console->info("{}\n", lexer);
+      fmt::print("{}\n", lexer);
     } else {
       Notification::error_notifications.notify_for_each();
     }

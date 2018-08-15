@@ -2,13 +2,13 @@
 #define FILE_HPP
 
 #include <fstream>
+#include <vector>
 
 namespace Lexer {
 
 class Position {
 public:
-  Position(std::size_t column = 0, std::size_t line = 0)
-      : mColumn(column), mLine(line) {}
+  Position(size_t column = 0, size_t line = 0);
 
   Position(const Position &other) = default;
   Position(Position &&other) noexcept = default;
@@ -18,32 +18,22 @@ public:
 
   ~Position() = default;
 
-  std::size_t column() const { return mColumn; }
-  std::size_t line() const { return mLine; }
+  size_t column() const;
+  size_t line() const;
 
-  void incColumn() { ++mColumn; }
-  void setColumn(std::size_t column) { mColumn = column; }
-  void incLine() { ++mLine; }
+  void incColumn();
+  void setColumn(size_t column);
+  void incLine();
 
 private:
-  std::size_t mColumn;
-  std::size_t mLine;
+  size_t mColumn;
+  size_t mLine;
 };
 
 class File {
 public:
   File() = default;
-  explicit File(std::string file_name)
-      : mFileName(std::move(file_name)), mFile() {
-    mFile.open(mFileName);
-
-    if (!isFailure()) {
-      std::string line;
-      while (std::getline(mFile, line)) {
-        lines.emplace_back(std::move(line));
-      }
-    }
-  }
+  explicit File(std::string file_name);
 
   File(const File &other) = default;
   File(File &&other) = default;
@@ -55,25 +45,16 @@ public:
 
   const std::string &name() const { return mFileName; }
   const Position &position() const { return mPosition; }
-  std::string line() const {
-    if (lines.size() <= position().line() - 1)
-      return "";
-    return lines[position().line() - 1];
-  }
+  std::string line() const;
 
-  void setColumn(std::size_t column) { mPosition.setColumn(column); }
+  void setColumn(size_t column);
 
-  bool nextLine() {
-    mPosition.incLine();
-    return mPosition.line() < lines.size();
-  }
+  bool nextLine();
 
-  void nextColumn() { mPosition.incColumn(); }
-  const std::string& line(size_t l) const {
-    return lines[l];
-  }
+  void nextColumn();
+  const std::string &line(size_t l) const;
 
-  bool isFailure() const { return (mFile.fail() && lines.empty()) || !mFile.is_open(); }
+  bool isFailure() const;
 
 private:
   std::string mFileName;

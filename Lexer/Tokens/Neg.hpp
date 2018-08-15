@@ -21,7 +21,7 @@ public:
 
   TokenType tokenType() const final { return NEG; }
 
-  void assemble() override { Token::assemble(); }
+  void assemble(int16_t &programCounter, size_t width, const std::string &symbol) override { }
 
   word memoryRequired() const override { return 2_words; }
 };

@@ -25,16 +25,17 @@ public:
             std::find(openFiles.begin(), openFiles.end(), mFile.name());
         it != openFiles.end()) {
       Notification::error_notifications << Diagnostics::Diagnostic(
-          std::make_unique<Diagnostics::DiagnosticHighlighter>(0, 0, ""),
-          "File is already open (probable recursive includes)", mFile.name(),
-          0);
+          std::make_unique<Diagnostics::DiagnosticHighlighter>(0, 0,
+                                                               std::string{}),
+          "File is already open (probable recursive include)", mFile.name(), 0);
       error();
       return;
     }
 
     if (mFile.isFailure()) {
       Notification::error_notifications << Diagnostics::Diagnostic(
-          std::make_unique<Diagnostics::DiagnosticHighlighter>(0, 0, ""),
+          std::make_unique<Diagnostics::DiagnosticHighlighter>(0, 0,
+                                                               std::string{}),
           "Unable to open file", mFile.name(), 0);
       error();
       return;
@@ -51,8 +52,9 @@ public:
   }
 
   ~Lexer() {
-    const auto it = std::find(openFiles.begin(), openFiles.end(), mFile.name());
-    if (it != openFiles.end()) {
+    if (const auto it =
+            std::find(openFiles.begin(), openFiles.end(), mFile.name());
+        it != openFiles.end()) {
       openFiles.erase(it);
     }
   }
@@ -92,7 +94,7 @@ public:
     }
   }
 
-  bool isOkay() const { return mOkay; }
+  auto isOkay() const { return mOkay; }
   void error() {
     mOkay = false;
     ++errorCount;
@@ -107,7 +109,7 @@ public:
    *
    */
   void lex() {
-    DEBUG("Tokens size: {}", tokens.size());
+    // DEBUG("Tokens size: {}", tokens.size());
     const Match requiresZero = Match(TokenType::LABEL) | Match(TokenType::RET) |
                                Match(TokenType::END) | Match(TokenType::HALT) |
                                Match(TokenType::PUTS) | Match(TokenType::OUT) |
@@ -119,11 +121,11 @@ public:
         ;
 
     for (idx = 0; idx < tokens.size(); ++idx) {
-      DEBUG("Found token {}", tokens[idx]->getToken());
+      // DEBUG("Found token {}", tokens[idx]->getToken());
       const auto &requirements = tokens[idx]->requirements();
 
       for (auto &&token : requirements.consume(tokens, idx, mFile)) {
-        DEBUG("Consumed - {}", token->getToken());
+        // DEBUG("Consumed - {}", token->getToken());
         tokens[idx]->addOperand(std::move(token));
       }
 
@@ -184,7 +186,7 @@ public:
    * @return The consumed tokens if there are enough of them, otherwise an empty
    * vector.
    */
-  auto consume_range(std::size_t begin, std::size_t end) {
+  auto consume_range(size_t begin, size_t end) {
     std::vector<std::unique_ptr<Token::Token>> consumed;
 
     if (idx + begin > tokens.size()) {
@@ -237,7 +239,7 @@ private:
 }; // namespace Lexer
 
 template <> Lexer &Lexer::operator<<<std::string_view>(std::string_view s) {
-  DEBUG("Passed in line '{}'", s);
+  // DEBUG("Passed in line '{}'", s);
   auto &&l_tokens = mTokenizer.tokenizeLine(Line(s));
   for (auto &&token : l_tokens) {
     tokens.emplace_back(std::move(token));
@@ -246,7 +248,7 @@ template <> Lexer &Lexer::operator<<<std::string_view>(std::string_view s) {
 }
 
 template <> Lexer &Lexer::operator<<<std::string>(std::string s) {
-  DEBUG("Passed in line '{}'", s);
+  // DEBUG("Passed in line '{}'", s);
   auto &&l_tokens = mTokenizer.tokenizeLine(Line(s));
   for (auto &&token : l_tokens) {
     tokens.emplace_back(std::move(token));
