@@ -41,6 +41,7 @@
 #ifdef ADDONS
 #include "Tokens/Character.hpp"
 #include "Tokens/Include.hpp"
+#include "Tokens/Jmpt.hpp"
 #include "Tokens/Lshift.hpp"
 #include "Tokens/Neg.hpp"
 #include "Tokens/Sub.hpp"

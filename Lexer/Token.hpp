@@ -2,6 +2,7 @@
 #define TOKEN_HPP
 
 #include <cassert>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -22,6 +23,35 @@ constexpr word operator""_words(unsigned long long val) {
 }
 
 namespace Lexer {
+
+struct Symbol {
+  Symbol() = default;
+  Symbol(const std::string &tName, size_t tAddress, const std::string &tFile,
+         size_t tColumn, size_t tLine)
+      : mName(tName), mAddress(tAddress), mFile(tFile), mColumn(tColumn),
+        mLine(tLine) {}
+
+  Symbol(const Symbol &) = default;
+  Symbol(Symbol &&) noexcept = default;
+
+  Symbol &operator=(const Symbol &) = default;
+  Symbol &operator=(Symbol &&) noexcept = default;
+
+  ~Symbol() = default;
+
+  const auto &name() const { return mName; }
+  const auto &file() const { return mFile; }
+
+  auto address() const { return mAddress; }
+  auto column() const { return mColumn; }
+  auto line() const { return mLine; }
+
+  std::string mName;
+  size_t mAddress;
+  std::string mFile;
+  size_t mColumn;
+  size_t mLine;
+};
 
 enum TokenType {
   NONE = 0,
@@ -64,6 +94,7 @@ enum TokenType {
   SET,
   NEG,
   SUB,
+  JMPT,
 #endif
 #ifdef KEEP_COMMENTS
   COMMENT,
@@ -111,6 +142,7 @@ const char *TokenTypeString[] = {
     "Directive .SET",
     "Directive .NEG",
     "Directive .SUB",
+    "Instruction JMPT",
 #endif
 #ifdef KEEP_COMMENTS
     "Comment",
@@ -312,7 +344,7 @@ public:
   }
 
   virtual void assemble(int16_t &programCounter, size_t width,
-                        const std::string &symbol) {}
+                        const std::map<std::string, Symbol> &symbol) {}
   virtual word memoryRequired() const { return -1; }
 
   virtual bool isTooBig() const { return tooBig; }
@@ -322,13 +354,14 @@ public:
   size_t column() const { return atColumn; }
 
   void setAssembled(AssembledToken assembled) {
-    asAssembled.emplace_back(std::move(assembled));
+    asAssembled = {std::move(assembled)};
   }
   auto &&assembled() const { return asAssembled; }
 
 protected:
   std::string token;
   bool tooBig{false};
+  std::vector<AssembledToken> asAssembled{};
 
 private:
   size_t atLine;
@@ -338,7 +371,6 @@ private:
   std::vector<std::unique_ptr<Token>> mOperands{};
   std::string ast{};
   bool astCompiled{false};
-  std::vector<AssembledToken> asAssembled{};
 };
 
 /*! Consume tokens from the tokens the lexer contains according to our
@@ -372,7 +404,7 @@ Requirements::consume(std::vector<std::unique_ptr<Token>> &tokens, size_t index,
       auto &&token = tokens[index + 1];
       Notification::error_notifications << Diagnostics::Diagnostic(
           std::make_unique<Diagnostics::DiagnosticHighlighter>(
-              token->column(), token->getToken().length() - 1,
+              token->column(), token->getToken().length(),
               file.line(token->line() - 1)),
           fmt::format("Expected {}, but found '{}' (with type {})",
                       arguments[0], token->getToken(), token->tokenType()),
@@ -410,7 +442,7 @@ Requirements::consume(std::vector<std::unique_ptr<Token>> &tokens, size_t index,
       // token->tokenType());
       Notification::error_notifications << Diagnostics::Diagnostic(
           std::make_unique<Diagnostics::DiagnosticHighlighter>(
-              token->column(), token->getToken().length() - 1,
+              token->column(), token->getToken().length(),
               file.line(token->line() - 1)),
           fmt::format("Expected {}, but found '{}' (with type {})",
                       arguments[arg_index], token->getToken(),

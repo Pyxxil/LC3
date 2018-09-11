@@ -135,6 +135,8 @@ static inline bool isValidDecimalLiteral(const std::string_view &s) {
     } else {
       offset = 1;
     }
+  } else if ('-' == s.front()) {
+    offset++;
   }
   return std::all_of(s.cbegin() + offset, s.cend(), ::isdigit);
 }
@@ -408,6 +410,11 @@ public:
       case ::hash("RET"):
         return std::make_unique<Token::Ret>(
             s, file.position().line(), file.position().column(), file.name());
+#ifdef ADDONS
+      case ::hash("JMPT"):
+        return std::make_unique<Token::Jmpt>(
+            s, file.position().line(), file.position().column(), file.name());
+#endif
       case ::hash("JMP"):
         return std::make_unique<Token::Jmp>(
             s, file.position().line(), file.position().column(), file.name());
@@ -542,7 +549,7 @@ public:
     }
 
 #ifdef ADDONS
-    if (isValidOctalLiteral(s)) {
+    if (s.front() == '0' && isValidOctalLiteral(s)) {
       return std::make_unique<Token::Octal>(
           s, file.position().line(), file.position().column(), file.name());
     }
@@ -570,8 +577,7 @@ public:
 
     throwError(this, Diagnostics::Diagnostic(
                          std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                             file.position().column() - s.length(), s.length(),
-                             file.line()),
+                             file.position().column(), s.length(), file.line()),
                          fmt::format("Invalid token: {}", s), file.name(),
                          file.position().line()));
     return std::make_unique<Token::Token>(
@@ -664,15 +670,15 @@ public:
                 fmt::format("Unterminated {} literal",
                             next == '"' ? "String" : "Character")};
 #else
-            const std::string unterminatedLiteral(
+            static const std::string unterminatedLiteral(
                 "Unterminated String literal");
 #endif
-            throwError(this,
-                       Diagnostics::Diagnostic(
-                           std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                               token_start, line.index() - begin, file.line()),
-                           unterminatedLiteral, file.name(),
-                           file.position().line()));
+            throwError(
+                this,
+                Diagnostics::Diagnostic(
+                    std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                        token_start, line.index() - begin + 1, file.line()),
+                    unterminatedLiteral, file.name(), file.position().line()));
             lTokens.emplace_back(std::make_unique<Token::Token>(
                 unterminatedLiteral, file.position().line(), token_start,
                 file.name()));

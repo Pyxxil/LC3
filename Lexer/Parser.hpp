@@ -7,35 +7,6 @@
 #include "Tokens.hpp"
 
 namespace Parser {
-struct Symbol {
-  Symbol() = default;
-  Symbol(const std::string &tName, size_t tAddress, const std::string &tFile,
-         size_t tColumn, size_t tLine)
-      : mName(tName), mAddress(tAddress), mFile(tFile), mColumn(tColumn),
-        mLine(tLine) {}
-
-  Symbol(const Symbol &) = default;
-  Symbol(Symbol &&) noexcept = default;
-
-  Symbol &operator=(const Symbol &) = default;
-  Symbol &operator=(Symbol &&) noexcept = default;
-
-  ~Symbol() = default;
-
-  const auto &name() const { return mName; }
-  const auto &file() const { return mFile; }
-
-  auto address() const { return mAddress; }
-  auto column() const { return mColumn; }
-  auto line() const { return mLine; }
-
-  std::string mName;
-  size_t mAddress;
-  std::string mFile;
-  size_t mColumn;
-  size_t mLine;
-};
-
 class Parser {
 public:
   Parser(std::vector<std::unique_ptr<Lexer::Token::Token>> tokens)
@@ -53,10 +24,6 @@ public:
 
     for (auto &token : mTokens) {
       switch (token->tokenType()) {
-#ifdef ADDONS
-      case Lexer::TokenType::INCLUDE:
-        break;
-#endif
       case Lexer::TokenType::LABEL: {
         if (!originSeen) {
           error();
@@ -85,8 +52,8 @@ public:
 
         auto &&[symbol, inserted] = mSymbols.try_emplace(
             token->getToken(),
-            Symbol(token->getToken(), currentAddress, token->file(),
-                   token->column(), token->line()));
+            Lexer::Symbol(token->getToken(), currentAddress, token->file(),
+                          token->column(), token->line()));
 
         if (!inserted) {
           // TODO: Fix the way these are handled. At the moment, any errors
@@ -156,7 +123,7 @@ public:
 
 private:
   std::vector<std::unique_ptr<Lexer::Token::Token>> mTokens;
-  std::map<std::string, Symbol> mSymbols{};
+  std::map<std::string, Lexer::Symbol> mSymbols{};
   size_t errorCount{0};
   int longestSymbolLength{20};
 }; // namespace Parser

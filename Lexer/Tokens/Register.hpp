@@ -21,7 +21,7 @@ public:
   TokenType tokenType() const final { return REGISTER; }
 
   void assemble(int16_t &programCounter, size_t width,
-                const std::string &symbol) override {}
+                const std::map<std::string, Symbol> &symbol) override {}
 
   auto reg() const { return mReg; }
 

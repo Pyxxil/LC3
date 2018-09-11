@@ -18,7 +18,20 @@ public:
 
   TokenType tokenType() const final { return PUTS; }
 
-  void assemble(int16_t &programCounter, size_t width, const std::string &symbol) override { }
+  void assemble(int16_t &programCounter, size_t width,
+                const std::map<std::string, Symbol> &symbols) override {
+    auto sym = std::find_if(symbols.begin(), symbols.end(),
+                            [programCounter](const auto &sym) {
+                              return sym.second.address() == programCounter;
+                            });
+
+    setAssembled(AssembledToken(
+        0xF022,
+        fmt::format(
+            "({0:0>4X}) F022 1111000000100010 ({1: >4d}) {2: <{3}s} PUTS",
+            programCounter++, line(),
+            sym == symbols.end() ? "" : sym->second.name(), width)));
+  }
 
   word memoryRequired() const override { return 1_word; }
 };

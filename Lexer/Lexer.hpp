@@ -146,7 +146,7 @@ public:
         const auto &tok = tokens[idx];
         Notification::error_notifications << Diagnostics::Diagnostic(
             std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                tok->column(), tok->getToken().length() - 1,
+                tok->column(), tok->getToken().length(),
                 mFile.line(tok->line() - 1)),
             fmt::format("Expected Label, Instruction, or Directive, but "
                         "found '{}' (type {}) instead.",
@@ -157,25 +157,25 @@ public:
     }
 
 #ifdef ADDONS
-    std::vector<std::unique_ptr<Token::Token>> _tokens{};
-    for (std::vector<std::unique_ptr<Token::Token>>::iterator it =
-             tokens.begin();
-         it != tokens.end(); ++it) {
+    for (auto it = tokens.begin(); it != tokens.end();) {
       if ((*it)->tokenType() == TokenType::INCLUDE) {
         const auto &fileName = (*it)->operands().front()->getToken();
         Lexer lexer(File{fileName.substr(1, fileName.length() - 2)});
         lexer.lex();
 
+        it = tokens.erase(it);
         if (mOkay = lexer.isOkay(); mOkay) {
-          for (auto &token : lexer.tokens) {
-            _tokens.emplace_back(std::move(token));
-          }
+          // TODO: This annoyingly means we will look over every token inside
+          // the new tokens as well, which is done by the child lexer...
+          it = tokens.insert(it,
+                             std::make_move_iterator(std::begin(lexer.tokens)),
+                             std::make_move_iterator(std::end(lexer.tokens)));
         }
       } else {
-        _tokens.emplace_back(std::move(*it));
+        ++it;
       }
     }
-    tokens = std::move(_tokens);
+    // tokens = std::move(_tokens);
 #endif
   }
 

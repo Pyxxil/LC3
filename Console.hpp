@@ -93,33 +93,22 @@ struct Colour {
   Colour(const Colour &other) = default;
   Colour(Colour &&other) noexcept = default;
   Colour &operator=(const Colour &other) = default;
-  Colour &operator=(Colour &&other) noexcept {
-    if (this != &other) {
-      fg = other.fg;
-      bg = other.bg;
-      mod = other.mod;
-    }
-
-    return *this;
-  }
+  Colour &operator=(Colour &&other) noexcept = default;
 
   ~Colour() = default;
 
   friend std::ostream &operator<<(std::ostream &os, const Colour &colour) {
-//    if (!Config::is_set(Config::NO_COLOUR)) {
 #if defined(_MSC_VER)
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
                             static_cast<int>(colour.fg) |
                                 static_cast<int>(colour.bg) |
                                 static_cast<int>(colour.mod));
+    return os;
 #else
     return os << "\033[" << static_cast<int>(colour.fg) << ';'
               << static_cast<int>(colour.bg) << ';'
               << static_cast<int>(colour.mod) << 'm';
 #endif
-    // }
-
-    return os;
   }
 
   bool operator==(const Colour &other) const {

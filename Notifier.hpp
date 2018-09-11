@@ -84,6 +84,8 @@ public:
     }
   }
 
+  size_t count() const { return diagnostics.size(); }
+
   void notify_all_and_clear() {
     notify_for_each();
     diagnostics.clear();
@@ -101,6 +103,11 @@ private:
 Notification_Wrapper<NOTIFY_EVENT::DIAGNOSTIC> diagnostic_notifications;
 Notification_Wrapper<NOTIFY_EVENT::ERROR> error_notifications;
 Notification_Wrapper<NOTIFY_EVENT::WARNING> warning_notifications;
+
+size_t count() {
+  return diagnostic_notifications.count() + error_notifications.count() +
+         warning_notifications.count();
+}
 
 } // namespace Notification
 

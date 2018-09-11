@@ -20,7 +20,8 @@ public:
 
   TokenType tokenType() const final { return COMMENT; }
 
-  void assemble(int16_t &programCounter, size_t width, const std::string &symbol) override { }
+  void assemble(int16_t &programCounter, size_t width,
+                const std::map<std::string, Symbol> &symbol) override {}
 };
 #endif
 } // namespace Token

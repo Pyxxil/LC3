@@ -19,7 +19,8 @@ public:
 
   TokenType tokenType() const final { return IMMEDIATE; }
 
-  void assemble(int16_t &programCounter, size_t width, const std::string &symbol) override { }
+  void assemble(int16_t &programCounter, size_t width,
+                const std::map<std::string, Symbol> &symbol) override {}
 
   int16_t value() const { return mValue; }
 

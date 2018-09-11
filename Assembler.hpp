@@ -51,7 +51,7 @@ public:
 
     bool weShouldPrintAST;
     bool weShouldTreatWarningsAsErrors;
-    bool weShouldntDisplayWarnings;
+    bool weShouldShowWarnings;
     bool weShouldBeQuiet;
     bool weShouldntUseColours;
 
@@ -75,7 +75,7 @@ public:
 
       weShouldPrintAST = parsed["print-ast"].as<bool>();
       weShouldTreatWarningsAsErrors = parsed["error"].as<bool>();
-      weShouldntDisplayWarnings = parsed["no-warn"].as<bool>();
+      weShouldShowWarnings = !parsed["no-warn"].as<bool>();
       weShouldBeQuiet = parsed["quiet"].as<bool>();
       weShouldntUseColours =
           parsed["no-colour"].as<bool>() || parsed["no-color"].as<bool>();
@@ -101,8 +101,8 @@ public:
 
       Callback warnings(
           "LC3AS",
-          [&warnings, weShouldTreatWarningsAsErrors,
-           weShouldntDisplayWarnings](auto &&, auto &&diagnostic) {
+          [&warnings, weShouldTreatWarningsAsErrors](auto &&,
+                                                     auto &&diagnostic) {
             if (weShouldTreatWarningsAsErrors) {
               warnings.error(
                   "{}: {}",
@@ -110,7 +110,7 @@ public:
                               Console::Colour(Console::FOREGROUND_COLOUR::RED),
                               "Error", Console::reset),
                   diagnostic);
-            } else if (!weShouldntDisplayWarnings) {
+            } else {
               warnings.warn("{}: {}",
                             fmt::format("{0:s}{1:s}{2:s}",
                                         Console::Colour(
@@ -121,7 +121,9 @@ public:
           },
           false, false);
 
-      warning_notifications << warnings;
+      if (weShouldShowWarnings) {
+        warning_notifications << warnings;
+      }
     }
 
     int retValue = 0;
@@ -150,11 +152,13 @@ public:
           auto hex_file_name = file_name + ".hex";
           auto lst_file_name = file_name + ".lst";
           auto obj_file_name = file_name + ".obj";
+          auto sym_file_name = file_name + ".sym";
 
           auto bin_file = std::ofstream(bin_file_name);
           auto hex_file = std::ofstream(hex_file_name);
           auto lst_file = std::ofstream(lst_file_name);
           auto obj_file = std::ofstream(obj_file_name, std::ios::binary);
+          auto sym_file = std::ofstream(sym_file_name);
 
           auto &&tokens = parser.tokens();
           auto &&symbols = parser.symbols();
@@ -162,34 +166,40 @@ public:
           int16_t program_counter{0};
           // Assemble the Orig statement simply because it's required as the
           // starting program counter
-          (*(tokens.begin()))->assemble(program_counter, 0, std::string());
+          (*(tokens.begin()))->assemble(program_counter, 0, symbols);
 
           program_counter = static_cast<int16_t>(
               ((*(tokens.begin()))->assembled().front().binary()));
 
-          for (auto &&token : tokens) {
-            token->assemble(program_counter, 30, std::string());
+          sym_file << fmt::format(
+              "// Symbol table\n// Scope Level 0:\n//\t{: "
+              "<30} Page Address\n//\t{:-<30} ------------\n",
+              "Symbol Name", "-");
+
+          for (const auto &[addr, symbol] : symbols) {
+            sym_file << fmt::format("//\t{: <30} {:04X}\n", symbol.name(),
+                                    symbol.address());
           }
 
+          for (auto &token : tokens) {
+            token->assemble(program_counter, 30, symbols);
+          }
           for (auto &&token : tokens) {
             if (token->tokenType() == ::Lexer::LABEL) {
               // Labels don't get assembled
               continue;
+            } else if (token->tokenType() == ::Lexer::END) {
+              // Nor does the .END
+              break;
             }
 
             auto &&assembled = token->assembled();
-#ifndef NDEBUG
-            if (assembled.empty()) {
-              DEBUG("Assembly not implemented for {}", *token);
-            }
-#endif
             for (auto &&word : assembled) {
-              DEBUG("Assembled: {0:0>16b} {0:0>4X} {1}  for {2}", word.binary(),
-                    word.lstStr(), *token);
+              DEBUG("Assembled as {}", word.lstStr());
               bin_file << fmt::format("{:0>16b}\n", word.binary());
               hex_file << fmt::format("{:0>4X}\n", word.binary());
               lst_file << word.lstStr() << '\n';
-              obj_file << word.binary();
+              obj_file.put(word.binary());
             }
           }
         } else {
@@ -200,7 +210,6 @@ public:
         error_notifications.notify_all_and_clear();
       }
     }
-
     return retValue;
   }
 

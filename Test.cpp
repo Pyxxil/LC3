@@ -50,34 +50,38 @@ auto main(int, char **) -> int {
       false, false);
   Notification::warning_notifications << warnings;
 
-  Notification::diagnostic_notifications.for_each(
-      [](auto &&diagnostic) { std::cout << diagnostic << '\n'; });
+  Notification::Callback test("Test", [](auto &&, auto &&diagnostic) {
+    fmt::print("{{ \"line\": \"{}\", \"column\": \"{}\", \"message\": \"{}\", "
+               "\"file\": \"{}\" }}\n",
+               diagnostic.line(), diagnostic.column(), diagnostic.message(),
+               diagnostic.file());
+  });
+  Notification::warning_notifications << test;
+  Notification::error_notifications << test;
 
-  // Lexer::Lexer lexer;
+  // Notification::diagnostic_notifications.for_each(
+  //     [](auto &&diagnostic) { std::cout << diagnostic << '\n'; });
 
-  // lexer
-  //     << Add("Add") << Register("R1") << Register("R2") << Immediate("10")
+  Lexer::Lexer lexer;
 
-  //     << Add("ADD") << Register("R3") << Register("R1") << Register("R2")
+  lexer
+      << "\tAdd R1 R2 '\n'; Yay for comments!"sv
+      << "\"Hello\" \"\\\"\" \""sv
+      << "'H'  'Hello'  '\n'"sv
+      << "Jmp R7 JSR  LABEL JSRR R2 NOT R2 ,, R3 TEST:.FILL, -x300 AND R1, R2"sv
+      << "\"Unterminated string"sv;
 
-  //     << "\tAdd R1 R2 '\n'; Yay for comments!"sv
-  //     << "\"Hello\" \"\\\"\" \""sv
-  //     << "'H'  'Hello'  '\n'"sv
-  //     << "Jmp R7 JSR  LABEL JSRR R2 NOT R2 ,, R3 TEST:.FILL, -x300 AND R1, R2
-  //     "sv
-  //     << Immediate("144") << "\"Unterminated string"sv;
+  lexer.lex();
 
-  // lexer.lex();
+  Notification::warning_notifications.notify_all(true);
 
-  // Notification::warning_notifications.notify_all(true);
+  if (lexer.isOkay()) {
+    std::cout << lexer;
+  } else {
+    Notification::error_notifications.notify_all(true);
+  }
 
-  // if (lexer.okay()) {
-  //   std::cout << lexer;
-  // } else {
-  //   Notification::error_notifications.notify_all(true);
-  // }
-
-  // lexer.clear();
+  lexer.clear();
 
   for (auto &&file : {
            "Test.asm", // TEST_FILE_PATH "/Fibonacci.asm",

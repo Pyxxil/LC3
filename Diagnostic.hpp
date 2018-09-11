@@ -17,7 +17,7 @@ public:
     if (!mContext.empty()) {
       mHighlighter.push_back('^');
       if (length() > 0) {
-        mHighlighter += std::string(length(), '~');
+        mHighlighter += std::string(length() - 1, '~');
       }
     }
   }
@@ -65,11 +65,10 @@ public:
   template <typename OStream>
   friend OStream &operator<<(OStream &os, const Diagnostic &diagnostic) {
     using namespace Console;
-    os << Colour(FOREGROUND_COLOUR::GREEN) << diagnostic.file() << reset << ':'
-       << diagnostic.line() << ':' << diagnostic.column() << ": "
-       << diagnostic.message() << '\n'
-       << *diagnostic.mHighlighter;
-    return os;
+    return os << Colour(FOREGROUND_COLOUR::GREEN) << diagnostic.file() << reset
+              << ':' << diagnostic.line() << ':' << diagnostic.column() << ": "
+              << diagnostic.message() << '\n'
+              << *diagnostic.mHighlighter;
   }
 
 private:

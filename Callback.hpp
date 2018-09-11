@@ -42,8 +42,8 @@ public:
 
   auto name() const -> const Callback_Name_t & { return callback.first; }
 
-  auto wants_previous() const -> bool { return want_previous; }
-  auto wants_updates() const -> bool { return update_on_each; }
+  auto wants_previous() const { return want_previous; }
+  auto wants_updates() const { return update_on_each; }
 
   template <typename... Args> void warn(const char *fmt, Args &&... args) {
     fmt::print("{0:s}\n", fmt::format(fmt, args...));

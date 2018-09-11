@@ -11,6 +11,20 @@ public:
   Character(std::string s, size_t tLine, size_t tColumn,
             const std::string &tFile)
       : Immediate(std::move(s), tLine, tColumn, tFile) {
+    DEBUG("Found character as '{}'", token);
+    if ('\\' == token.front()) {
+      switch (token.back()) {
+      case 'n':
+        token = "\n";
+        break;
+      case 't':
+        token = '\t';
+        break;
+      case '\'':
+        token = "'";
+        break;
+      }
+    }
     mValue = static_cast<int16_t>(token.front());
   }
 
