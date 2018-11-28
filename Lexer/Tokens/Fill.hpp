@@ -14,10 +14,10 @@ public:
                                Match(TokenType::LABEL)})) {}
 
   Fill(const Fill &) = default;
-  Fill(Fill &&) noexcept = default;
+  Fill(Fill &&) = default;
 
   Fill &operator=(const Fill &) = default;
-  Fill &operator=(Fill &&) noexcept = default;
+  Fill &operator=(Fill &&) = default;
 
   TokenType tokenType() const final { return FILL; }
 
@@ -37,6 +37,13 @@ public:
       bin = static_cast<Immediate *>(ops.front().get())->value();
     } else if (label != symbols.end()) {
       bin = label->second.address();
+    } else {
+      Notification::error_notifications << Diagnostics::Diagnostic(
+          std::make_unique<Diagnostics::DiagnosticHighlighter>(
+              ops.front()->column(), ops.front()->getToken().length(), ""),
+          fmt::format("Undefined label '{}'", *(ops.front())),
+          ops.front()->file(), ops.front()->line());
+      return;
     }
 
     auto sym = std::find_if(symbols.begin(), symbols.end(),
@@ -45,16 +52,18 @@ public:
                             });
 
     setAssembled(AssembledToken(
-        bin, fmt::format(
-                 "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
-                 ".FILL {5:s}",
-                 programCounter++, bin, line(),
-                 sym == symbols.end() ? "" : sym->second.name(), width,
-                 fmt::format(
-                     "0x{:04X}",
-                     TokenType::IMMEDIATE == ops.front()->tokenType()
-                         ? static_cast<Immediate *>(ops.front().get())->value()
-                         : label->second.address()))));
+        bin,
+        fmt::format(
+            "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
+            ".FILL {5:s}",
+            programCounter++, bin, line(),
+            sym == symbols.end() ? "" : sym->second.name(), width,
+            fmt::format(
+                "0x{:04X}",
+                TokenType::IMMEDIATE == ops.front()->tokenType()
+                    ? (static_cast<Immediate *>(ops.front().get())->value() &
+                       0xFFFF)
+                    : label->second.address()))));
   }
 
   word memoryRequired() const override { return 1_word; }

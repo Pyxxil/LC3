@@ -15,10 +15,10 @@ public:
                                Match(TokenType::IMMEDIATE)})) {}
 
   Lshift(const Lshift &) = default;
-  Lshift(Lshift &&) noexcept = default;
+  Lshift(Lshift &&) = default;
 
   Lshift &operator=(const Lshift &) = default;
-  Lshift &operator=(Lshift &&) noexcept = default;
+  Lshift &operator=(Lshift &&) = default;
 
   TokenType tokenType() const final { return LSHIFT; }
 

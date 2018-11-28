@@ -104,7 +104,7 @@ static bool isValidHexadecimalLiteral(const std::string_view &s) {
     return std::all_of(s.cbegin() + 1, s.cend(), ::isxdigit);
   }
 
-  if (s.size() > 2 && 'X' == toUpper(s[1])) {
+  if (s.length() > 2 && 'X' == toUpper(s[1])) {
     if ('-' == s[2]) {
       if (s.length() == 3) {
         return false;
@@ -344,50 +344,39 @@ public:
   }
 
   std::unique_ptr<Token::Token> tokenizeDirective(const std::string &s) {
+    const auto &[column, line] = file.position();
     if (const auto _hash{hash(s)}; _hash > 0) {
       switch (_hash) {
+      case ::hash(".FILL"):
+        return std::make_unique<Token::Fill>(s, line, column, file.name());
+      case ::hash(".STRINGZ"):
+        return std::make_unique<Token::Stringz>(s, line, column, file.name());
+      case ::hash(".BLKW"):
+        return std::make_unique<Token::Blkw>(s, line, column, file.name());
 #ifdef ADDONS
       case ::hash(".INCLUDE"):
-        return std::make_unique<Token::Include>(
-            s, file.position().line(), file.position().column(), file.name());
+        return std::make_unique<Token::Include>(s, line, column, file.name());
       case ::hash(".SET"):
-        return std::make_unique<Token::Set>(
-            s, file.position().line(), file.position().column(), file.name());
+        return std::make_unique<Token::Set>(s, line, column, file.name());
       case ::hash(".LSHIFT"):
-        return std::make_unique<Token::Lshift>(
-            s, file.position().line(), file.position().column(), file.name());
+        return std::make_unique<Token::Lshift>(s, line, column, file.name());
       case ::hash(".NEG"):
-        return std::make_unique<Token::Neg>(
-            s, file.position().line(), file.position().column(), file.name());
+        return std::make_unique<Token::Neg>(s, line, column, file.name());
       case ::hash(".SUB"):
-        return std::make_unique<Token::Sub>(
-            s, file.position().line(), file.position().column(), file.name());
+        return std::make_unique<Token::Sub>(s, line, column, file.name());
 #endif
       case ::hash(".ORIG"):
-        return std::make_unique<Token::Orig>(
-            s, file.position().line(), file.position().column(), file.name());
+        return std::make_unique<Token::Orig>(s, line, column, file.name());
       case ::hash(".END"):
-        return std::make_unique<Token::End>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash(".STRINGZ"):
-        return std::make_unique<Token::Stringz>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash(".FILL"):
-        return std::make_unique<Token::Fill>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash(".BLKW"):
-        return std::make_unique<Token::Blkw>(
-            s, file.position().line(), file.position().column(), file.name());
+        return std::make_unique<Token::End>(s, line, column, file.name());
       }
     }
 
     if (isValidLabel(s)) {
-      return std::make_unique<Token::Label>(
-          s, file.position().line(), file.position().column(), file.name());
+      return std::make_unique<Token::Label>(s, line, column, file.name());
     }
 
-    return std::make_unique<Token::Token>(
-        s, file.position().line(), file.position().column(), file.name());
+    return std::make_unique<Token::Token>(s, line, column, file.name());
   }
 
   /*! Tokenize a single word
@@ -396,136 +385,9 @@ public:
    * @return The token the word corresponds to
    */
   std::unique_ptr<Token::Token> tokenize(const std::string &s) {
+    const auto &[column, line] = file.position();
     if (const auto _hash = hash(s); _hash > 0) {
       switch (_hash) {
-      case ::hash("ADD"):
-        return std::make_unique<Token::Add>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("AND"):
-        return std::make_unique<Token::And>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("NOT"):
-        return std::make_unique<Token::Not>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("RET"):
-        return std::make_unique<Token::Ret>(
-            s, file.position().line(), file.position().column(), file.name());
-#ifdef ADDONS
-      case ::hash("JMPT"):
-        return std::make_unique<Token::Jmpt>(
-            s, file.position().line(), file.position().column(), file.name());
-#endif
-      case ::hash("JMP"):
-        return std::make_unique<Token::Jmp>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("JSR"):
-        return std::make_unique<Token::Jsr>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("JSRR"):
-        return std::make_unique<Token::Jsrr>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("LD"):
-        return std::make_unique<Token::Ld>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("LEA"):
-        return std::make_unique<Token::Lea>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("LDI"):
-        return std::make_unique<Token::Ldi>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("LDR"):
-        return std::make_unique<Token::Ldr>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("ST"):
-        return std::make_unique<Token::St>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("STR"):
-        return std::make_unique<Token::Str>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("STI"):
-        return std::make_unique<Token::Sti>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("TRAP"):
-        return std::make_unique<Token::Trap>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("PUTS"):
-        return std::make_unique<Token::Puts>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("PUTSP"):
-        return std::make_unique<Token::Putsp>(
-            s, file.position().line(), file.position().column(), file.name());
-
-      case ::hash("PUTC"):
-        [[fallthrough]];
-      case ::hash("OUT"):
-        return std::make_unique<Token::Out>(
-            s, file.position().line(), file.position().column(), file.name());
-
-      case ::hash("GETC"):
-        return std::make_unique<Token::Getc>(
-            s, file.position().line(), file.position().column(), file.name());
-
-      case ::hash("IN"):
-        return std::make_unique<Token::In>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("HALT"):
-        return std::make_unique<Token::Halt>(
-            s, file.position().line(), file.position().column(), file.name());
-      case ::hash("RTI"):
-        return std::make_unique<Token::Rti>(
-            s, file.position().line(), file.position().column(), file.name());
-
-      case ::hash("BR"):
-        [[fallthrough]];
-      case ::hash("BRNZP"):
-        [[fallthrough]];
-      case ::hash("BRNPZ"):
-        [[fallthrough]];
-      case ::hash("BRZNP"):
-        [[fallthrough]];
-      case ::hash("BRZPN"):
-        [[fallthrough]];
-      case ::hash("BRPNZ"):
-        [[fallthrough]];
-      case ::hash("BRPZN"):
-        return std::make_unique<Token::Br>(
-            s, true, true, true, file.position().line(),
-            file.position().column(), file.name());
-
-      case ::hash("BRN"):
-        return std::make_unique<Token::Br>(
-            s, true, false, false, file.position().line(),
-            file.position().column(), file.name());
-      case ::hash("BRZ"):
-        return std::make_unique<Token::Br>(
-            s, false, true, false, file.position().line(),
-            file.position().column(), file.name());
-      case ::hash("BRP"):
-        return std::make_unique<Token::Br>(
-            s, false, false, true, file.position().line(),
-            file.position().column(), file.name());
-
-      case ::hash("BRNZ"):
-        [[fallthrough]];
-      case ::hash("BRZN"):
-        return std::make_unique<Token::Br>(
-            s, true, true, false, file.position().line(),
-            file.position().column(), file.name());
-
-      case ::hash("BRNP"):
-        [[fallthrough]];
-      case ::hash("BRPN"):
-        return std::make_unique<Token::Br>(
-            s, true, false, true, file.position().line(),
-            file.position().column(), file.name());
-
-      case ::hash("BRZP"):
-        [[fallthrough]];
-      case ::hash("BRPZ"):
-        return std::make_unique<Token::Br>(
-            s, false, true, true, file.position().line(),
-            file.position().column(), file.name());
-
       case ::hash("R0"):
         [[fallthrough]];
       case ::hash("R1"):
@@ -541,8 +403,106 @@ public:
       case ::hash("R6"):
         [[fallthrough]];
       case ::hash("R7"):
-        return std::make_unique<Token::Register>(
-            s, file.position().line(), file.position().column(), file.name());
+        return std::make_unique<Token::Register>(s, line, column, file.name());
+
+      case ::hash("ADD"):
+        return std::make_unique<Token::Add>(s, line, column, file.name());
+      case ::hash("AND"):
+        return std::make_unique<Token::And>(s, line, column, file.name());
+      case ::hash("LD"):
+        return std::make_unique<Token::Ld>(s, line, column, file.name());
+      case ::hash("NOT"):
+        return std::make_unique<Token::Not>(s, line, column, file.name());
+      case ::hash("RET"):
+        return std::make_unique<Token::Ret>(s, line, column, file.name());
+#ifdef ADDONS
+      case ::hash("JMPT"):
+        return std::make_unique<Token::Jmpt>(s, line, column, file.name());
+#endif
+      case ::hash("JMP"):
+        return std::make_unique<Token::Jmp>(s, line, column, file.name());
+      case ::hash("JSR"):
+        return std::make_unique<Token::Jsr>(s, line, column, file.name());
+      case ::hash("JSRR"):
+        return std::make_unique<Token::Jsrr>(s, line, column, file.name());
+      case ::hash("LEA"):
+        return std::make_unique<Token::Lea>(s, line, column, file.name());
+      case ::hash("LDI"):
+        return std::make_unique<Token::Ldi>(s, line, column, file.name());
+      case ::hash("LDR"):
+        return std::make_unique<Token::Ldr>(s, line, column, file.name());
+      case ::hash("ST"):
+        return std::make_unique<Token::St>(s, line, column, file.name());
+      case ::hash("STR"):
+        return std::make_unique<Token::Str>(s, line, column, file.name());
+      case ::hash("STI"):
+        return std::make_unique<Token::Sti>(s, line, column, file.name());
+      case ::hash("TRAP"):
+        return std::make_unique<Token::Trap>(s, line, column, file.name());
+      case ::hash("PUTS"):
+        return std::make_unique<Token::Puts>(s, line, column, file.name());
+      case ::hash("PUTSP"):
+        return std::make_unique<Token::Putsp>(s, line, column, file.name());
+
+      case ::hash("PUTC"):
+        [[fallthrough]];
+      case ::hash("OUT"):
+        return std::make_unique<Token::Out>(s, line, column, file.name());
+
+      case ::hash("GETC"):
+        return std::make_unique<Token::Getc>(s, line, column, file.name());
+
+      case ::hash("IN"):
+        return std::make_unique<Token::In>(s, line, column, file.name());
+      case ::hash("HALT"):
+        return std::make_unique<Token::Halt>(s, line, column, file.name());
+      case ::hash("RTI"):
+        return std::make_unique<Token::Rti>(s, line, column, file.name());
+
+      case ::hash("BR"):
+        [[fallthrough]];
+      case ::hash("BRNZP"):
+        [[fallthrough]];
+      case ::hash("BRNPZ"):
+        [[fallthrough]];
+      case ::hash("BRZNP"):
+        [[fallthrough]];
+      case ::hash("BRZPN"):
+        [[fallthrough]];
+      case ::hash("BRPNZ"):
+        [[fallthrough]];
+      case ::hash("BRPZN"):
+        return std::make_unique<Token::Br>(
+            s, true, true, true, line, column, file.name());
+
+      case ::hash("BRN"):
+        return std::make_unique<Token::Br>(
+            s, true, false, false, line, column, file.name());
+      case ::hash("BRZ"):
+        return std::make_unique<Token::Br>(
+            s, false, true, false, line, column, file.name());
+      case ::hash("BRP"):
+        return std::make_unique<Token::Br>(
+            s, false, false, true, line, column, file.name());
+
+      case ::hash("BRNZ"):
+        [[fallthrough]];
+      case ::hash("BRZN"):
+        return std::make_unique<Token::Br>(
+            s, true, true, false, line, column, file.name());
+
+      case ::hash("BRNP"):
+        [[fallthrough]];
+      case ::hash("BRPN"):
+        return std::make_unique<Token::Br>(
+            s, true, false, true, line, column, file.name());
+
+      case ::hash("BRZP"):
+        [[fallthrough]];
+      case ::hash("BRPZ"):
+        return std::make_unique<Token::Br>(
+            s, false, true, true, line, column, file.name());
+
       default:
         break;
       }
@@ -550,38 +510,32 @@ public:
 
 #ifdef ADDONS
     if (s.front() == '0' && isValidOctalLiteral(s)) {
-      return std::make_unique<Token::Octal>(
-          s, file.position().line(), file.position().column(), file.name());
+      return std::make_unique<Token::Octal>(s, line, column, file.name());
     }
 #endif
 
     if (isValidDecimalLiteral(s)) {
-      return std::make_unique<Token::Decimal>(
-          s, file.position().line(), file.position().column(), file.name());
+      return std::make_unique<Token::Decimal>(s, line, column, file.name());
     }
 
     if (isValidHexadecimalLiteral(s)) {
-      return std::make_unique<Token::Hexadecimal>(
-          s, file.position().line(), file.position().column(), file.name());
+      return std::make_unique<Token::Hexadecimal>(s, line, column, file.name());
     }
 
     if (isValidBinaryLiteral(s)) {
-      return std::make_unique<Token::Binary>(
-          s, file.position().line(), file.position().column(), file.name());
+      return std::make_unique<Token::Binary>(s, line, column, file.name());
     }
 
     if (isValidLabel(s)) {
-      return std::make_unique<Token::Label>(
-          s, file.position().line(), file.position().column(), file.name());
+      return std::make_unique<Token::Label>(s, line, column, file.name());
     }
 
     throwError(this, Diagnostics::Diagnostic(
                          std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                             file.position().column(), s.length(), file.line()),
+                             column, s.length(), file.line()),
                          fmt::format("Invalid token: {}", s), file.name(),
-                         file.position().line()));
-    return std::make_unique<Token::Token>(
-        s, file.position().line(), file.position().column(), file.name());
+                         line));
+    return std::make_unique<Token::Token>(s, line, column, file.name());
   }
 
   auto extraneous(char character) -> void {
@@ -625,8 +579,8 @@ public:
             return !(std::isalnum(c));
           }));
           if (token.size() > 0) {
-            auto &&t{tokenizeImmediate(token)};
-            lTokens.emplace_back(std::move(t));
+            auto &&tok{tokenizeImmediate(token)};
+            lTokens.emplace_back(std::move(tok));
           } else {
             throwError(this,
                        Diagnostics::Diagnostic(
@@ -667,8 +621,8 @@ public:
           if (-1u == end) {
 #ifdef ADDONS
             const std::string unterminatedLiteral{
-                fmt::format("Unterminated {} literal",
-                            next == '"' ? "String" : "Character")};
+                next == '"' ? "Unterminated String literal" :
+                              "Unterminated Character literal"};
 #else
             static const std::string unterminatedLiteral(
                 "Unterminated String literal");
@@ -736,7 +690,7 @@ public:
           line.skip_while([](auto &&) -> bool { return true; });
           break;
         case '#': {
-          token = line.substr(token_start, line.find_if([](auto &&c) {
+          token = line.substr(token_start, line.find_if([](auto c) {
             return !(std::isdigit(c) || '-' == c);
           }));
           if (isValidDecimalLiteral(token)) {

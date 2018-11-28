@@ -15,15 +15,16 @@
 #include "Tokenizer.hpp"
 
 namespace Lexer {
+
+bool file_exists(const std::string& file);
+
 class Lexer {
 public:
   Lexer() : mTokenizer(*this, mFile) {}
   explicit Lexer(File file, bool warnings_are_errors = false)
       : mFile(std::move(file)), fromFile(true),
         treatWarningsAsErrors(warnings_are_errors), mTokenizer(*this, mFile) {
-    if (const auto it =
-            std::find(openFiles.begin(), openFiles.end(), mFile.name());
-        it != openFiles.end()) {
+    if (file_exists(mFile.name())) {
       Notification::error_notifications << Diagnostics::Diagnostic(
           std::make_unique<Diagnostics::DiagnosticHighlighter>(0, 0,
                                                                std::string{}),
@@ -114,18 +115,18 @@ public:
                                Match(TokenType::END) | Match(TokenType::HALT) |
                                Match(TokenType::PUTS) | Match(TokenType::OUT) |
                                Match(TokenType::GETC) | Match(TokenType::IN) |
-                               Match(TokenType::PUTC)
+                               Match(TokenType::PUTC) | Match(TokenType::RTI)
 #ifdef KEEP_COMMENTS
                                | Match(TokenType::COMMENT)
 #endif
         ;
 
     for (idx = 0; idx < tokens.size(); ++idx) {
-      // DEBUG("Found token {}", tokens[idx]->getToken());
+      DEBUG("Found token {}", tokens[idx]->getToken());
       const auto &requirements = tokens[idx]->requirements();
 
       for (auto &&token : requirements.consume(tokens, idx, mFile)) {
-        // DEBUG("Consumed - {}", token->getToken());
+        DEBUG("Consumed - {}", token->getToken());
         tokens[idx]->addOperand(std::move(token));
       }
 
@@ -158,7 +159,9 @@ public:
 
 #ifdef ADDONS
     for (auto it = tokens.begin(); it != tokens.end();) {
+      DEBUG("Working on token: {}", (*it)->getToken());
       if ((*it)->tokenType() == TokenType::INCLUDE) {
+        DEBUG("Found this: {}", (*it)->operands().size());
         const auto &fileName = (*it)->operands().front()->getToken();
         Lexer lexer(File{fileName.substr(1, fileName.length() - 2)});
         lexer.lex();
@@ -236,7 +239,13 @@ private:
   bool mOkay{true};
   std::size_t errorCount{0};
   Tokenizer::Tokenizer mTokenizer;
-}; // namespace Lexer
+};
+
+bool file_exists(const std::string& file) {
+  const auto it =
+            std::find(Lexer::openFiles.begin(), Lexer::openFiles.end(), file);
+        return it != Lexer::openFiles.end();
+}
 
 template <> Lexer &Lexer::operator<<<std::string_view>(std::string_view s) {
   // DEBUG("Passed in line '{}'", s);

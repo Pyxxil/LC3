@@ -12,10 +12,10 @@ public:
       : Token(std::move(t), tLine, tColumn, tFile, Requirements()) {}
 
   Getc(const Getc &) = default;
-  Getc(Getc &&) noexcept = default;
+  Getc(Getc &&) = default;
 
   Getc &operator=(const Getc &) = default;
-  Getc &operator=(Getc &&) noexcept = default;
+  Getc &operator=(Getc &&) = default;
 
   TokenType tokenType() const final { return GETC; }
 

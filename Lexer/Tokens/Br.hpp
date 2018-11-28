@@ -15,10 +15,10 @@ public:
         N(n), Z(z), P(p) {}
 
   Br(const Br &) = default;
-  Br(Br &&) noexcept = default;
+  Br(Br &&) = default;
 
   Br &operator=(const Br &) = default;
-  Br &operator=(Br &&) noexcept = default;
+  Br &operator=(Br &&) = default;
 
   TokenType tokenType() const final { return BR; }
 
@@ -49,6 +49,13 @@ public:
                                   << 7) >>
              7) &
             0x1FF;
+      } else {
+        Notification::error_notifications << Diagnostics::Diagnostic(
+            std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                ops[1]->column(), ops[1]->getToken().length(), ""),
+            fmt::format("Undefined label '{}'", *(ops[1])), ops[1]->file(),
+            ops[1]->line());
+        return;
       }
     }
 

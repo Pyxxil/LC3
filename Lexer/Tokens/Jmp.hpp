@@ -13,10 +13,10 @@ public:
               Requirements(1, {Match(TokenType::REGISTER)})) {}
 
   Jmp(const Jmp &) = default;
-  Jmp(Jmp &&) noexcept = default;
+  Jmp(Jmp &&) = default;
 
   Jmp &operator=(const Jmp &) = default;
-  Jmp &operator=(Jmp &&) noexcept = default;
+  Jmp &operator=(Jmp &&) = default;
 
   TokenType tokenType() const final { return JMP; }
 
@@ -34,7 +34,7 @@ public:
 
     setAssembled(AssembledToken(
         bin, fmt::format("({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
-                         "JMP R{}",
+                         "JMP R{5:d}",
                          programCounter++, bin, line(),
                          sym == symbols.end() ? "" : sym->second.name(), width,
                          reg >> 6)));

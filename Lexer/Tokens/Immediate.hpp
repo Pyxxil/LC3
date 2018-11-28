@@ -12,10 +12,10 @@ public:
       : Token(std::move(t), tLine, tColumn, tFile) {}
 
   Immediate(const Immediate &) = default;
-  Immediate(Immediate &&) noexcept = default;
+  Immediate(Immediate &&) = default;
 
   Immediate &operator=(const Immediate &) = default;
-  Immediate &operator=(Immediate &&) noexcept = default;
+  Immediate &operator=(Immediate &&) = default;
 
   TokenType tokenType() const final { return IMMEDIATE; }
 

@@ -128,7 +128,8 @@ public:
 
     int retValue = 0;
 
-    for (auto &file : files) {
+    for (auto &&file : files) {
+      int tempRetValue = 0;
       Lexer lexer(File{file}, weShouldTreatWarningsAsErrors);
 
       lexer.lex();
@@ -146,6 +147,8 @@ public:
 
         warning_notifications.notify_all_and_clear();
 
+        std::vector<::Lexer::Token::AssembledToken> assembled;
+
         if (parser.isOkay()) {
           auto file_name = file.substr(0, file.find('.'));
           auto bin_file_name = file_name + ".bin";
@@ -157,7 +160,7 @@ public:
           auto bin_file = std::ofstream(bin_file_name);
           auto hex_file = std::ofstream(hex_file_name);
           auto lst_file = std::ofstream(lst_file_name);
-          auto obj_file = std::ofstream(obj_file_name, std::ios::binary);
+          auto obj_file = std::ofstream(obj_file_name, std::ofstream::binary);
           auto sym_file = std::ofstream(sym_file_name);
 
           auto &&tokens = parser.tokens();
@@ -168,8 +171,8 @@ public:
           // starting program counter
           (*(tokens.begin()))->assemble(program_counter, 0, symbols);
 
-          program_counter = static_cast<int16_t>(
-              ((*(tokens.begin()))->assembled().front().binary()));
+          auto &&[high, low] = (*tokens.begin())->assembled().front().binary();
+          program_counter = static_cast<int16_t>(high) << 8 | low;
 
           sym_file << fmt::format(
               "// Symbol table\n// Scope Level 0:\n//\t{: "
@@ -184,6 +187,7 @@ public:
           for (auto &token : tokens) {
             token->assemble(program_counter, 30, symbols);
           }
+
           for (auto &&token : tokens) {
             if (token->tokenType() == ::Lexer::LABEL) {
               // Labels don't get assembled
@@ -193,22 +197,40 @@ public:
               break;
             }
 
-            auto &&assembled = token->assembled();
+            auto &&tAssembled = token->assembled();
+            if (tAssembled.size() != token->memoryRequired()) {
+              DEBUG("Token that failed was {}", token->AST());
+              tempRetValue = 1;
+            } else {
+              assembled.insert(std::end(assembled),
+                               std::make_move_iterator(std::begin(tAssembled)),
+                               std::make_move_iterator(std::end(tAssembled)));
+            }
+          }
+
+          if (tempRetValue == 0) {
             for (auto &&word : assembled) {
-              DEBUG("Assembled as {}", word.lstStr());
-              bin_file << fmt::format("{:0>16b}\n", word.binary());
-              hex_file << fmt::format("{:0>4X}\n", word.binary());
+              auto &&[high, low] = word.binary();
+              bin_file << fmt::format("{:0>16b}\n",
+                                      static_cast<uint16_t>(high) << 8 | low);
+              hex_file << fmt::format("{:0>4X}\n",
+                                      static_cast<uint16_t>(high) << 8 | low);
               lst_file << word.lstStr() << '\n';
-              obj_file.put(word.binary());
+              obj_file.put(high).put(low);
             }
           }
         } else {
-          error_notifications.notify_all_and_clear();
+          tempRetValue = 1;
         }
       } else {
-        retValue = 1;
+        tempRetValue = 1;
+      }
+
+      if (tempRetValue != 0) {
         error_notifications.notify_all_and_clear();
       }
+
+      retValue += tempRetValue;
     }
     return retValue;
   }

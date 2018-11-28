@@ -14,10 +14,10 @@ public:
               Requirements(1, {Match(STRING)}, -1u)) {}
 
   Stringz(const Stringz &) = default;
-  Stringz(Stringz &&) noexcept = default;
+  Stringz(Stringz &&) = default;
 
   Stringz &operator=(const Stringz &) = default;
-  Stringz &operator=(Stringz &&) noexcept = default;
+  Stringz &operator=(Stringz &&) = default;
 
   TokenType tokenType() const final { return STRINGZ; }
 
@@ -44,7 +44,7 @@ public:
 
     for (auto idx = 1; idx < len; ++idx) {
       asAssembled.emplace_back(
-          static_cast<int16_t>(firstString[idx]),
+          static_cast<uint16_t>(firstString[idx]),
           fmt::format("({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
                       ".FILL 0x{5:04X}",
                       programCounter++, static_cast<int16_t>(firstString[idx]),
@@ -60,7 +60,7 @@ public:
     for (auto idx = 1; idx < ops.size(); ++idx) {
       for (auto chr : static_cast<String *>(ops[idx].get())->trueToken()) {
         asAssembled.emplace_back(
-            static_cast<int16_t>(chr),
+            static_cast<uint16_t>(chr),
             fmt::format("({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
                         ".FILL 0x{5:04X}",
                         programCounter++, static_cast<int16_t>(chr), line(),

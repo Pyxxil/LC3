@@ -32,25 +32,25 @@ struct Symbol {
         mLine(tLine) {}
 
   Symbol(const Symbol &) = default;
-  Symbol(Symbol &&) noexcept = default;
+  Symbol(Symbol &&) = default;
 
   Symbol &operator=(const Symbol &) = default;
-  Symbol &operator=(Symbol &&) noexcept = default;
+  Symbol &operator=(Symbol &&) = default;
 
   ~Symbol() = default;
 
-  const auto &name() const { return mName; }
-  const auto &file() const { return mFile; }
+  constexpr const auto &name() const { return mName; }
+  constexpr const auto &file() const { return mFile; }
 
-  auto address() const { return mAddress; }
-  auto column() const { return mColumn; }
-  auto line() const { return mLine; }
+  constexpr auto address() const { return mAddress; }
+  constexpr auto column() const { return mColumn; }
+  constexpr auto line() const { return mLine; }
 
-  std::string mName;
-  size_t mAddress;
-  std::string mFile;
-  size_t mColumn;
-  size_t mLine;
+  const std::string mName;
+  const size_t mAddress{};
+  const std::string mFile{};
+  const size_t mColumn{};
+  const size_t mLine{};
 };
 
 enum TokenType {
@@ -242,10 +242,10 @@ public:
   }
 
   Requirements(const Requirements &) = default;
-  Requirements(Requirements &&) noexcept = default;
+  Requirements(Requirements &&) = default;
 
   Requirements &operator=(const Requirements &) = default;
-  Requirements &operator=(Requirements &&) noexcept = default;
+  Requirements &operator=(Requirements &&) = default;
 
   ~Requirements() = default;
 
@@ -262,7 +262,7 @@ public:
 private:
   size_t min{};
   size_t max{};
-  std::vector<Match> arguments{};
+  const std::vector<Match> arguments{};
   mutable bool satisfied{false};
 };
 
@@ -278,7 +278,10 @@ public:
   ~AssembledToken() = default;
 
   const auto &lstStr() const { return mLSTStr; }
-  auto binary() const { return mBin; }
+  auto binary() const {
+    return std::make_pair(static_cast<char>((mBin >> 8) & 0xFF),
+                          static_cast<char>(mBin & 0xFF));
+  }
 
 private:
   uint16_t mBin;
@@ -293,10 +296,10 @@ public:
         mRequirements(std::move(r)) {}
 
   Token(const Token &) = default;
-  Token(Token &&) noexcept = default;
+  Token(Token &&) = default;
 
   Token &operator=(const Token &) = default;
-  Token &operator=(Token &&) noexcept = default;
+  Token &operator=(Token &&) = default;
 
   virtual ~Token() = default;
 
@@ -388,13 +391,13 @@ Requirements::consume(std::vector<std::unique_ptr<Token>> &tokens, size_t index,
                       const File &file) const {
   std::vector<std::unique_ptr<Token>> consumed;
   if (0 == min) {
-    // DEBUG("Trying to consume for a token which takes no operands", "");
+    DEBUG("Trying to consume for a token which takes no operands", "");
     satisfied = true;
     return consumed;
   }
 
   if (tokens.size() <= index + min) {
-    // DEBUG("Not enough tokens ({} > {})", min, tokens.size() - index - 1);
+    DEBUG("Not enough tokens ({} > {})", min, tokens.size() - index - 1);
     return consumed;
   }
 

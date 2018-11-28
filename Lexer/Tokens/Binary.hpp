@@ -30,10 +30,10 @@ public:
   }
 
   Binary(const Binary &) = default;
-  Binary(Binary &&) noexcept = default;
+  Binary(Binary &&) = default;
 
   Binary &operator=(const Binary &) = default;
-  Binary &operator=(Binary &&) noexcept = default;
+  Binary &operator=(Binary &&) = default;
 };
 } // namespace Token
 } // namespace Lexer

@@ -6,7 +6,7 @@
 
 namespace Lexer {
 
-class Position {
+struct Position {
 public:
   Position(size_t column = 0, size_t line = 0);
 
@@ -25,7 +25,6 @@ public:
   void setColumn(size_t column);
   void incLine();
 
-private:
   size_t mColumn;
   size_t mLine;
 };

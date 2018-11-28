@@ -13,10 +13,10 @@ public:
               Requirements(1, {Match(TokenType::REGISTER)})) {}
 
   Jsrr(const Jsrr &) = default;
-  Jsrr(Jsrr &&) noexcept = default;
+  Jsrr(Jsrr &&) = default;
 
   Jsrr &operator=(const Jsrr &) = default;
-  Jsrr &operator=(Jsrr &&) noexcept = default;
+  Jsrr &operator=(Jsrr &&) = default;
 
   TokenType tokenType() const final { return JSRR; }
 

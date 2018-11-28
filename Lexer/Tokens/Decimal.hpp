@@ -52,10 +52,10 @@ public:
   } // namespace Token
 
   Decimal(const Decimal &) = default;
-  Decimal(Decimal &&) noexcept = default;
+  Decimal(Decimal &&) = default;
 
   Decimal &operator=(const Decimal &) = default;
-  Decimal &operator=(Decimal &&) noexcept = default;
+  Decimal &operator=(Decimal &&) = default;
 }; // namespace Token
 } // namespace Token
 } // namespace Lexer

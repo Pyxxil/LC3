@@ -12,10 +12,10 @@ public:
       : Token(std::move(t), tLine, tColumn, tFile) {}
 
   Halt(const Halt &) = default;
-  Halt(Halt &&) noexcept = default;
+  Halt(Halt &&) = default;
 
   Halt &operator=(const Halt &) = default;
-  Halt &operator=(Halt &&) noexcept = default;
+  Halt &operator=(Halt &&) = default;
 
   TokenType tokenType() const final { return HALT; }
 

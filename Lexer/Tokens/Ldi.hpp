@@ -15,10 +15,10 @@ public:
                                    Match(TokenType::IMMEDIATE)})) {}
 
   Ldi(const Ldi &) = default;
-  Ldi(Ldi &&) noexcept = default;
+  Ldi(Ldi &&) = default;
 
   Ldi &operator=(const Ldi &) = default;
-  Ldi &operator=(Ldi &&) noexcept = default;
+  Ldi &operator=(Ldi &&) = default;
 
   TokenType tokenType() const final { return LDI; }
 
@@ -49,6 +49,13 @@ public:
                                   << 7) >>
              7) &
             0x1FF;
+      } else {
+        Notification::error_notifications << Diagnostics::Diagnostic(
+            std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                ops[1]->column(), ops[1]->getToken().length(), ""),
+            fmt::format("Undefined label '{}'", *(ops[1])), ops[1]->file(),
+            ops[1]->line());
+        return;
       }
     }
 

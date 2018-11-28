@@ -17,10 +17,10 @@ public:
                   2)) {}
 
   Blkw(const Blkw &) = default;
-  Blkw(Blkw &&) noexcept = default;
+  Blkw(Blkw &&) = default;
 
   Blkw &operator=(const Blkw &) = default;
-  Blkw &operator=(Blkw &&) noexcept = default;
+  Blkw &operator=(Blkw &&) = default;
 
   TokenType tokenType() const final { return BLKW; }
 
@@ -30,17 +30,25 @@ public:
 
     uint16_t bin = 0x0000;
 
+    std::map<std::string, Symbol>::const_iterator label;
+
     if (ops.size() > 1) {
       if (TokenType::IMMEDIATE == ops[1]->tokenType()) {
         bin = static_cast<Immediate *>(ops[1].get())->value();
       } else {
-        auto label =
-            std::find_if(symbols.begin(), symbols.end(),
-                         [&token = ops[1]->getToken()](const auto &sym) {
-                           return sym.second.name() == token;
-                         });
+        label = std::find_if(symbols.begin(), symbols.end(),
+                             [&token = ops[1]->getToken()](const auto &sym) {
+                               return sym.second.name() == token;
+                             });
         if (label != symbols.end()) {
           bin = label->second.address();
+        } else {
+          Notification::error_notifications << Diagnostics::Diagnostic(
+              std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                  ops[1]->column(), ops[1]->getToken().length(), ""),
+              fmt::format("Undefined label '{}'", *ops[1]), ops[1]->file(),
+              ops[1]->line());
+          return;
         }
       }
     }
@@ -53,10 +61,12 @@ public:
     auto value =
         ops.size() == 1
             ? "0x0000"
-            : TokenType::IMMEDIATE == ops[1]->tokenType()
-                  ? fmt::format("0x{:04X}",
-                                static_cast<Immediate *>(ops[1].get())->value())
-                  : ops[1]->getToken();
+            : fmt::format(
+                  "0x{:04X}",
+                  TokenType::IMMEDIATE == ops[1]->tokenType()
+                      ? (static_cast<Immediate *>(ops[1].get())->value() &
+                         0xFFFF)
+                      : label->second.address());
 
     setAssembled(AssembledToken(
         bin, fmt::format("({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "

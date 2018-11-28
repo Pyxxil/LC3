@@ -12,10 +12,10 @@ public:
       : Token(std::move(s), tLine, tColumn, tFile) {}
 
   Label(const Label &) = default;
-  Label(Label &&) noexcept = default;
+  Label(Label &&) = default;
 
   Label &operator=(const Label &) = default;
-  Label &operator=(Label &&) noexcept = default;
+  Label &operator=(Label &&) = default;
 
   TokenType tokenType() const final { return LABEL; }
 

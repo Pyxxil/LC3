@@ -15,10 +15,10 @@ public:
                                Match(TokenType::IMMEDIATE)})) {}
 
   Str(const Str &) = default;
-  Str(Str &&) noexcept = default;
+  Str(Str &&) = default;
 
   Str &operator=(const Str &) = default;
-  Str &operator=(Str &&) noexcept = default;
+  Str &operator=(Str &&) = default;
 
   TokenType tokenType() const final { return STR; }
 

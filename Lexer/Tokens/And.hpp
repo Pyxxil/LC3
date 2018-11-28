@@ -17,10 +17,10 @@ public:
                   3)) {}
 
   And(const And &) = default;
-  And(And &&) noexcept = default;
+  And(And &&) = default;
 
   And &operator=(const And &) = default;
-  And &operator=(And &&) noexcept = default;
+  And &operator=(And &&) = default;
 
   TokenType tokenType() const final { return AND; }
 

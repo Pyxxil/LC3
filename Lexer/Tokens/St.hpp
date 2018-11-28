@@ -15,10 +15,10 @@ public:
                                    Match(TokenType::IMMEDIATE)})) {}
 
   St(const St &) = default;
-  St(St &&) noexcept = default;
+  St(St &&) = default;
 
   St &operator=(const St &) = default;
-  St &operator=(St &&) noexcept = default;
+  St &operator=(St &&) = default;
 
   TokenType tokenType() const final { return ST; }
 
@@ -50,6 +50,13 @@ public:
                                   << 7) >>
              7) &
             0x1FF;
+      } else {
+        Notification::error_notifications << Diagnostics::Diagnostic(
+            std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                ops[1]->column(), ops[1]->getToken().length(), ""),
+            fmt::format("Undefined label '{}'", *(ops[1])), ops[1]->file(),
+            ops[1]->line());
+        return;
       }
     }
 

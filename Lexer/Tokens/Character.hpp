@@ -29,10 +29,10 @@ public:
   }
 
   Character(const Character &) = default;
-  Character(Character &&) noexcept = default;
+  Character(Character &&) = default;
 
   Character &operator=(const Character &) = default;
-  Character &operator=(Character &&) noexcept = default;
+  Character &operator=(Character &&) = default;
 
   const std::string &getToken() const override {
     if (character.empty()) {

@@ -11,10 +11,10 @@ public:
       : Token(std::move(t), tLine, tColumn, tFile) {}
 
   Putsp(const Putsp &) = default;
-  Putsp(Putsp &&) noexcept = default;
+  Putsp(Putsp &&) = default;
 
   Putsp &operator=(const Putsp &) = default;
-  Putsp &operator=(Putsp &&) noexcept = default;
+  Putsp &operator=(Putsp &&) = default;
 
   TokenType tokenType() const final { return PUTSP; }
 

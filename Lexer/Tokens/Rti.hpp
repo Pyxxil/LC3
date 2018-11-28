@@ -11,10 +11,10 @@ public:
       : Token(std::move(t), tLine, tColumn, tFile) {}
 
   Rti(const Rti &) = default;
-  Rti(Rti &&) noexcept = default;
+  Rti(Rti &&) = default;
 
   Rti &operator=(const Rti &) = default;
-  Rti &operator=(Rti &&) noexcept = default;
+  Rti &operator=(Rti &&) = default;
 
   TokenType tokenType() const final { return RTI; }
 

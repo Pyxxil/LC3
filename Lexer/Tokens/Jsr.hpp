@@ -14,10 +14,10 @@ public:
                                Match(TokenType::IMMEDIATE)})) {}
 
   Jsr(const Jsr &) = default;
-  Jsr(Jsr &&) noexcept = default;
+  Jsr(Jsr &&) = default;
 
   Jsr &operator=(const Jsr &) = default;
-  Jsr &operator=(Jsr &&) noexcept = default;
+  Jsr &operator=(Jsr &&) = default;
 
   TokenType tokenType() const final { return JSR; }
 
@@ -45,6 +45,13 @@ public:
                  << 5) >>
                 5) &
                0x7FF;
+      } else {
+        Notification::error_notifications << Diagnostics::Diagnostic(
+            std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                ops.front()->column(), ops.front()->getToken().length(), ""),
+            fmt::format("Undefined label '{}'", *(ops.front())),
+            ops.front()->file(), ops.front()->line());
+        return;
       }
     }
 

@@ -15,10 +15,10 @@ public:
                                    Match(TokenType::IMMEDIATE)})) {}
 
   Lea(const Lea &) = default;
-  Lea(Lea &&) noexcept = default;
+  Lea(Lea &&) = default;
 
   Lea &operator=(const Lea &) = default;
-  Lea &operator=(Lea &&) noexcept = default;
+  Lea &operator=(Lea &&) = default;
 
   TokenType tokenType() const final { return LEA; }
 
@@ -50,7 +50,12 @@ public:
              7) &
             0x1FF;
       } else {
-        DEBUG("Couldn't find label '{}'", ops[1]->getToken());
+        Notification::error_notifications << Diagnostics::Diagnostic(
+            std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                ops[1]->column(), ops[1]->getToken().length(), ""),
+            fmt::format("Undefined label '{}'", *(ops[1])), ops[1]->file(),
+            ops[1]->line());
+        return;
       }
     }
 
@@ -59,7 +64,7 @@ public:
                               return sym.second.address() == programCounter;
                             });
 
-// 3020
+    // 3020
     setAssembled(AssembledToken(
         bin,
         fmt::format(

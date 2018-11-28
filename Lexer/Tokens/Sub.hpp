@@ -19,10 +19,10 @@ public:
                            3)) {}
 
   Sub(const Sub &) = default;
-  Sub(Sub &&) noexcept = default;
+  Sub(Sub &&) = default;
 
   Sub &operator=(const Sub &) = default;
-  Sub &operator=(Sub &&) noexcept = default;
+  Sub &operator=(Sub &&) = default;
 
   TokenType tokenType() const final { return SUB; }
 

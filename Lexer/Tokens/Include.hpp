@@ -12,10 +12,10 @@ public:
               Requirements(1, {Match(TokenType::STRING)})) {}
 
   Include(const Include &) = default;
-  Include(Include &&) noexcept = default;
+  Include(Include &&) = default;
 
   Include &operator=(const Include &) = default;
-  Include &operator=(Include &&) noexcept = default;
+  Include &operator=(Include &&) = default;
 
   TokenType tokenType() const final { return INCLUDE; }
 

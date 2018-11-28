@@ -11,9 +11,8 @@ namespace Diagnostics {
 
 class DiagnosticHighlighter {
 public:
-  DiagnosticHighlighter(size_t tColumn, size_t tLength,
-                        const std::string &tContext)
-      : mContext(tContext), mColumn(tColumn), mLength(tLength) {
+  DiagnosticHighlighter(size_t tColumn, size_t tLength, std::string tContext)
+      : mContext(std::move(tContext)), mColumn(tColumn), mLength(tLength) {
     if (!mContext.empty()) {
       mHighlighter.push_back('^');
       if (length() > 0) {

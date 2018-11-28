@@ -13,10 +13,10 @@ public:
       : Token(std::move(t), tLine, tColumn, tFile, Requirements()) {}
 
   Comment(const Comment &) = default;
-  Comment(Comment &&) noexcept = default;
+  Comment(Comment &&) = default;
 
   Comment &operator=(const Comment &) = default;
-  Comment &operator=(Comment &&) noexcept = default;
+  Comment &operator=(Comment &&) = default;
 
   TokenType tokenType() const final { return COMMENT; }
 

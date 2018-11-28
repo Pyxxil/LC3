@@ -36,10 +36,10 @@ public:
   }
 
   Hexadecimal(const Hexadecimal &) = default;
-  Hexadecimal(Hexadecimal &&) noexcept = default;
+  Hexadecimal(Hexadecimal &&) = default;
 
   Hexadecimal &operator=(const Hexadecimal &) = default;
-  Hexadecimal &operator=(Hexadecimal &&) noexcept = default;
+  Hexadecimal &operator=(Hexadecimal &&) = default;
 };
 } // namespace Token
 } // namespace Lexer

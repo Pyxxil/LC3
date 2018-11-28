@@ -16,10 +16,10 @@ public:
                                    Match(TokenType::LABEL)})) {}
 
   Set(const Set &) = default;
-  Set(Set &&) noexcept = default;
+  Set(Set &&) = default;
 
   Set &operator=(const Set &) = default;
-  Set &operator=(Set &&) noexcept = default;
+  Set &operator=(Set &&) = default;
 
   TokenType tokenType() const final { return SET; }
 

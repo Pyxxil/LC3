@@ -15,10 +15,10 @@ public:
                                Match(TokenType::IMMEDIATE)})) {}
 
   Ldr(const Ldr &) = default;
-  Ldr(Ldr &&) noexcept = default;
+  Ldr(Ldr &&) = default;
 
   Ldr &operator=(const Ldr &) = default;
-  Ldr &operator=(Ldr &&) noexcept = default;
+  Ldr &operator=(Ldr &&) = default;
 
   TokenType tokenType() const final { return LDR; }
 

@@ -13,10 +13,10 @@ public:
         mReg(static_cast<size_t>(token[1] - 0x30)) {}
 
   Register(const Register &) = default;
-  Register(Register &&) noexcept = default;
+  Register(Register &&) = default;
 
   Register &operator=(const Register &) = default;
-  Register &operator=(Register &&) noexcept = default;
+  Register &operator=(Register &&) = default;
 
   TokenType tokenType() const final { return REGISTER; }
 

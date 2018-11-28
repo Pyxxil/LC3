@@ -15,10 +15,10 @@ public:
                   2)) {}
 
   Not(const Not &) = default;
-  Not(Not &&) noexcept = default;
+  Not(Not &&) = default;
 
   Not &operator=(const Not &) = default;
-  Not &operator=(Not &&) noexcept = default;
+  Not &operator=(Not &&) = default;
 
   TokenType tokenType() const final { return NOT; }
 

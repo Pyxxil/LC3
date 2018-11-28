@@ -25,10 +25,10 @@ public:
   }
 
   Octal(const Octal &) = default;
-  Octal(Octal &&) noexcept = default;
+  Octal(Octal &&) = default;
 
   Octal &operator=(const Octal &) = default;
-  Octal &operator=(Octal &&) noexcept = default;
+  Octal &operator=(Octal &&) = default;
 };
 #endif
 } // namespace Token

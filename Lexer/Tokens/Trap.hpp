@@ -12,10 +12,10 @@ public:
               Requirements(1, {Match(TokenType::IMMEDIATE)})) {}
 
   Trap(const Trap &) = default;
-  Trap(Trap &&) noexcept = default;
+  Trap(Trap &&) = default;
 
   Trap &operator=(const Trap &) = default;
-  Trap &operator=(Trap &&) noexcept = default;
+  Trap &operator=(Trap &&) = default;
 
   TokenType tokenType() const final { return TRAP; }
 

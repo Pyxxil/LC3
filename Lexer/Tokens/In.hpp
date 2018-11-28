@@ -12,10 +12,10 @@ public:
       : Token(std::move(t), tLine, tColumn, tFile) {}
 
   In(const In &) = default;
-  In(In &&) noexcept = default;
+  In(In &&) = default;
 
   In &operator=(const In &) = default;
-  In &operator=(In &&) noexcept = default;
+  In &operator=(In &&) = default;
 
   TokenType tokenType() const final { return IN; }
 

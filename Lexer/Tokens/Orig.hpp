@@ -13,10 +13,10 @@ public:
               Requirements(1, {Match(TokenType::IMMEDIATE)})) {}
 
   Orig(const Orig &) = default;
-  Orig(Orig &&) noexcept = default;
+  Orig(Orig &&) = default;
 
   Orig &operator=(const Orig &) = default;
-  Orig &operator=(Orig &&) noexcept = default;
+  Orig &operator=(Orig &&) = default;
 
   TokenType tokenType() const final { return ORIG; }
 

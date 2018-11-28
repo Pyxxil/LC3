@@ -23,10 +23,10 @@ public:
                   3)) {}
 
   Add(const Add &) = default;
-  Add(Add &&) noexcept = default;
+  Add(Add &&) = default;
 
   Add &operator=(const Add &) = default;
-  Add &operator=(Add &&) noexcept = default;
+  Add &operator=(Add &&) = default;
 
   TokenType tokenType() const final { return ADD; }
 

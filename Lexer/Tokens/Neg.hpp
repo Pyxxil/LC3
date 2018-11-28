@@ -14,10 +14,10 @@ public:
                   2)) {}
 
   Neg(const Neg &) = default;
-  Neg(Neg &&) noexcept = default;
+  Neg(Neg &&) = default;
 
   Neg &operator=(const Neg &) = default;
-  Neg &operator=(Neg &&) noexcept = default;
+  Neg &operator=(Neg &&) = default;
 
   TokenType tokenType() const final { return NEG; }
 

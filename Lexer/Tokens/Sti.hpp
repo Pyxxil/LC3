@@ -10,15 +10,15 @@ public:
   explicit Sti(std::string t, size_t tLine, size_t tColumn,
                const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile,
-              Requirements(3, {Match(TokenType::REGISTER),
+              Requirements(2, {Match(TokenType::REGISTER),
                                Match(TokenType::IMMEDIATE) |
                                    Match(TokenType::LABEL)})) {}
 
   Sti(const Sti &) = default;
-  Sti(Sti &&) noexcept = default;
+  Sti(Sti &&) = default;
 
   Sti &operator=(const Sti &) = default;
-  Sti &operator=(Sti &&) noexcept = default;
+  Sti &operator=(Sti &&) = default;
 
   TokenType tokenType() const final { return STI; }
 
@@ -49,6 +49,13 @@ public:
                                   << 7) >>
              7) &
             0x1FF;
+      } else {
+        Notification::error_notifications << Diagnostics::Diagnostic(
+            std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                ops[1]->column(), ops[1]->getToken().length(), ""),
+            fmt::format("Undefined label '{}'", *(ops[1])), ops[1]->file(),
+            ops[1]->line());
+        return;
       }
     }
 
