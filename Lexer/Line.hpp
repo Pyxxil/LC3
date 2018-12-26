@@ -10,7 +10,7 @@
 namespace Lexer {
 class Line {
 public:
-  explicit Line(std::string_view t_line) : m_line(t_line) {}
+  explicit Line(const std::string &t_line) : m_line(t_line) {}
 
   enum IGNORES {
     RESET = 0,
@@ -147,7 +147,7 @@ public:
   const auto &line() const { return m_line; }
 
 private:
-  std::string m_line{};
+  const std::string &m_line;
   size_t m_index{};
   size_t m_ignores{};
 

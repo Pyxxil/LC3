@@ -6,6 +6,7 @@
 #include "../Debug.hpp"
 
 #include "../Diagnostic.hpp"
+#include "Algorithm.hpp"
 #include "Line.hpp"
 #include "Token.hpp"
 #include "Tokens.hpp"
@@ -25,11 +26,11 @@ static constexpr size_t hashedLetters[] = {
     35401,  37039, 28697, 27791, 20201, 21523, 6449,  4813,
     16333,  13337, 3571,  5519,  26783, 71471, 68371, 104729};
 
-static inline constexpr char toUpper(char c) {
+static constexpr char toUpper(char c) {
   return (c >= 0x61 && c <= 0x7a) ? static_cast<char>(c ^ 0x20) : c;
 }
 
-static inline constexpr bool isAlpha(const size_t c) {
+static constexpr bool isAlpha(const size_t c) {
   return (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A);
 }
 
@@ -51,99 +52,124 @@ static constexpr size_t hash(const std::string_view &string) {
     return {};
   }
 
-  if (const size_t firstCharacter{static_cast<size_t>(toUpper(string.front()))};
-      firstCharacter != '.' && !isAlpha(firstCharacter)) {
+  const size_t firstCharacter{static_cast<size_t>(toUpper(string.front()))};
+
+  if (firstCharacter != '.' && !isAlpha(firstCharacter)) {
     // Basically, we don't really want something that's likely to be an
     // immediate value, or a label (less likely to be caught here, but may as
     // well try).
     return {};
-  } else {
-    size_t hashed{37};
-
-    for (const char character : string) {
-      const size_t as_hashed{
-          hashedLetters[(static_cast<size_t>(toUpper(character)) - 0x41u) &
-                        0x1F]};
-      hashed = (hashed * as_hashed) ^ (firstCharacter * as_hashed);
-    }
-
-    return hashed;
   }
+
+  size_t hashed{37};
+
+  for (auto character : string) {
+    const size_t as_hashed{
+        hashedLetters[(static_cast<size_t>(toUpper(character)) - 0x41u) &
+                      0x1F]};
+    hashed = (hashed * as_hashed) ^ (firstCharacter * as_hashed);
+  }
+
+  return hashed;
 }
 
-static bool isValidBinaryLiteral(const std::string_view &s) {
-  if (s.size() == 1) {
+/*! Checks whether a string contains a valid hexadecimal value
+ *  Valid hexadecimal values are of the form '0?[bB][01]+'
+ *  While the LC3 only supports 16 bit values, we accept larger ones here. This
+ *  is so that we can warn about the size of them later.
+ */
+static constexpr bool isValidBinaryLiteral(const std::string_view &s) {
+  if (s.length() == 1) {
+    // There isn't a valid binary literal with only one character (something
+    // like '0', or '1' will be picked up by either the octal or decimal
+    // choosers)
     return false;
   }
 
   if ('B' == toUpper(s.front())) {
-    return std::all_of(s.cbegin() + 1, s.cend(),
-                       [](auto &&c) { return '0' == c || '1' == c; });
+    return Algorithm::all(s.cbegin() + 1, s.cend(),
+                          [](auto &&c) { return '0' == c || '1' == c; });
   }
 
-  if (s.size() > 2 && 'B' == toUpper(s[1])) {
-    return std::all_of(s.cbegin() + 2, s.cend(),
-                       [](auto &&c) { return '0' == c || '1' == c; });
+  if (s.length() > 2 && 'B' == toUpper(s[1])) {
+    return Algorithm::all(s.cbegin() + 2, s.cend(),
+                          [](auto &&c) { return '0' == c || '1' == c; });
   }
 
   return false;
 }
 
-static bool isValidHexadecimalLiteral(const std::string_view &s) {
+/*! Checks whether a string contains a valid hexadecimal value
+ *  Valid hexadecimal values are of the form '0?[xX]-?[\da-fA-F]+'
+ *  While the LC3 only supports 16 bit values, we accept larger ones here. This
+ *  is so that we can warn about the size of them later.
+ */
+static constexpr bool isValidHexadecimalLiteral(const std::string_view &s) {
   if (s.length() == 1) {
+    // A Hexadecimal value with a single character is invalid (if it's a value,
+    // it'll be caught elsewhere).
+    return false;
+  }
+
+  if (s.length() == 2 && !std::isxdigit(s[1])) {
+    // Something along the lines of 'X-' or '0X' are not valid
+    return false;
+  }
+
+  if (s.length() == 3 && !std::isxdigit(s[2])) {
+    // Something like '0x-' is an invalid hex value
     return false;
   }
 
   if ('X' == toUpper(s.front())) {
-    if ('-' == s[1]) {
-      if (s.length() == 2) {
-        return false;
-      }
-      return std::all_of(s.cbegin() + 2, s.cend(), ::isxdigit);
-    }
-    return std::all_of(s.cbegin() + 1, s.cend(), ::isxdigit);
+    const size_t offset = '-' == s[1] ? 2 : 1;
+    return Algorithm::all(s.cbegin() + offset, s.cend(), ::isxdigit);
   }
 
   if (s.length() > 2 && 'X' == toUpper(s[1])) {
-    if ('-' == s[2]) {
-      if (s.length() == 3) {
-        return false;
-      }
-      return std::all_of(s.cbegin() + 3, s.cend(), ::isxdigit);
-    }
-    return std::all_of(s.cbegin() + 2, s.cend(), ::isxdigit);
+    const size_t offset = '-' == s[2] ? 3 : 2;
+    return Algorithm::all(s.cbegin() + offset, s.cend(), ::isxdigit);
   }
 
   return false;
 }
 
-static inline bool isValidOctalLiteral(const std::string_view &s) {
-  return std::all_of(s.cbegin(), s.cend(),
-                     [](auto &&c) { return c <= 0x37 && c >= 0x30; });
+static constexpr bool isValidOctalLiteral(const std::string_view &s) {
+  return Algorithm::all(s.cbegin(), s.cend(),
+                        [](auto c) { return c <= 0x37 && c >= 0x30; });
 }
 
-static inline bool isValidDecimalLiteral(const std::string_view &s) {
-  size_t offset{0};
-  if ('#' == s.front()) {
-    if (s.length() < 2) {
+/*! Checks whether a string contains a valid decimal value
+ *  Valid decimal values are of the form '((-?#?)|(#?-?))\d+'
+ *  While the LC3 only supports 16 bit values, we accept larger ones here. This
+ *  is so that we can warn about the size of them later.
+ */
+static constexpr bool isValidDecimalLiteral(const std::string_view &s) {
+  if (s.length() == 1 && !std::isdigit(s.front())) {
+    // Anything that's of length 1 that doesn't have a digit as the only
+    // character is invalid
+    return false;
+  } else if (s.length() == 2) {
+    if (('#' == s.front() || '-' == s.front()) && !std::isdigit(s[1])) {
+      // Anything without a digit in the second position but the length is 2
+      // characters is invalid.
       return false;
-    } else if (s[1] == '-') {
-      if (s.length() < 3) {
-        return false;
-      }
-      offset = 2;
-    } else {
-      offset = 1;
     }
-  } else if ('-' == s.front()) {
-    offset++;
   }
-  return std::all_of(s.cbegin() + offset, s.cend(), ::isdigit);
+
+  const size_t offset = std::isdigit(s.front())
+                            ? 0
+                            : (('-' == s.front() && '#' == s[1]) ||
+                               ('#' == s.front() && '-' == s[1]))
+                                  ? 2
+                                  : 1;
+  return Algorithm::all(s.cbegin() + offset, s.cend(), ::isdigit);
 }
 
-static bool isValidLabel(const std::string_view &s) {
-  return std::all_of('.' == s.front() ? s.cbegin() + 1 : s.cbegin(), s.cend(),
-                     [](auto &&c) { return std::isalnum(c) || '_' == c; });
+static constexpr bool isValidLabel(const std::string_view &s) {
+  return Algorithm::all(s.cbegin() + static_cast<size_t>(s.front() == '.'),
+                        s.cend(),
+                        [](auto c) { return std::isalnum(c) || c == '_'; });
 }
 
 namespace Lexer {
@@ -161,7 +187,7 @@ public:
     case '\'':
       break;
     case '0':
-      if (s.size() > 1) {
+      if (s.length() > 1) {
         if ('X' == toUpper(s[1]) && isValidHexadecimalLiteral(s)) {
           auto hex{std::make_unique<Token::Hexadecimal>(
               s, file.position().line(), file.position().column(), file.name(),
@@ -201,6 +227,7 @@ public:
           }
           return std::move(bin);
         }
+
 #ifdef ADDONS
         if (isValidOctalLiteral(s)) {
           auto oct{std::make_unique<Token::Octal>(s, file.position().line(),
@@ -222,6 +249,7 @@ public:
           return std::move(oct);
         }
 #endif
+
         throwError(this,
                    Diagnostics::Diagnostic(
                        std::make_unique<Diagnostics::DiagnosticHighlighter>(
@@ -250,7 +278,6 @@ public:
         }
         return std::move(bin);
       } else {
-        // DEBUG("Expected Binary literal, but found {}", s);
         throwError(this,
                    Diagnostics::Diagnostic(
                        std::make_unique<Diagnostics::DiagnosticHighlighter>(
@@ -261,7 +288,6 @@ public:
       }
       break;
     case 'X':
-      DEBUG("Found potential hex value {}", s);
       if (isValidHexadecimalLiteral(s)) {
         auto hex{std::make_unique<Token::Hexadecimal>(s, file.position().line(),
                                                       file.position().column(),
@@ -472,36 +498,36 @@ public:
       case ::hash("BRPNZ"):
         [[fallthrough]];
       case ::hash("BRPZN"):
-        return std::make_unique<Token::Br>(
-            s, true, true, true, line, column, file.name());
+        return std::make_unique<Token::Br>(s, true, true, true, line, column,
+                                           file.name());
 
       case ::hash("BRN"):
-        return std::make_unique<Token::Br>(
-            s, true, false, false, line, column, file.name());
+        return std::make_unique<Token::Br>(s, true, false, false, line, column,
+                                           file.name());
       case ::hash("BRZ"):
-        return std::make_unique<Token::Br>(
-            s, false, true, false, line, column, file.name());
+        return std::make_unique<Token::Br>(s, false, true, false, line, column,
+                                           file.name());
       case ::hash("BRP"):
-        return std::make_unique<Token::Br>(
-            s, false, false, true, line, column, file.name());
+        return std::make_unique<Token::Br>(s, false, false, true, line, column,
+                                           file.name());
 
       case ::hash("BRNZ"):
         [[fallthrough]];
       case ::hash("BRZN"):
-        return std::make_unique<Token::Br>(
-            s, true, true, false, line, column, file.name());
+        return std::make_unique<Token::Br>(s, true, true, false, line, column,
+                                           file.name());
 
       case ::hash("BRNP"):
         [[fallthrough]];
       case ::hash("BRPN"):
-        return std::make_unique<Token::Br>(
-            s, true, false, true, line, column, file.name());
+        return std::make_unique<Token::Br>(s, true, false, true, line, column,
+                                           file.name());
 
       case ::hash("BRZP"):
         [[fallthrough]];
       case ::hash("BRPZ"):
-        return std::make_unique<Token::Br>(
-            s, false, true, true, line, column, file.name());
+        return std::make_unique<Token::Br>(s, false, true, true, line, column,
+                                           file.name());
 
       default:
         break;
@@ -509,7 +535,7 @@ public:
     }
 
 #ifdef ADDONS
-    if (s.front() == '0' && isValidOctalLiteral(s)) {
+    if ('0' == s.front() && isValidOctalLiteral(s)) {
       return std::make_unique<Token::Octal>(s, line, column, file.name());
     }
 #endif
@@ -530,11 +556,11 @@ public:
       return std::make_unique<Token::Label>(s, line, column, file.name());
     }
 
-    throwError(this, Diagnostics::Diagnostic(
-                         std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                             column, s.length(), file.line()),
-                         fmt::format("Invalid token: {}", s), file.name(),
-                         line));
+    throwError(this,
+               Diagnostics::Diagnostic(
+                   std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                       column, s.length(), file.line()),
+                   fmt::format("Invalid token: {}", s), file.name(), line));
     return std::make_unique<Token::Token>(s, line, column, file.name());
   }
 
@@ -621,8 +647,8 @@ public:
           if (-1u == end) {
 #ifdef ADDONS
             const std::string unterminatedLiteral{
-                next == '"' ? "Unterminated String literal" :
-                              "Unterminated Character literal"};
+                next == '"' ? "Unterminated String literal"
+                            : "Unterminated Character literal"};
 #else
             static const std::string unterminatedLiteral(
                 "Unterminated String literal");

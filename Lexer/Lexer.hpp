@@ -16,7 +16,7 @@
 
 namespace Lexer {
 
-bool file_exists(const std::string& file);
+bool file_exists(const std::string &file);
 
 class Lexer {
 public:
@@ -241,15 +241,15 @@ private:
   Tokenizer::Tokenizer mTokenizer;
 };
 
-bool file_exists(const std::string& file) {
+bool file_exists(const std::string &file) {
   const auto it =
-            std::find(Lexer::openFiles.begin(), Lexer::openFiles.end(), file);
-        return it != Lexer::openFiles.end();
+      std::find(Lexer::openFiles.begin(), Lexer::openFiles.end(), file);
+  return it != Lexer::openFiles.end();
 }
 
 template <> Lexer &Lexer::operator<<<std::string_view>(std::string_view s) {
   // DEBUG("Passed in line '{}'", s);
-  auto &&l_tokens = mTokenizer.tokenizeLine(Line(s));
+  auto &&l_tokens = mTokenizer.tokenizeLine(Line(std::string(s)));
   for (auto &&token : l_tokens) {
     tokens.emplace_back(std::move(token));
   }

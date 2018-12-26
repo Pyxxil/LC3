@@ -150,12 +150,12 @@ public:
         std::vector<::Lexer::Token::AssembledToken> assembled;
 
         if (parser.isOkay()) {
-          auto file_name = file.substr(0, file.find('.'));
-          auto bin_file_name = file_name + ".bin";
-          auto hex_file_name = file_name + ".hex";
-          auto lst_file_name = file_name + ".lst";
-          auto obj_file_name = file_name + ".obj";
-          auto sym_file_name = file_name + ".sym";
+          const auto file_name = file.substr(0, file.rfind('.'));
+          const auto bin_file_name = file_name + ".bin";
+          const auto hex_file_name = file_name + ".hex";
+          const auto lst_file_name = file_name + ".lst";
+          const auto obj_file_name = file_name + ".obj";
+          const auto sym_file_name = file_name + ".sym";
 
           auto bin_file = std::ofstream(bin_file_name);
           auto hex_file = std::ofstream(hex_file_name);
