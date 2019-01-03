@@ -34,6 +34,16 @@ static constexpr bool isAlpha(const size_t c) {
   return (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A);
 }
 
+static constexpr bool isDigit(char c) { return c >= 0x30 && c <= 0x39; }
+
+static constexpr bool isBinDigit(char c) { return c == 0x30 || c == 0x31; }
+
+static constexpr bool isOctDigit(char c) { return c >= 0x30 && c <= 0x37; }
+
+static constexpr bool isHexDigit(char c) {
+  return isDigit(c) || (c >= 0x61 && c <= 0x66) || (c >= 0x41 && c <= 0x46);
+}
+
 /*! Create a hash from a string.
  *
  * It should be relatively safe in regards to repeat hashes, as it reduces the
@@ -86,17 +96,36 @@ static constexpr bool isValidBinaryLiteral(const std::string_view &s) {
     return false;
   }
 
-  if ('B' == toUpper(s.front())) {
-    return Algorithm::all(s.cbegin() + 1, s.cend(),
-                          [](auto &&c) { return '0' == c || '1' == c; });
+  if (s.length() == 2 && !isBinDigit(s[1])) {
+    // Something along the lines of 'B-' or '0B' are not valid
+    return false;
   }
 
-  if (s.length() > 2 && 'B' == toUpper(s[1])) {
-    return Algorithm::all(s.cbegin() + 2, s.cend(),
-                          [](auto &&c) { return '0' == c || '1' == c; });
+  if (s.length() == 3 && !isBinDigit(s[2])) {
+    // Something like '0x-' is an invalid hex value
+    return false;
   }
 
-  return false;
+  auto begin = s.cbegin();
+  const bool negativeFirst = '-' == *begin;
+
+  if (negativeFirst) {
+    begin++;
+  }
+
+  if ('0' == *begin) {
+    begin++;
+  }
+
+  if ('B' == toUpper(*begin)) {
+    begin++;
+  }
+
+  if (!negativeFirst && '-' == *begin) {
+    begin++;
+  }
+
+  return Algorithm::all(begin, s.cend(), isBinDigit);
 }
 
 /*! Checks whether a string contains a valid hexadecimal value
@@ -111,32 +140,40 @@ static constexpr bool isValidHexadecimalLiteral(const std::string_view &s) {
     return false;
   }
 
-  if (s.length() == 2 && !std::isxdigit(s[1])) {
+  if (s.length() == 2 && !isHexDigit(s[1])) {
     // Something along the lines of 'X-' or '0X' are not valid
     return false;
   }
 
-  if (s.length() == 3 && !std::isxdigit(s[2])) {
+  if (s.length() == 3 && !isHexDigit(s[2])) {
     // Something like '0x-' is an invalid hex value
     return false;
   }
 
-  if ('X' == toUpper(s.front())) {
-    const size_t offset = '-' == s[1] ? 2 : 1;
-    return Algorithm::all(s.cbegin() + offset, s.cend(), ::isxdigit);
+  auto begin = s.cbegin();
+  const bool negativeFirst = '-' == *begin;
+
+  if (negativeFirst) {
+    begin++;
   }
 
-  if (s.length() > 2 && 'X' == toUpper(s[1])) {
-    const size_t offset = '-' == s[2] ? 3 : 2;
-    return Algorithm::all(s.cbegin() + offset, s.cend(), ::isxdigit);
+  if ('0' == *begin) {
+    begin++;
   }
 
-  return false;
+  if ('X' == toUpper(*begin)) {
+    begin++;
+  }
+
+  if (!negativeFirst && '-' == *begin) {
+    begin++;
+  }
+
+  return Algorithm::all(begin, s.cend(), isHexDigit);
 }
 
 static constexpr bool isValidOctalLiteral(const std::string_view &s) {
-  return Algorithm::all(s.cbegin(), s.cend(),
-                        [](auto c) { return c <= 0x37 && c >= 0x30; });
+  return Algorithm::all(s.cbegin(), s.cend(), isOctDigit);
 }
 
 /*! Checks whether a string contains a valid decimal value
@@ -145,25 +182,34 @@ static constexpr bool isValidOctalLiteral(const std::string_view &s) {
  *  is so that we can warn about the size of them later.
  */
 static constexpr bool isValidDecimalLiteral(const std::string_view &s) {
-  if (s.length() == 1 && !std::isdigit(s.front())) {
+  if (s.length() == 1 && !isDigit(s.front())) {
     // Anything that's of length 1 that doesn't have a digit as the only
     // character is invalid
     return false;
   } else if (s.length() == 2) {
-    if (('#' == s.front() || '-' == s.front()) && !std::isdigit(s[1])) {
+    if (('#' == s.front() || '-' == s.front()) && !isDigit(s[1])) {
       // Anything without a digit in the second position but the length is 2
       // characters is invalid.
       return false;
     }
   }
 
-  const size_t offset = std::isdigit(s.front())
-                            ? 0
-                            : (('-' == s.front() && '#' == s[1]) ||
-                               ('#' == s.front() && '-' == s[1]))
-                                  ? 2
-                                  : 1;
-  return Algorithm::all(s.cbegin() + offset, s.cend(), ::isdigit);
+  auto begin = s.cbegin();
+  const bool negativeFirst = '-' == *begin;
+
+  if (negativeFirst) {
+    begin++;
+  }
+
+  if ('#' == *begin) {
+    begin++;
+  }
+
+  if (!negativeFirst && '-' == *begin) {
+    begin++;
+  }
+
+  return Algorithm::all(begin, s.cend(), isDigit);
 }
 
 static constexpr bool isValidLabel(const std::string_view &s) {
@@ -544,12 +590,15 @@ public:
       return std::make_unique<Token::Decimal>(s, line, column, file.name());
     }
 
-    if (isValidHexadecimalLiteral(s)) {
-      return std::make_unique<Token::Hexadecimal>(s, line, column, file.name());
-    }
-
+    // Due to how immediate literals are processed, this needs to occur before
+    // the hex check, as otherwise it'll be treated as a valid hex digit (and
+    // quite possibly seen as too big)
     if (isValidBinaryLiteral(s)) {
       return std::make_unique<Token::Binary>(s, line, column, file.name());
+    }
+
+    if (isValidHexadecimalLiteral(s)) {
+      return std::make_unique<Token::Hexadecimal>(s, line, column, file.name());
     }
 
     if (isValidLabel(s)) {
@@ -717,7 +766,7 @@ public:
           break;
         case '#': {
           token = line.substr(token_start, line.find_if([](auto c) {
-            return !(std::isdigit(c) || '-' == c);
+            return !(isDigit(c) || '-' == c);
           }));
           if (isValidDecimalLiteral(token)) {
             auto &&decimal{std::make_unique<Token::Decimal>(

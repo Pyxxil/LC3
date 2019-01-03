@@ -36,6 +36,7 @@ public:
               token->line());
           break;
         }
+
         for (auto &&[_, symbol] : mSymbols) {
           if (symbol.address() == currentAddress) {
             Notification::error_notifications << Diagnostics::Diagnostic(
@@ -101,7 +102,7 @@ public:
                   token->column(), token->getToken().length(), std::string{}),
               "Extra .END directive found.", token->file(), token->line());
         } else {
-          word memoryRequired = token->memoryRequired();
+          const word memoryRequired = token->memoryRequired();
           if (memoryRequired == -1) {
             error();
           } else if (memoryRequired > 0) {
