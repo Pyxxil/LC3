@@ -97,12 +97,12 @@ static constexpr bool isValidBinaryLiteral(const std::string_view &s) {
   }
 
   if (s.length() == 2 && !isBinDigit(s[1])) {
-    // Something along the lines of 'B-' or '0B' are not valid
+    // Something along the lines of 'B-' or '0B' is not valid
     return false;
   }
 
   if (s.length() == 3 && !isBinDigit(s[2])) {
-    // Something like '0x-' is an invalid hex value
+    // Something like '0b-' is an invalid binary value
     return false;
   }
 
