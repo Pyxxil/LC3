@@ -20,27 +20,28 @@ extern void throwError(Lexer::Tokenizer::Tokenizer *, Diagnostics::Diagnostic);
 extern void throwWarning(Lexer::Tokenizer::Tokenizer *,
                          Diagnostics::Diagnostic);
 
-static constexpr size_t hashedLetters[] = {
+namespace {
+constexpr size_t hashedLetters[] = {
     100363, 99989, 97711, 97151, 92311, 80147, 82279, 72997,
     66457,  65719, 70957, 50262, 48407, 51151, 41047, 39371,
     35401,  37039, 28697, 27791, 20201, 21523, 6449,  4813,
     16333,  13337, 3571,  5519,  26783, 71471, 68371, 104729};
 
-static constexpr char toUpper(char c) {
+constexpr char toUpper(char c) {
   return (c >= 0x61 && c <= 0x7a) ? static_cast<char>(c ^ 0x20) : c;
 }
 
-static constexpr bool isAlpha(const size_t c) {
+constexpr bool isAlpha(const size_t c) {
   return (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A);
 }
 
-static constexpr bool isDigit(char c) { return c >= 0x30 && c <= 0x39; }
+constexpr bool isDigit(char c) { return c >= 0x30 && c <= 0x39; }
 
-static constexpr bool isBinDigit(char c) { return c == 0x30 || c == 0x31; }
+constexpr bool isBinDigit(char c) { return c == 0x30 || c == 0x31; }
 
-static constexpr bool isOctDigit(char c) { return c >= 0x30 && c <= 0x37; }
+constexpr bool isOctDigit(char c) { return c >= 0x30 && c <= 0x37; }
 
-static constexpr bool isHexDigit(char c) {
+constexpr bool isHexDigit(char c) {
   return isDigit(c) || (c >= 0x61 && c <= 0x66) || (c >= 0x41 && c <= 0x46);
 }
 
@@ -55,7 +56,7 @@ static constexpr bool isHexDigit(char c) {
  *
  * @return The hash of the string
  */
-static constexpr size_t hash(const std::string_view &string) {
+constexpr size_t hash(const std::string_view &string) {
   if (string.length() > 8 || string.length() < 2) {
     // There are no registers, directives, or instructions which are longer than
     // 8 characters, or less than 2, so this string isn't one of them.
@@ -88,7 +89,7 @@ static constexpr size_t hash(const std::string_view &string) {
  *  While the LC3 only supports 16 bit values, we accept larger ones here. This
  *  is so that we can warn about the size of them later.
  */
-static constexpr bool isValidBinaryLiteral(const std::string_view &s) {
+constexpr bool isValidBinaryLiteral(const std::string_view &s) {
   if (s.length() == 1) {
     // There isn't a valid binary literal with only one character (something
     // like '0', or '1' will be picked up by either the octal or decimal
@@ -133,7 +134,7 @@ static constexpr bool isValidBinaryLiteral(const std::string_view &s) {
  *  While the LC3 only supports 16 bit values, we accept larger ones here. This
  *  is so that we can warn about the size of them later.
  */
-static constexpr bool isValidHexadecimalLiteral(const std::string_view &s) {
+constexpr bool isValidHexadecimalLiteral(const std::string_view &s) {
   if (s.length() == 1) {
     // A Hexadecimal value with a single character is invalid (if it's a value,
     // it'll be caught elsewhere).
@@ -172,7 +173,7 @@ static constexpr bool isValidHexadecimalLiteral(const std::string_view &s) {
   return Algorithm::all(begin, s.cend(), isHexDigit);
 }
 
-static constexpr bool isValidOctalLiteral(const std::string_view &s) {
+constexpr bool isValidOctalLiteral(const std::string_view &s) {
   return Algorithm::all(s.cbegin(), s.cend(), isOctDigit);
 }
 
@@ -181,7 +182,7 @@ static constexpr bool isValidOctalLiteral(const std::string_view &s) {
  *  While the LC3 only supports 16 bit values, we accept larger ones here. This
  *  is so that we can warn about the size of them later.
  */
-static constexpr bool isValidDecimalLiteral(const std::string_view &s) {
+constexpr bool isValidDecimalLiteral(const std::string_view &s) {
   if (s.length() == 1 && !isDigit(s.front())) {
     // Anything that's of length 1 that doesn't have a digit as the only
     // character is invalid
@@ -212,11 +213,12 @@ static constexpr bool isValidDecimalLiteral(const std::string_view &s) {
   return Algorithm::all(begin, s.cend(), isDigit);
 }
 
-static constexpr bool isValidLabel(const std::string_view &s) {
+constexpr bool isValidLabel(const std::string_view &s) {
   return Algorithm::all(s.cbegin() + static_cast<size_t>(s.front() == '.'),
                         s.cend(),
                         [](auto c) { return std::isalnum(c) || c == '_'; });
 }
+} // namespace
 
 namespace Lexer {
 class Lexer;
