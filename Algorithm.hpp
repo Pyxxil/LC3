@@ -1,6 +1,8 @@
 #ifndef ALGORITHM_HPP
 #define ALGORITHM_HPP
 
+#include <iterator>
+
 namespace Algorithm {
 
 template <class InputIterator, class Function>
@@ -25,11 +27,27 @@ constexpr bool all(InputIterator first, InputIterator last, Function f) {
   return true;
 }
 
-template <class InputItertor, class T>
-constexpr T max(InputItertor first, InputItertor last) {
-  T _max{*first};
+template <typename T> struct greater_than {
+  constexpr greater_than(T next, T prev) : n(next), p(prev) {}
+  constexpr bool operator()() { return n > p; }
+
+  const T n, p;
+};
+
+template <typename T> struct less_than {
+  constexpr less_than(T next, T prev) : n(next), p(prev) {}
+  constexpr bool operator()() { return n < p; }
+
+  const T n, p;
+};
+
+template <class InputIterator,
+          class Comp = greater_than<
+              typename std::iterator_traits<InputIterator>::value_type>>
+constexpr auto max(InputIterator first, InputIterator last) {
+  auto _max{*first};
   for (; ++first != last;) {
-    if (*first > _max) {
+    if (Comp(*first, _max)()) {
       _max = *first;
     }
   }
@@ -37,11 +55,37 @@ constexpr T max(InputItertor first, InputItertor last) {
   return _max;
 }
 
-template <class InputItertor>
-constexpr auto min(InputItertor first, InputItertor last) {
+template <class InputIterator, class Comp>
+constexpr auto max(InputIterator first, InputIterator last, Comp compare) {
+  auto _max{*first};
+  for (; ++first != last;) {
+    if (compare(*first, _max)) {
+      _max = *first;
+    }
+  }
+
+  return _max;
+}
+
+template <class InputIterator,
+          class Comp = less_than<
+              typename std::iterator_traits<InputIterator>::value_type>>
+constexpr auto min(InputIterator first, InputIterator last) {
   auto _min{*first};
   for (; ++first != last;) {
-    if (*first < _min) {
+    if (Comp(*first, _min)()) {
+      _min = *first;
+    }
+  }
+
+  return _min;
+}
+
+template <class InputIterator, class Comp>
+constexpr auto min(InputIterator first, InputIterator last, Comp compare) {
+  auto _min{*first};
+  for (; ++first != last;) {
+    if (compare(*first, _min)) {
       _min = *first;
     }
   }
