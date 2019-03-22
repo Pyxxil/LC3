@@ -140,7 +140,7 @@ public:
 
       warning_notifications.notify_all_and_clear();
 
-      if (lexer.isOkay()) {
+      if (lexer.is_okay()) {
         Parser parser(std::move(lexer.tokens));
 
         parser.parse();
@@ -149,7 +149,7 @@ public:
 
         std::vector<::Lexer::Token::AssembledToken> assembled;
 
-        if (parser.isOkay()) {
+        if (parser.is_okay()) {
           const auto file_name = file.substr(0, file.rfind('.'));
           const auto bin_file_name = file_name + ".bin";
           const auto hex_file_name = file_name + ".hex";
@@ -189,22 +189,22 @@ public:
           }
 
           for (auto &&token : tokens) {
-            if (token->tokenType() == ::Lexer::LABEL) {
+            if (token->token_type() == ::Lexer::LABEL) {
               // Labels don't get assembled
               continue;
-            } else if (token->tokenType() == ::Lexer::END) {
+            } else if (token->token_type() == ::Lexer::END) {
               // Nor does the .END
               break;
             }
 
-            auto &&tAssembled = token->assembled();
-            if (tAssembled.size() != token->memoryRequired()) {
+            auto &&t_assembled = token->assembled();
+            if (t_assembled.size() != token->memory_required()) {
               DEBUG("Token that failed was {}", token->AST());
               tempRetValue = 1;
             } else {
               assembled.insert(std::end(assembled),
-                               std::make_move_iterator(std::begin(tAssembled)),
-                               std::make_move_iterator(std::end(tAssembled)));
+                               std::make_move_iterator(std::begin(t_assembled)),
+                               std::make_move_iterator(std::end(t_assembled)));
             }
           }
 

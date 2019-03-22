@@ -13,7 +13,7 @@ namespace Lexer {
 namespace Token {
 class Add : public Token {
 public:
-  explicit Add(std::string t, size_t tLine, size_t tColumn,
+  explicit Add(const std::string &t, size_t tLine, size_t tColumn,
                const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile,
               Requirements(
@@ -28,7 +28,7 @@ public:
   Add &operator=(const Add &) = default;
   Add &operator=(Add &&) = default;
 
-  TokenType tokenType() const final { return ADD; }
+  TokenType token_type() const final { return ADD; }
 
   void assemble(int16_t &programCounter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
@@ -40,7 +40,7 @@ public:
     uint16_t SR1 = static_cast<Register *>(ops[1].get())->reg();
     if (ops.size() == 2) {
       bin |= (DR << 9) | (DR << 6) | SR1;
-    } else if (TokenType::REGISTER == ops[2]->tokenType()) {
+    } else if (TokenType::REGISTER == ops[2]->token_type()) {
       bin |=
           (DR << 9) | (SR1 << 6) | static_cast<Register *>(ops[2].get())->reg();
     } else {
@@ -53,7 +53,7 @@ public:
                               return sym.second.address() == programCounter;
                             });
 
-    setAssembled(AssembledToken(
+    set_assembled(AssembledToken(
         bin,
         fmt::format(
             "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} ADD R{5:d} "
@@ -69,7 +69,7 @@ public:
                 : fmt::format("R{:d}", bin & 0x7))));
   }
 
-  word memoryRequired() const override { return 1_word; }
+  word memory_required() const override { return 1_word; }
 
 private:
 };

@@ -7,7 +7,7 @@ namespace Lexer {
 namespace Token {
 class Ld : public Token {
 public:
-  explicit Ld(std::string t, size_t tLine, size_t tColumn,
+  explicit Ld(const std::string &t, size_t tLine, size_t tColumn,
               const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile,
               Requirements(2, {Match(TokenType::REGISTER),
@@ -20,7 +20,7 @@ public:
   Ld &operator=(const Ld &) = default;
   Ld &operator=(Ld &&) = default;
 
-  TokenType tokenType() const final { return LD; }
+  TokenType token_type() const final { return LD; }
 
   void assemble(int16_t &programCounter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
@@ -32,16 +32,17 @@ public:
 
     bin |= DR;
 
-    if (TokenType::IMMEDIATE == ops[1]->tokenType()) {
+    if (TokenType::IMMEDIATE == ops[1]->token_type()) {
       bin |= ((static_cast<int16_t>(
                    static_cast<Immediate *>(ops[1].get())->value() & 0x1FF)
                << 7) >>
               7);
     } else {
-      auto label = std::find_if(symbols.begin(), symbols.end(),
-                                [&token = ops[1]->getToken()](const auto &sym) {
-                                  return sym.second.name() == token;
-                                });
+      auto label =
+          std::find_if(symbols.begin(), symbols.end(),
+                       [&token = ops[1]->get_token()](const auto &sym) {
+                         return sym.second.name() == token;
+                       });
       if (label != symbols.end()) {
         bin |=
             (static_cast<int16_t>(static_cast<int16_t>(label->second.address() -
@@ -52,7 +53,7 @@ public:
       } else {
         Notification::error_notifications << Diagnostics::Diagnostic(
             std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                ops[1]->column(), ops[1]->getToken().length(), ""),
+                ops[1]->column(), ops[1]->get_token().length(), ""),
             fmt::format("Undefined label '{}'", *(ops[1])), ops[1]->file(),
             ops[1]->line());
         return;
@@ -64,20 +65,20 @@ public:
                               return sym.second.address() == programCounter;
                             });
 
-    setAssembled(AssembledToken(
+    set_assembled(AssembledToken(
         bin,
         fmt::format(
             "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} LD R{5:d} "
             "{6:s}",
             programCounter++, bin, line(),
             sym == symbols.end() ? "" : sym->second.name(), width, DR >> 9,
-            TokenType::IMMEDIATE == ops[1]->tokenType()
+            TokenType::IMMEDIATE == ops[1]->token_type()
                 ? fmt::format("#{:d}",
                               static_cast<Immediate *>(ops[1].get())->value())
-                : ops[1]->getToken())));
+                : ops[1]->get_token())));
   }
 
-  word memoryRequired() const override { return 1_word; }
+  word memory_required() const override { return 1_word; }
 
 private:
 };

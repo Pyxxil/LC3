@@ -8,7 +8,7 @@ namespace Token {
 #ifdef ADDONS
 class Set : public Token {
 public:
-  explicit Set(std::string t, size_t tLine, size_t tColumn,
+  explicit Set(const std::string &t, size_t tLine, size_t tColumn,
                const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile,
               Requirements(2, {Match(TokenType::REGISTER),
@@ -21,7 +21,7 @@ public:
   Set &operator=(const Set &) = default;
   Set &operator=(Set &&) = default;
 
-  TokenType tokenType() const final { return SET; }
+  TokenType token_type() const final { return SET; }
 
   void assemble(int16_t &programCounter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
@@ -31,74 +31,75 @@ public:
 
     if (value > -16 && value < 15) {
       And a("AND", line(), column(), file());
-      a.addOperand(std::make_unique<Register>(
+      a.add_operand(std::make_unique<Register>(
           fmt::format("R{:d}",
                       static_cast<Register *>(ops.front().get())->reg()),
           line(), column(), file()));
-      a.addOperand(std::make_unique<Register>(
+      a.add_operand(std::make_unique<Register>(
           fmt::format("R{:d}",
                       static_cast<Register *>(ops.front().get())->reg()),
           line(), column(), file()));
-      a.addOperand(std::make_unique<Immediate>("#0", line(), column(), file()));
+      a.add_operand(
+          std::make_unique<Immediate>("#0", line(), column(), file()));
       a.assemble(programCounter, width, symbols);
 
       Add ad("ADD", line(), column(), file());
-      ad.addOperand(std::make_unique<Register>(
+      ad.add_operand(std::make_unique<Register>(
           fmt::format("R{:d}",
                       static_cast<Register *>(ops.front().get())->reg()),
           line(), column(), file()));
-      ad.addOperand(std::make_unique<Register>(
+      ad.add_operand(std::make_unique<Register>(
           fmt::format("R{:d}",
                       static_cast<Register *>(ops.front().get())->reg()),
           line(), column(), file()));
-      ad.addOperand(std::make_unique<Decimal>(fmt::format("#{:d}", value),
-                                              line(), column(), file()));
+      ad.add_operand(std::make_unique<Decimal>(fmt::format("#{:d}", value),
+                                               line(), column(), file()));
       ad.assemble(programCounter, width, symbols);
 
       for (auto &&as : a.assembled()) {
-        asAssembled.emplace_back(as);
+        as_assembled.emplace_back(as);
       }
 
       for (auto &&as : ad.assembled()) {
-        asAssembled.emplace_back(as);
+        as_assembled.emplace_back(as);
       }
     } else {
       Br b("BR", true, true, true, line(), column(), file());
-      b.addOperand(std::make_unique<Decimal>("#1", line(), column(), file()));
+      b.add_operand(std::make_unique<Decimal>("#1", line(), column(), file()));
       b.assemble(programCounter, width, symbols);
 
       Fill f(".FILL", line(), column(), file());
-      f.addOperand(std::make_unique<Decimal>(fmt::format("#{:d}", value),
-                                             line(), column(), file()));
+      f.add_operand(std::make_unique<Decimal>(fmt::format("#{:d}", value),
+                                              line(), column(), file()));
       f.assemble(programCounter, width, symbols);
 
       Ld l("LD", line(), column(), file());
-      l.addOperand(std::make_unique<Register>(
+      l.add_operand(std::make_unique<Register>(
           fmt::format("R{:d}",
                       static_cast<Register *>(ops.front().get())->reg()),
           line(), column(), file()));
-      l.addOperand(std::make_unique<Decimal>("#-2", line(), column(), file()));
+      l.add_operand(std::make_unique<Decimal>("#-2", line(), column(), file()));
       l.assemble(programCounter, width, symbols);
 
       for (auto &&as : b.assembled()) {
-        asAssembled.emplace_back(as);
+        as_assembled.emplace_back(as);
       }
 
       for (auto &&as : f.assembled()) {
-        asAssembled.emplace_back(as);
+        as_assembled.emplace_back(as);
       }
 
       for (auto &&as : l.assembled()) {
-        asAssembled.emplace_back(as);
+        as_assembled.emplace_back(as);
       }
     }
   }
 
-  word memoryRequired() const override {
-    const auto immediateValue =
+  word memory_required() const override {
+    const auto immediate_value =
         static_cast<Immediate *>(operands().back().get())->value();
-    return static_cast<word>((immediateValue > 15 || immediateValue < -16) ? 3
-                                                                           : 2);
+    return static_cast<word>(
+        (immediate_value > 15 || immediate_value < -16) ? 3 : 2);
   }
 };
 #endif

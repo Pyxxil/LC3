@@ -9,13 +9,13 @@ namespace Lexer {
 namespace Token {
 class Decimal : public Immediate {
 public:
-  explicit Decimal(std::string s, size_t tLine, size_t tColumn,
+  explicit Decimal(const std::string &s, size_t tLine, size_t tColumn,
                    const std::string &tFile, bool isNegative = false)
       : Immediate(std::move(s), tLine, tColumn, tFile) {
     if (token.length() > 7) {
       // 7 digits (i.e. #-12345) is the largest that can fit inside a 16 bit
       // number
-      tooBig = true;
+      too_big = true;
       return;
     }
     switch (token.front()) {
@@ -25,9 +25,9 @@ public:
 
       if (nullptr == check || v > std::numeric_limits<int16_t>::max() ||
           v < std::numeric_limits<int16_t>::min()) {
-        tooBig = true;
+        too_big = true;
       } else {
-        mValue = static_cast<std::int16_t>(v);
+        m_value = static_cast<std::int16_t>(v);
       }
       break;
     }
@@ -42,9 +42,9 @@ public:
 
       if (nullptr == check || v > std::numeric_limits<int16_t>::max() ||
           v < std::numeric_limits<int16_t>::min()) {
-        tooBig = true;
+        too_big = true;
       } else {
-        mValue = static_cast<std::int16_t>(v);
+        m_value = static_cast<std::int16_t>(v);
       }
       break;
     }

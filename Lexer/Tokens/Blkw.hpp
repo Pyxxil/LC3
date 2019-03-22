@@ -7,7 +7,7 @@ namespace Lexer {
 namespace Token {
 class Blkw : public Token {
 public:
-  explicit Blkw(std::string t, size_t tLine, size_t tColumn,
+  explicit Blkw(const std::string &t, size_t tLine, size_t tColumn,
                 const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile,
               Requirements(
@@ -22,7 +22,7 @@ public:
   Blkw &operator=(const Blkw &) = default;
   Blkw &operator=(Blkw &&) = default;
 
-  TokenType tokenType() const final { return BLKW; }
+  TokenType token_type() const final { return BLKW; }
 
   void assemble(int16_t &programCounter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
@@ -33,11 +33,11 @@ public:
     std::map<std::string, Symbol>::const_iterator label;
 
     if (ops.size() > 1) {
-      if (TokenType::IMMEDIATE == ops[1]->tokenType()) {
-        bin = static_cast<Immediate *>(ops[1].get())->value();
+      if (TokenType::IMMEDIATE == ops[1]->token_type()) {
+        bin = static_cast<uint16_t>(static_cast<Immediate *>(ops[1].get())->value());
       } else {
         label = std::find_if(symbols.begin(), symbols.end(),
-                             [&token = ops[1]->getToken()](const auto &sym) {
+                             [&token = ops[1]->get_token()](const auto &sym) {
                                return sym.second.name() == token;
                              });
         if (label != symbols.end()) {
@@ -45,7 +45,7 @@ public:
         } else {
           Notification::error_notifications << Diagnostics::Diagnostic(
               std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                  ops[1]->column(), ops[1]->getToken().length(), ""),
+                  ops[1]->column(), ops[1]->get_token().length(), ""),
               fmt::format("Undefined label '{}'", *ops[1]), ops[1]->file(),
               ops[1]->line());
           return;
@@ -63,12 +63,12 @@ public:
             ? "0x0000"
             : fmt::format(
                   "0x{:04X}",
-                  TokenType::IMMEDIATE == ops[1]->tokenType()
+                  TokenType::IMMEDIATE == ops[1]->token_type()
                       ? (static_cast<Immediate *>(ops[1].get())->value() &
                          0xFFFF)
                       : label->second.address());
 
-    setAssembled(AssembledToken(
+    set_assembled(AssembledToken(
         bin, fmt::format("({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
                          ".FILL {5:s}",
                          programCounter++, bin, line(),
@@ -77,7 +77,7 @@ public:
 
     for (auto i = static_cast<Immediate *>(ops.front().get())->value() - 1;
          i > 0; i--) {
-      asAssembled.emplace_back(
+      as_assembled.emplace_back(
           bin, fmt::format(
                    "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
                    ".FILL {5:s}",
@@ -85,7 +85,7 @@ public:
     }
   }
 
-  word memoryRequired() const final {
+  word memory_required() const final {
     return static_cast<Immediate *>(operands().front().get())->value();
   }
 };

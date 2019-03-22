@@ -75,7 +75,7 @@ auto main(int, char **) -> int {
 
   Notification::warning_notifications.notify_all(true);
 
-  if (lexer.isOkay()) {
+  if (lexer.is_okay()) {
     std::cout << lexer;
   } else {
     Notification::error_notifications.notify_all(true);
@@ -96,7 +96,7 @@ auto main(int, char **) -> int {
 
     Notification::warning_notifications.notify_for_each();
 
-    if (lexer.isOkay()) {
+    if (lexer.is_okay()) {
       fmt::print("{}\n", lexer);
     } else {
       Notification::error_notifications.notify_for_each();

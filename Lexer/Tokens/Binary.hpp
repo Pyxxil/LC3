@@ -9,9 +9,9 @@ namespace Lexer {
 namespace Token {
 class Binary : public Immediate {
 public:
-  explicit Binary(std::string s, size_t tLine, size_t tColumn,
-                  const std::string &tFile, bool isNegative = false)
-      : Immediate(std::move(s), tLine, tColumn, tFile) {
+  explicit Binary(const std::string &s, size_t t_line, size_t t_column,
+                  const std::string &t_file, bool is_negative = false)
+      : Immediate(std::move(s), t_line, t_column, t_file) {
     std::string immediate = token;
     if (immediate.length() > 2 && 'B' == std::toupper(immediate[1])) {
       immediate.erase(0, 2);
@@ -20,10 +20,10 @@ public:
     }
 
     if (immediate.length() > 16) {
-      tooBig = true;
+      too_big = true;
     } else {
-      mValue =
-          isNegative
+      m_value =
+          is_negative
               ? -static_cast<int16_t>(std::bitset<16>(immediate).to_ulong())
               : static_cast<int16_t>(std::bitset<16>(immediate).to_ulong());
     }

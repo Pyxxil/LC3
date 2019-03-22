@@ -2,24 +2,26 @@
 
 namespace Lexer {
 
-Position::Position(size_t column, size_t line) : mColumn(column), mLine(line) {}
+Position::Position(size_t column, size_t line)
+    : m_column(column), m_line(line) {}
 
-size_t Position::column() const { return mColumn; }
+size_t Position::column() const { return m_column; }
 
-size_t Position::line() const { return mLine; }
+size_t Position::line() const { return m_line; }
 
-void Position::incColumn() { ++mColumn; }
+void Position::inc_column() { ++m_column; }
 
-void Position::setColumn(size_t column) { mColumn = column; }
+void Position::set_column(size_t column) { m_column = column; }
 
-void Position::incLine() { ++mLine; }
+void Position::inc_line() { ++m_line; }
 
-File::File(std::string file_name) : mFileName(std::move(file_name)), mFile() {
-  mFile.open(mFileName);
+File::File(std::string file_name)
+    : m_file_name(std::move(file_name)), m_file() {
+  m_file.open(m_file_name);
 
-  if (!isFailure()) {
+  if (!is_failure()) {
     std::string line;
-    while (std::getline(mFile, line)) {
+    while (std::getline(m_file, line)) {
       lines.emplace_back(std::move(line));
     }
   }
@@ -31,19 +33,19 @@ std::string File::line() const {
   return lines[position().line() - 1];
 }
 
-void File::setColumn(size_t column) { mPosition.setColumn(column); }
+void File::set_column(size_t column) { m_position.set_column(column); }
 
-bool File::nextLine() {
-  mPosition.incLine();
-  return mPosition.line() < lines.size();
+bool File::next_line() {
+  m_position.inc_line();
+  return m_position.line() < lines.size();
 }
 
-void File::nextColumn() { mPosition.incColumn(); }
+void File::next_column() { m_position.inc_column(); }
 
 const std::string &File::line(size_t l) const { return lines[l]; }
 
-bool File::isFailure() const {
-  return (mFile.fail() && lines.empty()) || !mFile.is_open();
+bool File::is_failure() const {
+  return (m_file.fail() && lines.empty()) || !m_file.is_open();
 }
 
 } // namespace Lexer

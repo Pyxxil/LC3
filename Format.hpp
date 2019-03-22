@@ -105,7 +105,7 @@ public:
 
         Notification::warning_notifications.notify_for_each();
 
-        if (!lexer.isOkay()) {
+        if (!lexer.is_okay()) {
           Notification::error_notifications.notify_for_each();
           continue;
         }
@@ -117,47 +117,47 @@ public:
         for (size_t index = 0; index < tokens.size(); ++index) {
           const auto &token = tokens[index];
 #ifdef KEEP_COMMENTS
-          if (token->tokenType() == Lexer::TokenType::COMMENT) {
-            formatFile << "; " << token->getToken() << '\n';
+          if (token->token_type() == Lexer::TokenType::COMMENT) {
+            formatFile << "; " << token->get_token() << '\n';
             continue;
           }
 #endif
 
           std::string line;
 
-          if (token->tokenType() == Lexer::TokenType::LABEL) {
+          if (token->token_type() == Lexer::TokenType::LABEL) {
             line.push_back(':');
-            line = fmt::format("{}:", token->getToken());
-          } else if (token->tokenType() == Lexer::TokenType::ORIG ||
-                     token->tokenType() == Lexer::TokenType::END) {
-            line = fmt::format("\n{}", token->getToken());
+            line = fmt::format("{}:", token->get_token());
+          } else if (token->token_type() == Lexer::TokenType::ORIG ||
+                     token->token_type() == Lexer::TokenType::END) {
+            line = fmt::format("\n{}", token->get_token());
           } else {
-            line = fmt::format("    {}", token->getToken());
+            line = fmt::format("    {}", token->get_token());
           }
 
           if (use_spaces) {
             for (const auto &operand : token->operands()) {
-              line += fmt::format(" {}", operand->getToken());
+              line += fmt::format(" {}", operand->get_token());
             }
           } else {
             Algorithm::enumerate(
                 token->operands().cbegin(), token->operands().cend(),
                 [&line](auto &&operand, auto idx) {
                   if (idx > 0) {
-                    line += fmt::format(", {}", operand->getToken());
+                    line += fmt::format(", {}", operand->get_token());
                   } else {
-                    line += fmt::format(" {}", operand->getToken());
+                    line += fmt::format(" {}", operand->get_token());
                   }
                 });
           }
 
 #ifdef KEEP_COMMENTS
           if (index + 1 < tokens.size() &&
-              tokens[index + 1]->tokenType() == Lexer::TokenType::COMMENT) {
+              tokens[index + 1]->token_type() == Lexer::TokenType::COMMENT) {
             if (align_comments && line.length() < 40) {
               line += std::string(40 - line.length(), ' ');
             }
-            const std::string &tokenString = tokens[++index]->getToken();
+            const std::string &tokenString = tokens[++index]->get_token();
             if (tokenString.empty()) {
               line.push_back(';');
             } else {
@@ -166,8 +166,8 @@ public:
           }
 #endif
 
-          if (token->tokenType() == Lexer::TokenType::ORIG ||
-              token->tokenType() == Lexer::TokenType::END) {
+          if (token->token_type() == Lexer::TokenType::ORIG ||
+              token->token_type() == Lexer::TokenType::END) {
             line.push_back('\n');
           }
 

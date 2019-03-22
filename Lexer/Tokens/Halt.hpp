@@ -7,7 +7,7 @@ namespace Lexer {
 namespace Token {
 class Halt : public Token {
 public:
-  explicit Halt(std::string t, size_t tLine, size_t tColumn,
+  explicit Halt(const std::string &t, size_t tLine, size_t tColumn,
                 const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile) {}
 
@@ -17,7 +17,7 @@ public:
   Halt &operator=(const Halt &) = default;
   Halt &operator=(Halt &&) = default;
 
-  TokenType tokenType() const final { return HALT; }
+  TokenType token_type() const final { return HALT; }
 
   void assemble(int16_t &programCounter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
@@ -26,7 +26,7 @@ public:
                               return sym.second.address() == programCounter;
                             });
 
-    setAssembled(AssembledToken(
+    set_assembled(AssembledToken(
         0xF025,
         fmt::format(
             "({0:0>4X}) F025 1111000000100101 ({1: >4d}) {2: <{3}s} HALT",
@@ -34,7 +34,7 @@ public:
             sym == symbols.end() ? "" : sym->second.name(), width)));
   }
 
-  word memoryRequired() const override { return 1_word; }
+  word memory_required() const override { return 1_word; }
 
 private:
 };

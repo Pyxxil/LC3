@@ -7,7 +7,7 @@ namespace Lexer {
 namespace Token {
 class Fill : public Token {
 public:
-  explicit Fill(std::string t, size_t tLine, size_t tColumn,
+  explicit Fill(const std::string &t, size_t tLine, size_t tColumn,
                 const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile,
               Requirements(1, {Match(TokenType::IMMEDIATE) |
@@ -19,7 +19,7 @@ public:
   Fill &operator=(const Fill &) = default;
   Fill &operator=(Fill &&) = default;
 
-  TokenType tokenType() const final { return FILL; }
+  TokenType token_type() const final { return FILL; }
 
   void assemble(int16_t &programCounter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
@@ -29,18 +29,18 @@ public:
 
     auto label =
         std::find_if(symbols.begin(), symbols.end(),
-                     [&token = ops.front()->getToken()](const auto &sym) {
+                     [&token = ops.front()->get_token()](const auto &sym) {
                        return sym.second.name() == token;
                      });
 
-    if (TokenType::IMMEDIATE == ops.front()->tokenType()) {
-      bin = static_cast<Immediate *>(ops.front().get())->value();
+    if (TokenType::IMMEDIATE == ops.front()->token_type()) {
+      bin = static_cast<uint16_t>(static_cast<Immediate *>(ops.front().get())->value());
     } else if (label != symbols.end()) {
       bin = label->second.address();
     } else {
       Notification::error_notifications << Diagnostics::Diagnostic(
           std::make_unique<Diagnostics::DiagnosticHighlighter>(
-              ops.front()->column(), ops.front()->getToken().length(), ""),
+              ops.front()->column(), ops.front()->get_token().length(), ""),
           fmt::format("Undefined label '{}'", *(ops.front())),
           ops.front()->file(), ops.front()->line());
       return;
@@ -51,7 +51,7 @@ public:
                               return sym.second.address() == programCounter;
                             });
 
-    setAssembled(AssembledToken(
+    set_assembled(AssembledToken(
         bin,
         fmt::format(
             "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
@@ -60,13 +60,13 @@ public:
             sym == symbols.end() ? "" : sym->second.name(), width,
             fmt::format(
                 "0x{:04X}",
-                TokenType::IMMEDIATE == ops.front()->tokenType()
+                TokenType::IMMEDIATE == ops.front()->token_type()
                     ? (static_cast<Immediate *>(ops.front().get())->value() &
                        0xFFFF)
                     : label->second.address()))));
   }
 
-  word memoryRequired() const override { return 1_word; }
+  word memory_required() const override { return 1_word; }
 
 private:
 }; // namespace Token

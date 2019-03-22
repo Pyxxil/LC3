@@ -9,7 +9,7 @@ namespace Lexer {
 namespace Token {
 class Sub : public Token {
 public:
-  explicit Sub(std::string t, size_t tLine, size_t tColumn,
+  explicit Sub(const std::string &t, size_t tLine, size_t tColumn,
                const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile,
               Requirements(2,
@@ -24,7 +24,7 @@ public:
   Sub &operator=(const Sub &) = default;
   Sub &operator=(Sub &&) = default;
 
-  TokenType tokenType() const final { return SUB; }
+  TokenType token_type() const final { return SUB; }
 
   void assemble(int16_t &programCounter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
@@ -36,21 +36,21 @@ public:
     if (static_cast<Register *>(ops[first_reg_idx].get())->reg() ==
         static_cast<Register *>(ops[second_reg_idx].get())->reg()) {
       And a("AND", line(), column(), file());
-      a.addOperand(std::make_unique<Register>(
+      a.add_operand(std::make_unique<Register>(
           fmt::format("R{:d}",
                       static_cast<Register *>(ops.front().get())->reg()),
           line(), column(), file()));
-      a.addOperand(std::make_unique<Register>(
+      a.add_operand(std::make_unique<Register>(
           fmt::format("R{:d}",
                       static_cast<Register *>(ops[first_reg_idx].get())->reg()),
           line(), column(), file()));
-      a.addOperand(std::make_unique<Decimal>(
+      a.add_operand(std::make_unique<Decimal>(
           fmt::format(
               "0", static_cast<Register *>(ops[second_reg_idx].get())->reg()),
           line(), column(), file()));
       a.assemble(programCounter, width, symbols);
 
-      asAssembled = a.assembled();
+      as_assembled = a.assembled();
     } else {
       const uint16_t DR = static_cast<Register *>(ops.front().get())->reg();
       const uint16_t SR1 =
@@ -59,50 +59,50 @@ public:
           static_cast<Register *>(ops[second_reg_idx].get())->reg();
 
       Neg n(".NEG", line(), column(), file());
-      n.addOperand(std::make_unique<Register>(fmt::format("R{:d}", SR2), line(),
-                                              column(), file()));
+      n.add_operand(std::make_unique<Register>(fmt::format("R{:d}", SR2),
+                                               line(), column(), file()));
       n.assemble(programCounter, width, symbols);
 
       Add a("ADD", line(), column(), file());
-      a.addOperand(std::make_unique<Register>(fmt::format("R{:d}", DR), line(),
-                                              column(), file()));
-      a.addOperand(std::make_unique<Register>(fmt::format("R{:d}", SR1), line(),
-                                              column(), file()));
-      a.addOperand(std::make_unique<Register>(fmt::format("R{:d}", SR2), line(),
-                                              column(), file()));
+      a.add_operand(std::make_unique<Register>(fmt::format("R{:d}", DR), line(),
+                                               column(), file()));
+      a.add_operand(std::make_unique<Register>(fmt::format("R{:d}", SR1),
+                                               line(), column(), file()));
+      a.add_operand(std::make_unique<Register>(fmt::format("R{:d}", SR2),
+                                               line(), column(), file()));
       a.assemble(programCounter, width, symbols);
 
-      asAssembled = n.assembled();
+      as_assembled = n.assembled();
 
       for (auto &&as : a.assembled()) {
-        asAssembled.emplace_back(as);
+        as_assembled.emplace_back(as);
       }
 
       if (DR != SR2) {
         Neg n(".NEG", line(), column(), file());
-        n.addOperand(std::make_unique<Register>(fmt::format("R{:d}", SR2),
-                                                line(), column(), file()));
+        n.add_operand(std::make_unique<Register>(fmt::format("R{:d}", SR2),
+                                                 line(), column(), file()));
         n.assemble(programCounter, width, symbols);
 
         for (auto &&as : n.assembled()) {
-          asAssembled.emplace_back(as);
+          as_assembled.emplace_back(as);
         }
       }
     }
   }
 
-  word memoryRequired() const override {
-    const size_t firstRegisterIndex = operands().size() - 2;
-    const size_t secondRegisterIndex = operands().size() - 1;
+  word memory_required() const override {
+    const size_t first_register_idx = operands().size() - 2;
+    const size_t second_register_idx = operands().size() - 1;
 
-    const auto secondRegister =
-        static_cast<Register *>(operands()[secondRegisterIndex].get())->reg();
+    const auto second_register =
+        static_cast<Register *>(operands()[second_register_idx].get())->reg();
 
-    if (static_cast<Register *>(operands()[firstRegisterIndex].get())->reg() ==
-        secondRegister) {
+    if (static_cast<Register *>(operands()[first_register_idx].get())->reg() ==
+        second_register) {
       return 1_word;
     } else if (static_cast<Register *>(operands().front().get())->reg() !=
-               secondRegister) {
+               second_register) {
       return 5_words;
     } else {
       return 3_words;

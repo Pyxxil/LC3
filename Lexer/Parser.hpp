@@ -9,39 +9,40 @@
 namespace Parser {
 class Parser {
 public:
-  Parser(std::vector<std::unique_ptr<Lexer::Token::Token>> tokens)
-      : mTokens(std::move(tokens)) {}
+  explicit Parser(std::vector<std::unique_ptr<Lexer::Token::Token>> tokens)
+      : m_tokens(std::move(tokens)) {}
 
   void parse() {
-    uint16_t currentAddress{0};
-    bool originSeen{false};
-    bool endSeen{false};
+    uint16_t current_address{0};
+    bool origin_seen{false};
+    bool end_seen{false};
 
-    if (mTokens.front()->tokenType() != Lexer::TokenType::ORIG) {
+    if (m_tokens.front()->token_type() != Lexer::TokenType::ORIG) {
       error();
       return;
     }
 
-    for (auto &token : mTokens) {
-      switch (token->tokenType()) {
+    for (auto &token : m_tokens) {
+      switch (token->token_type()) {
       case Lexer::TokenType::LABEL: {
-        if (!originSeen) {
+        if (!origin_seen) {
           error();
           break;
-        } else if (endSeen) {
+        } else if (end_seen) {
           Notification::warning_notifications << Diagnostics::Diagnostic(
               std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                  token->column(), token->getToken().length(), std::string{}),
+                  token->column(), token->get_token().length(), std::string{}),
               "Label found after .END directive, ignoring.", token->file(),
               token->line());
           break;
         }
 
-        for (auto &&[_, symbol] : mSymbols) {
-          if (symbol.address() == currentAddress) {
+        for (auto &&[_, symbol] : m_symbols) {
+          if (symbol.address() == current_address) {
             Notification::error_notifications << Diagnostics::Diagnostic(
                 std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                    token->column(), token->getToken().length(), std::string{}),
+                    token->column(), token->get_token().length(),
+                    std::string{}),
                 "Multiple labels found for address", token->file(),
                 token->line());
             Notification::error_notifications << Diagnostics::Diagnostic(
@@ -51,9 +52,9 @@ public:
           }
         }
 
-        auto &&[symbol, inserted] = mSymbols.try_emplace(
-            token->getToken(),
-            Lexer::Symbol(token->getToken(), currentAddress, token->file(),
+        auto &&[symbol, inserted] = m_symbols.try_emplace(
+            token->get_token(),
+            Lexer::Symbol(token->get_token(), current_address, token->file(),
                           token->column(), token->line()));
 
         if (!inserted) {
@@ -65,7 +66,7 @@ public:
           Notification::error_notifications
               << Diagnostics::Diagnostic(
                      std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                         token->column(), token->getToken().length(),
+                         token->column(), token->get_token().length(),
                          std::string{}),
                      "Multiple definitions of label", token->file(),
                      token->line())
@@ -74,39 +75,40 @@ public:
                          sym.column(), sym.name().length(), std::string{}),
                      "Previous definition found here", sym.file(), sym.line());
         } else {
-          longestSymbolLength =
-              std::max(longestSymbolLength,
-                       static_cast<int>(token->getToken().length()));
+          longest_symbol_length =
+              std::max(longest_symbol_length,
+                       static_cast<int>(token->get_token().length()));
         }
         break;
       }
       case Lexer::TokenType::ORIG:
-        if (originSeen) {
+        if (origin_seen) {
           error();
         } else {
-          currentAddress =
+          current_address =
               static_cast<uint16_t>(static_cast<Lexer::Token::Immediate *>(
                                         token->operands().front().get())
                                         ->value());
-          originSeen = true;
+          origin_seen = true;
         }
         break;
       case Lexer::TokenType::END:
+        end_seen = true;
         break;
       default:
-        if (!originSeen) {
+        if (!origin_seen) {
           error();
-        } else if (endSeen) {
+        } else if (end_seen) {
           Notification::warning_notifications << Diagnostics::Diagnostic(
               std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                  token->column(), token->getToken().length(), std::string{}),
+                  token->column(), token->get_token().length(), std::string{}),
               "Extra .END directive found.", token->file(), token->line());
         } else {
-          const word memoryRequired = token->memoryRequired();
-          if (memoryRequired == -1) {
+          if (const word memory_required = token->memory_required();
+              memory_required == -1) {
             error();
-          } else if (memoryRequired > 0) {
-            currentAddress += static_cast<uint16_t>(memoryRequired);
+          } else if (memory_required > 0) {
+            current_address += static_cast<uint16_t>(memory_required);
           }
         }
         break;
@@ -114,19 +116,19 @@ public:
     }
   }
 
-  void error() { ++errorCount; }
+  void error() { ++error_count; }
   void warning() {}
 
-  const auto &tokens() const { return mTokens; }
-  const auto &symbols() const { return mSymbols; }
+  const auto &tokens() const { return m_tokens; }
+  const auto &symbols() const { return m_symbols; }
 
-  auto isOkay() const { return errorCount == 0; }
+  auto is_okay() const { return error_count == 0; }
 
 private:
-  std::vector<std::unique_ptr<Lexer::Token::Token>> mTokens;
-  std::map<std::string, Lexer::Symbol> mSymbols{};
-  size_t errorCount{0};
-  int longestSymbolLength{20};
+  std::vector<std::unique_ptr<Lexer::Token::Token>> m_tokens{};
+  std::map<std::string, Lexer::Symbol> m_symbols{};
+  size_t error_count{0};
+  int longest_symbol_length{20};
 }; // namespace Parser
 } // namespace Parser
 

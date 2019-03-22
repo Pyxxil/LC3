@@ -21,12 +21,12 @@ public:
   size_t column() const;
   size_t line() const;
 
-  void incColumn();
-  void setColumn(size_t column);
-  void incLine();
+  void inc_column();
+  void set_column(size_t column);
+  void inc_line();
 
-  size_t mColumn;
-  size_t mLine;
+  size_t m_column;
+  size_t m_line;
 };
 
 class File {
@@ -42,23 +42,23 @@ public:
 
   ~File() = default;
 
-  const std::string &name() const { return mFileName; }
-  const Position &position() const { return mPosition; }
+  const std::string &name() const { return m_file_name; }
+  const Position &position() const { return m_position; }
   std::string line() const;
 
-  void setColumn(size_t column);
+  void set_column(size_t column);
 
-  bool nextLine();
+  bool next_line();
 
-  void nextColumn();
+  void next_column();
   const std::string &line(size_t l) const;
 
-  bool isFailure() const;
+  bool is_failure() const;
 
 private:
-  std::string mFileName;
-  std::ifstream mFile;
-  Position mPosition{};
+  std::string m_file_name;
+  std::ifstream m_file;
+  Position m_position{};
   std::vector<std::string> lines;
 };
 } // namespace Lexer

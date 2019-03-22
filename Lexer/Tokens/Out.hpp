@@ -7,7 +7,7 @@ namespace Lexer {
 namespace Token {
 class Out : public Token {
 public:
-  Out(std::string t, size_t tLine, size_t tColumn, const std::string &tFile)
+  Out(const std::string &t, size_t tLine, size_t tColumn, const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile) {}
 
   Out(const Out &) = default;
@@ -16,7 +16,7 @@ public:
   Out &operator=(const Out &) = default;
   Out &operator=(Out &&) = default;
 
-  TokenType tokenType() const final { return OUT; }
+  TokenType token_type() const final { return OUT; }
 
   void assemble(int16_t &programCounter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
@@ -25,7 +25,7 @@ public:
                               return sym.second.address() == programCounter;
                             });
 
-    setAssembled(AssembledToken(
+    set_assembled(AssembledToken(
         0xF021,
         fmt::format(
             "({0:0>4X}) F021 1111000000100001 ({1: >4d}) {2: <{3}s} OUT",
@@ -33,7 +33,7 @@ public:
             sym == symbols.end() ? "" : sym->second.name(), width)));
   }
 
-  word memoryRequired() const override { return 1_word; }
+  word memory_required() const override { return 1_word; }
 };
 } // namespace Token
 } // namespace Lexer

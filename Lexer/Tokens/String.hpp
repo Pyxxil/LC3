@@ -7,7 +7,7 @@ namespace Lexer {
 namespace Token {
 class String : public Token {
 public:
-  String(std::string s, size_t tLine, size_t tColumn, const std::string &tFile)
+  String(const std::string &s, size_t tLine, size_t tColumn, const std::string &tFile)
       : Token(std::move(s), tLine, tColumn, tFile, Requirements()) {
     std::string real{};
     for (auto idx = 0; idx < token.length(); ++idx) {
@@ -18,7 +18,7 @@ public:
         }
         switch (auto cx = token[idx + 1]; cx) {
         case '"':
-          token.erase(idx, 1);
+          token.erase(static_cast<unsigned long>(idx), 1);
           real.push_back(cx);
           break;
         case 'n':
@@ -48,11 +48,11 @@ public:
   String &operator=(const String &) = default;
   String &operator=(String &&) = default;
 
-  TokenType tokenType() const final { return STRING; }
+  TokenType token_type() const final { return STRING; }
 
-  const std::string &trueToken() const { return token; }
+  const std::string &true_token() const { return token; }
 
-  const std::string &getToken() const override {
+  const std::string &get_token() const override {
     if (string.empty()) {
       string.push_back('"');
       for (const auto c : token) {

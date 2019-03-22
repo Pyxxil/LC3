@@ -9,7 +9,7 @@ namespace Lexer {
 namespace Token {
 class Lshift : public Token {
 public:
-  Lshift(std::string t, size_t tLine, size_t tColumn, const std::string &tFile)
+  Lshift(const std::string &t, size_t tLine, size_t tColumn, const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile,
               Requirements(2, {Match(TokenType::REGISTER),
                                Match(TokenType::IMMEDIATE)})) {}
@@ -20,7 +20,7 @@ public:
   Lshift &operator=(const Lshift &) = default;
   Lshift &operator=(Lshift &&) = default;
 
-  TokenType tokenType() const final { return LSHIFT; }
+  TokenType token_type() const final { return LSHIFT; }
 
   void assemble(int16_t &programCounter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
@@ -36,7 +36,7 @@ public:
                             });
 
     for (auto i = 0; i < static_cast<Immediate *>(ops[1].get())->value(); i++) {
-      asAssembled.emplace_back(
+      as_assembled.emplace_back(
           bin,
           fmt::format(
               "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} ADD R{5:d} "
@@ -46,7 +46,7 @@ public:
     }
   }
 
-  word memoryRequired() const override {
+  word memory_required() const override {
     return static_cast<word>(
         static_cast<Immediate *>(operands().back().get())->value());
   }

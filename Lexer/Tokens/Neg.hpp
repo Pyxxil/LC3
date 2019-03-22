@@ -7,7 +7,7 @@ namespace Lexer {
 namespace Token {
 class Neg : public Token {
 public:
-  Neg(std::string t, size_t tLine, size_t tColumn, const std::string &tFile)
+  Neg(const std::string &t, size_t tLine, size_t tColumn, const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile,
               Requirements(
                   1, {Match(TokenType::REGISTER), Match(TokenType::REGISTER)},
@@ -19,7 +19,7 @@ public:
   Neg &operator=(const Neg &) = default;
   Neg &operator=(Neg &&) = default;
 
-  TokenType tokenType() const final { return NEG; }
+  TokenType token_type() const final { return NEG; }
 
   // TODO: This could also just alter the NOT instructions lower bits to make
   // the simulator do 2's complement for us..
@@ -43,7 +43,7 @@ public:
 
     bin |= (DR << 9) | (SR << 6);
 
-    setAssembled(AssembledToken(
+    set_assembled(AssembledToken(
         bin, fmt::format("({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: "
                          "<{4}s} NOT R{5:d} "
                          "R{6:d}",
@@ -51,9 +51,9 @@ public:
                          sym == symbols.end() ? "" : sym->second.name(), width,
                          DR, SR)));
 
-    bin = 0x1021 | (DR << 9) | (SR << 6);
+    bin = static_cast<uint16_t>(0x1021 | (DR << 9) | (SR << 6));
 
-    asAssembled.emplace_back(
+    as_assembled.emplace_back(
         bin,
         fmt::format(
             "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} ADD R{5:d} "
@@ -61,7 +61,7 @@ public:
             programCounter++, bin, line(), "", width, DR, SR));
   }
 
-  word memoryRequired() const final { return 2_words; }
+  word memory_required() const final { return 2_words; }
 };
 } // namespace Token
 } // namespace Lexer

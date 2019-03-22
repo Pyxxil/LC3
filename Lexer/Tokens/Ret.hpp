@@ -7,7 +7,7 @@ namespace Lexer {
 namespace Token {
 class Ret : public Token {
 public:
-  Ret(std::string t, size_t tLine, size_t tColumn, const std::string &tFile)
+  Ret(const std::string &t, size_t tLine, size_t tColumn, const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile, Requirements()) {}
 
   Ret(const Ret &) = default;
@@ -16,7 +16,7 @@ public:
   Ret &operator=(const Ret &) = default;
   Ret &operator=(Ret &&) = default;
 
-  TokenType tokenType() const final { return RET; }
+  TokenType token_type() const final { return RET; }
 
   void assemble(int16_t &programCounter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
@@ -27,7 +27,7 @@ public:
                               return sym.second.address() == programCounter;
                             });
 
-    setAssembled(AssembledToken(
+    set_assembled(AssembledToken(
         bin,
         fmt::format("({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
                     "RET",
@@ -35,7 +35,7 @@ public:
                     sym == symbols.end() ? "" : sym->second.name(), width)));
   }
 
-  word memoryRequired() const override { return 1_word; }
+  word memory_required() const override { return 1_word; }
 };
 } // namespace Token
 } // namespace Lexer

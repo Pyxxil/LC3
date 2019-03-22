@@ -7,7 +7,7 @@ namespace Lexer {
 namespace Token {
 class Label : public Token {
 public:
-  explicit Label(std::string s, size_t tLine, size_t tColumn,
+  explicit Label(const std::string &s, size_t tLine, size_t tColumn,
                  const std::string &tFile)
       : Token(std::move(s), tLine, tColumn, tFile) {}
 
@@ -17,9 +17,9 @@ public:
   Label &operator=(const Label &) = default;
   Label &operator=(Label &&) = default;
 
-  TokenType tokenType() const final { return LABEL; }
+  TokenType token_type() const final { return LABEL; }
 
-  word memoryRequired() const override { return 0_word; }
+  word memory_required() const override { return 0_word; }
 
 private:
 };

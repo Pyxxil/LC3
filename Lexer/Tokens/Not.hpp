@@ -7,7 +7,7 @@ namespace Lexer {
 namespace Token {
 class Not : public Token {
 public:
-  explicit Not(std::string t, size_t tLine, size_t tColumn,
+  explicit Not(const std::string &t, size_t tLine, size_t tColumn,
                const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile,
               Requirements(
@@ -20,7 +20,7 @@ public:
   Not &operator=(const Not &) = default;
   Not &operator=(Not &&) = default;
 
-  TokenType tokenType() const final { return NOT; }
+  TokenType token_type() const final { return NOT; }
 
   void assemble(int16_t &programCounter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
@@ -42,7 +42,7 @@ public:
                               return sym.second.address() == programCounter;
                             });
 
-    setAssembled(AssembledToken(
+    set_assembled(AssembledToken(
         bin,
         fmt::format(
             "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} NOT R{5:d} "
@@ -52,7 +52,7 @@ public:
             SR1 >> 6)));
   }
 
-  word memoryRequired() const override { return 1_word; }
+  word memory_required() const override { return 1_word; }
 
 private:
 };

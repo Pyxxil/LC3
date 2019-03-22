@@ -8,7 +8,7 @@ namespace Token {
 #ifdef ADDONS
 class Character : public Immediate {
 public:
-  Character(std::string s, size_t tLine, size_t tColumn,
+  Character(const std::string &s, size_t tLine, size_t tColumn,
             const std::string &tFile)
       : Immediate(std::move(s), tLine, tColumn, tFile) {
     if ('\\' == token.front()) {
@@ -22,9 +22,10 @@ public:
       case '\'':
         token = "'";
         break;
+      default: break;
       }
     }
-    mValue = static_cast<int16_t>(token.front());
+    m_value = static_cast<int16_t>(token.front());
   }
 
   Character(const Character &) = default;
@@ -33,7 +34,7 @@ public:
   Character &operator=(const Character &) = default;
   Character &operator=(Character &&) = default;
 
-  const std::string &getToken() const override {
+  const std::string &get_token() const override {
     if (character.empty()) {
       character.push_back('\'');
       switch (token.front()) {

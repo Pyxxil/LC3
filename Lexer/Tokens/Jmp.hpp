@@ -7,7 +7,7 @@ namespace Lexer {
 namespace Token {
 class Jmp : public Token {
 public:
-  explicit Jmp(std::string t, size_t tLine, size_t tColumn,
+  explicit Jmp(const std::string &t, size_t tLine, size_t tColumn,
                const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile,
               Requirements(1, {Match(TokenType::REGISTER)})) {}
@@ -18,7 +18,7 @@ public:
   Jmp &operator=(const Jmp &) = default;
   Jmp &operator=(Jmp &&) = default;
 
-  TokenType tokenType() const final { return JMP; }
+  TokenType token_type() const final { return JMP; }
 
   void assemble(int16_t &programCounter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
@@ -32,7 +32,7 @@ public:
                               return sym.second.address() == programCounter;
                             });
 
-    setAssembled(AssembledToken(
+    set_assembled(AssembledToken(
         bin, fmt::format("({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
                          "JMP R{5:d}",
                          programCounter++, bin, line(),
@@ -40,7 +40,7 @@ public:
                          reg >> 6)));
   }
 
-  word memoryRequired() const override { return 1_word; }
+  word memory_required() const override { return 1_word; }
 
 private:
 };

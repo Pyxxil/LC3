@@ -7,7 +7,7 @@ namespace Lexer {
 namespace Token {
 class Jmpt : public Token {
 public:
-  explicit Jmpt(std::string t, size_t tLine, size_t tColumn,
+  explicit Jmpt(const std::string &t, size_t tLine, size_t tColumn,
                 const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile,
               Requirements(1, {Match(TokenType::REGISTER)})) {}
@@ -18,20 +18,20 @@ public:
   Jmpt &operator=(const Jmpt &) = default;
   Jmpt &operator=(Jmpt &&) = default;
 
-  TokenType tokenType() const final { return JMPT; }
+  TokenType token_type() const final { return JMPT; }
 
   void assemble(int16_t &programCounter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
     const uint16_t reg =
         static_cast<Register *>(operands().front().get())->reg() << 6;
-    const uint16_t bin = 0xC001 | reg;
+    const uint16_t bin = static_cast<const uint16_t>(0xC001 | reg);
 
     auto sym = std::find_if(symbols.begin(), symbols.end(),
                             [programCounter](const auto &sym) {
                               return sym.second.address() == programCounter;
                             });
 
-    setAssembled(AssembledToken(
+    set_assembled(AssembledToken(
         bin, fmt::format("({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
                          "JMPT R{5:d}",
                          programCounter++, bin, line(),
@@ -39,7 +39,7 @@ public:
                          reg >> 6)));
   }
 
-  word memoryRequired() const override { return 1_word; }
+  word memory_required() const override { return 1_word; }
 
 private:
 };

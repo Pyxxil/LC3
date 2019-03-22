@@ -4,6 +4,7 @@
 #include <cassert>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "../Algorithm.hpp"
@@ -26,10 +27,10 @@ namespace Lexer {
 
 struct Symbol {
   Symbol() = default;
-  Symbol(const std::string &tName, size_t tAddress, const std::string &tFile,
-         size_t tColumn, size_t tLine)
-      : mName(tName), mAddress(tAddress), mFile(tFile), mColumn(tColumn),
-        mLine(tLine) {}
+  Symbol(std::string t_name, size_t t_address, std::string t_file,
+         size_t t_column, size_t t_line)
+      : m_name(std::move(t_name)), m_address(t_address), m_file(std::move(t_file)),
+        m_column(t_column), m_line(t_line) {}
 
   Symbol(const Symbol &) = default;
   Symbol(Symbol &&) = default;
@@ -39,18 +40,18 @@ struct Symbol {
 
   ~Symbol() = default;
 
-  constexpr const auto &name() const { return mName; }
-  constexpr const auto &file() const { return mFile; }
+  constexpr const auto &name() const { return m_name; }
+  constexpr const auto &file() const { return m_file; }
 
-  constexpr auto address() const { return mAddress; }
-  constexpr auto column() const { return mColumn; }
-  constexpr auto line() const { return mLine; }
+  constexpr auto address() const { return m_address; }
+  constexpr auto column() const { return m_column; }
+  constexpr auto line() const { return m_line; }
 
-  const std::string mName;
-  const size_t mAddress{};
-  const std::string mFile{};
-  const size_t mColumn{};
-  const size_t mLine{};
+  const std::string m_name;
+  const size_t m_address{};
+  const std::string m_file{};
+  const size_t m_column{};
+  const size_t m_line{};
 };
 
 enum TokenType {
@@ -101,7 +102,7 @@ enum TokenType {
 #endif
 };
 
-const char *TokenTypeString[] = {
+const char *TOKEN_TYPE_STRING[] = {
     "INVALID",
     "Instruction ADD",
     "Instruction AND",
@@ -151,7 +152,7 @@ const char *TokenTypeString[] = {
 
 template <typename OStream>
 inline OStream &operator<<(OStream &os, TokenType type) {
-  return os << TokenTypeString[type];
+  return os << TOKEN_TYPE_STRING[type];
 }
 
 class Match {
@@ -212,13 +213,8 @@ public:
   }
 
   bool operator&(TokenType t) const {
-    for (auto &&match : matches) {
-      if (match == t) {
-        return true;
-      }
-    }
-
-    return false;
+    return std::any_of(matches.cbegin(), matches.cend(),
+                       [&t](auto &&match) { return match == t; });
   }
 
 private:
@@ -251,7 +247,7 @@ public:
 
   auto count() const { return min; }
 
-  const auto &argumentRequirements() const { return arguments; }
+  const auto &argument_requirements() const { return arguments; }
 
   std::vector<std::unique_ptr<Token>>
   consume(std::vector<std::unique_ptr<Token>> &tokens, std::size_t index,
@@ -269,31 +265,31 @@ private:
 class AssembledToken {
 public:
   AssembledToken() = default;
-  AssembledToken(uint16_t tBin, std::string tLSTStr)
-      : mBin{tBin}, mLSTStr{std::move(tLSTStr)} {}
+  AssembledToken(uint16_t t_bin, const std::string &t_lst_str)
+      : m_bin{t_bin}, m_lst_str{std::move(t_lst_str)} {}
   AssembledToken(const AssembledToken &) = default;
   AssembledToken(AssembledToken &&) noexcept = default;
   AssembledToken &operator=(const AssembledToken &) = default;
   AssembledToken &operator=(AssembledToken &&) noexcept = default;
   ~AssembledToken() = default;
 
-  const auto &lstStr() const { return mLSTStr; }
+  const auto &lstStr() const { return m_lst_str; }
   auto binary() const {
-    return std::make_pair(static_cast<char>((mBin >> 8) & 0xFF),
-                          static_cast<char>(mBin & 0xFF));
+    return std::make_pair(static_cast<char>((m_bin >> 8) & 0xFF),
+                          static_cast<char>(m_bin & 0xFF));
   }
 
 private:
-  uint16_t mBin;
-  std::string mLSTStr;
+  uint16_t m_bin{};
+  std::string m_lst_str;
 };
 
 class Token {
 public:
-  Token(std::string t, size_t tLine, size_t tColumn, const std::string &tFile,
-        Requirements r = Requirements())
-      : token(std::move(t)), atLine(tLine), atColumn(tColumn), mFile(tFile),
-        mRequirements(std::move(r)) {}
+  Token(const std::string &t, size_t t_line, size_t t_column,
+        std::string t_file, Requirements r = Requirements())
+      : token(std::move(t)), at_line(t_line), at_column(t_column),
+        m_file(std::move(t_file)), m_requirements(std::move(r)) {}
 
   Token(const Token &) = default;
   Token(Token &&) = default;
@@ -303,77 +299,77 @@ public:
 
   virtual ~Token() = default;
 
-  const auto &operands() const { return mOperands; }
+  const auto &operands() const { return m_operands; }
 
-  void compileAST() {
+  void compile_ast() {
     ast = fmt::format("  {} ( '{}' ) [ File: {}, Line: {}, Column: {} ] {{",
-                      tokenType(), getToken(), file(), line(), column());
+                      token_type(), get_token(), file(), line(), column());
     for (const auto &operand : operands()) {
-      if (operand->tokenType() != STRING
+      if (operand->token_type() != STRING
 #ifdef ADDONS
-          && '\'' != operand->getToken().front()
+          && '\'' != operand->get_token().front()
 #endif
       ) {
         ast +=
             fmt::format("\n    {} ( '{}' ) [ File: {}, Line: {}, Column: {} ]",
-                        operand->tokenType(), *operand, operand->file(),
+                        operand->token_type(), *operand, operand->file(),
                         operand->line(), operand->column());
       } else {
         ast += fmt::format("\n    {} ( {} ) [ File: {}, Line: {}, Column: {} ]",
-                           operand->tokenType(), *operand, operand->file(),
+                           operand->token_type(), *operand, operand->file(),
                            operand->line(), operand->column());
       }
     }
     ast += fmt::format("{0} }}\n", !operands().empty() ? "\n " : std::string{});
-    astCompiled = true;
+    ast_compiled = true;
   }
 
   const std::string &AST() {
-    if (!astCompiled)
-      compileAST();
+    if (!ast_compiled)
+      compile_ast();
 
     return ast;
   }
 
-  virtual const std::string &getToken() const { return token; }
+  virtual const std::string &get_token() const { return token; }
 
-  virtual TokenType tokenType() const { return NONE; }
+  virtual TokenType token_type() const { return NONE; }
 
-  auto &requirements() const { return mRequirements; }
+  auto &requirements() const { return m_requirements; }
 
-  void addOperand(std::unique_ptr<Token> operand) {
-    astCompiled = false;
-    mOperands.emplace_back(std::move(operand));
+  void add_operand(std::unique_ptr<Token> operand) {
+    ast_compiled = false;
+    m_operands.emplace_back(std::move(operand));
   }
 
   virtual void assemble(int16_t &programCounter, size_t width,
                         const std::map<std::string, Symbol> &symbol) {}
-  virtual word memoryRequired() const { return -1; }
+  virtual word memory_required() const { return -1; }
 
-  virtual bool isTooBig() const { return tooBig; }
+  virtual bool is_too_big() const { return too_big; }
 
-  const std::string &file() const { return mFile; }
-  size_t line() const { return atLine; }
-  size_t column() const { return atColumn; }
+  const std::string &file() const { return m_file; }
+  size_t line() const { return at_line; }
+  size_t column() const { return at_column; }
 
-  void setAssembled(AssembledToken assembled) {
-    asAssembled = {std::move(assembled)};
+  void set_assembled(const AssembledToken &assembled) {
+    as_assembled = {std::move(assembled)};
   }
-  auto &&assembled() const { return asAssembled; }
+  auto &&assembled() const { return as_assembled; }
 
 protected:
   std::string token;
-  bool tooBig{false};
-  std::vector<AssembledToken> asAssembled{};
+  bool too_big{false};
+  std::vector<AssembledToken> as_assembled{};
 
 private:
-  size_t atLine;
-  size_t atColumn;
-  std::string mFile;
-  Requirements mRequirements;
-  std::vector<std::unique_ptr<Token>> mOperands{};
+  size_t at_line;
+  size_t at_column;
+  std::string m_file;
+  Requirements m_requirements;
+  std::vector<std::unique_ptr<Token>> m_operands{};
   std::string ast{};
-  bool astCompiled{false};
+  bool ast_compiled{false};
 };
 
 /*! Consume tokens from the tokens the lexer contains according to our
@@ -403,14 +399,14 @@ Requirements::consume(std::vector<std::unique_ptr<Token>> &tokens, size_t index,
 
   if (max == -1u) {
     // Need to match at least one of the tokens
-    if (!(arguments[0] & tokens[index + 1]->tokenType())) {
+    if (!(arguments[0] & tokens[index + 1]->token_type())) {
       auto &&token = tokens[index + 1];
       Notification::error_notifications << Diagnostics::Diagnostic(
           std::make_unique<Diagnostics::DiagnosticHighlighter>(
-              token->column(), token->getToken().length(),
+              token->column(), token->get_token().length(),
               file.line(token->line() - 1)),
           fmt::format("Expected {}, but found '{}' (with type {})",
-                      arguments[0], token->getToken(), token->tokenType()),
+                      arguments[0], token->get_token(), token->token_type()),
           token->file(), token->line());
       return consumed;
     }
@@ -418,8 +414,8 @@ Requirements::consume(std::vector<std::unique_ptr<Token>> &tokens, size_t index,
     consumed.emplace_back(std::move(tokens[index + 1]));
 
     size_t idx = index + 2;
-    while (idx < tokens.size() && arguments[0] & tokens[idx]->tokenType()) {
-      // DEBUG("Found token {}", tokens[idx]->getToken());
+    while (idx < tokens.size() && arguments[0] & tokens[idx]->token_type()) {
+      // DEBUG("Found token {}", tokens[idx]->get_token());
       consumed.emplace_back(std::move(tokens[idx++]));
     }
 
@@ -433,23 +429,23 @@ Requirements::consume(std::vector<std::unique_ptr<Token>> &tokens, size_t index,
     // DEBUG("Argument type required for this index is {}",
     // arguments[arg_index]);
     const auto &token = tokens[idx + 1];
-    if (arguments[arg_index] & tokens[idx + 1]->tokenType()) {
-      // DEBUG("Valid consumed token: {}, with type {}", token->getToken(),
-      //      token->tokenType());
+    if (arguments[arg_index] & tokens[idx + 1]->token_type()) {
+      // DEBUG("Valid consumed token: {}, with type {}", token->get_token(),
+      //      token->token_type());
       consumed.emplace_back(std::move(tokens[idx + 1]));
     } else if (arg_index >= min && arg_index <= max) {
       // DEBUG("Valid consumption, finished with argument count {}", arg_index);
       break;
     } else {
-      // DEBUG("Invalid consumed token: {}, with type {}", token->getToken(),
-      // token->tokenType());
+      // DEBUG("Invalid consumed token: {}, with type {}", token->get_token(),
+      // token->token_type());
       Notification::error_notifications << Diagnostics::Diagnostic(
           std::make_unique<Diagnostics::DiagnosticHighlighter>(
-              token->column(), token->getToken().length(),
+              token->column(), token->get_token().length(),
               file.line(token->line() - 1)),
           fmt::format("Expected {}, but found '{}' (with type {})",
-                      arguments[arg_index], token->getToken(),
-                      token->tokenType()),
+                      arguments[arg_index], token->get_token(),
+                      token->token_type()),
           token->file(), token->line());
       return consumed;
     }
@@ -461,7 +457,7 @@ Requirements::consume(std::vector<std::unique_ptr<Token>> &tokens, size_t index,
 
 template <typename OStream>
 inline OStream &operator<<(OStream &os, const Token &t) {
-  return os << t.getToken();
+  return os << t.get_token();
 }
 } // namespace Token
 } // namespace Lexer

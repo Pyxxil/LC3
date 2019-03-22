@@ -7,7 +7,7 @@ namespace Lexer {
 namespace Token {
 class Br : public Token {
 public:
-  Br(std::string t, bool n, bool z, bool p, size_t tLine, size_t tColumn,
+  Br(const std::string &t, bool n, bool z, bool p, size_t tLine, size_t tColumn,
      const std::string &tFile)
       : Token(std::move(t), tLine, tColumn, tFile,
               Requirements(
@@ -20,17 +20,17 @@ public:
   Br &operator=(const Br &) = default;
   Br &operator=(Br &&) = default;
 
-  TokenType tokenType() const final { return BR; }
+  TokenType token_type() const final { return BR; }
 
   void assemble(int16_t &programCounter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
     const auto &ops = operands();
 
-    uint16_t bin = 0x0000 | (static_cast<uint16_t>(N) << 11) |
-                   (static_cast<uint16_t>(Z) << 10) |
-                   (static_cast<uint16_t>(P) << 9);
+    uint16_t bin = static_cast<uint16_t>(0x0000 | (static_cast<uint16_t>(N) << 11) |
+                       (static_cast<uint16_t>(Z) << 10) |
+                       (static_cast<uint16_t>(P) << 9));
 
-    if (TokenType::IMMEDIATE == ops.front()->tokenType()) {
+    if (TokenType::IMMEDIATE == ops.front()->token_type()) {
       bin |= ((static_cast<int16_t>(
                    static_cast<Immediate *>(ops.front().get())->value() & 0x1FF)
                << 7) >>
@@ -39,7 +39,7 @@ public:
     } else {
       auto label =
           std::find_if(symbols.begin(), symbols.end(),
-                       [&token = ops.front()->getToken()](const auto &sym) {
+                       [&token = ops.front()->get_token()](const auto &sym) {
                          return sym.second.name() == token;
                        });
       if (label != symbols.end()) {
@@ -52,7 +52,7 @@ public:
       } else {
         Notification::error_notifications << Diagnostics::Diagnostic(
             std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                ops[1]->column(), ops[1]->getToken().length(), ""),
+                ops[1]->column(), ops[1]->get_token().length(), ""),
             fmt::format("Undefined label '{}'", *(ops[1])), ops[1]->file(),
             ops[1]->line());
         return;
@@ -64,21 +64,21 @@ public:
                               return sym.second.address() == programCounter;
                             });
 
-    setAssembled(AssembledToken(
+    set_assembled(AssembledToken(
         bin, fmt::format(
                  "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
                  "BR{5:s}{6:s}{7:s} {8:s}",
                  programCounter++, bin, line(),
                  sym == symbols.end() ? "" : sym->second.name(), width,
                  N ? "n" : "", Z ? "z" : "", P ? "p" : "",
-                 TokenType::IMMEDIATE == ops.front()->tokenType()
+                 TokenType::IMMEDIATE == ops.front()->token_type()
                      ? fmt::format(
                            "#{:d}",
                            static_cast<Immediate *>(ops.front().get())->value())
-                     : ops.front()->getToken())));
+                     : ops.front()->get_token())));
   }
 
-  word memoryRequired() const override { return 1_word; }
+  word memory_required() const override { return 1_word; }
 
 private:
   bool N;
