@@ -158,27 +158,29 @@ public:
     }
 
 #ifdef ADDONS
-    for (auto it = tokens.begin(); it != tokens.end();) {
-      DEBUG("Working on token: {}", (*it)->get_token());
-      if ((*it)->token_type() == TokenType::INCLUDE) {
-        DEBUG("Found this: {}", (*it)->operands().size());
-        const auto &file_name = (*it)->operands().front()->get_token();
-        Lexer lexer(File{file_name.substr(1, file_name.length() - 2)});
+    std::vector<std::unique_ptr<Token::Token>> _tokens;
+    _tokens.reserve(tokens.size());
+
+    for (auto &&token: tokens) {
+      DEBUG("Working on token: {}", token->get_token());
+
+      if (token->token_type() == TokenType::INCLUDE) {
+        DEBUG("Found this: {}", token->operands().size());
+        const auto& file_name = token->operands().front()->get_token();
+        Lexer lexer(File{file_name.substr(1, file_name.length() - 1)});
         lexer.lex();
 
-        it = tokens.erase(it);
         if (m_okay = lexer.is_okay(); m_okay) {
-          // TODO: This annoyingly means we will look over every token inside
-          // the new tokens as well, which is done by the child lexer...
-          it = tokens.insert(it,
-                             std::make_move_iterator(std::begin(lexer.tokens)),
-                             std::make_move_iterator(std::end(lexer.tokens)));
+          for (auto &&tok: lexer.tokens) {
+            _tokens.emplace_back(std::move(tok));
+          }
         }
       } else {
-        ++it;
+        _tokens.emplace_back(std::move(token));
       }
     }
-    // tokens = std::move(_tokens);
+
+    tokens = std::move(_tokens);
 #endif
   }
 
