@@ -7,8 +7,8 @@ namespace Lexer {
 namespace Token {
 class Include : public Token {
 public:
-  Include(const std::string &t, size_t tLine, size_t tColumn, const std::string &tFile)
-      : Token(std::move(t), tLine, tColumn, tFile,
+  Include(std::string t, size_t t_line, size_t t_column, const std::string &t_file)
+      : Token(std::move(t), t_line, t_column, t_file,
               Requirements(1, {Match(TokenType::STRING)})) {}
 
   Include(const Include &) = default;

@@ -7,9 +7,9 @@ namespace Lexer {
 namespace Token {
 class End : public Token {
 public:
-  explicit End(const std::string &t, size_t tLine, size_t tColumn,
-               const std::string &tFile)
-      : Token(std::move(t), tLine, tColumn, tFile) {}
+  explicit End(std::string t, size_t t_line, size_t t_column,
+               const std::string &t_file)
+      : Token(std::move(t), t_line, t_column, t_file) {}
 
   End(const End &) = default;
   End(End &&) = default;

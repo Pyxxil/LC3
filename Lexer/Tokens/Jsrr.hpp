@@ -7,9 +7,9 @@ namespace Lexer {
 namespace Token {
 class Jsrr : public Token {
 public:
-  explicit Jsrr(const std::string &t, size_t tLine, size_t tColumn,
-                const std::string &tFile)
-      : Token(std::move(t), tLine, tColumn, tFile,
+  explicit Jsrr(std::string t, size_t t_line, size_t t_column,
+                const std::string &t_file)
+      : Token(std::move(t), t_line, t_column, t_file,
               Requirements(1, {Match(TokenType::REGISTER)})) {}
 
   Jsrr(const Jsrr &) = default;
@@ -20,7 +20,7 @@ public:
 
   TokenType token_type() const final { return JSRR; }
 
-  void assemble(int16_t &programCounter, size_t width,
+  void assemble(int16_t &program_counter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
     uint16_t bin = 0x4000;
     uint16_t reg = static_cast<Register *>(operands().front().get())->reg()
@@ -28,14 +28,14 @@ public:
     bin |= reg;
 
     auto sym = std::find_if(symbols.begin(), symbols.end(),
-                            [programCounter](const auto &sym) {
-                              return sym.second.address() == programCounter;
+                            [program_counter](const auto &sym) {
+                              return sym.second.address() == program_counter;
                             });
 
     set_assembled(AssembledToken(
         bin, fmt::format("({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
                          "JSRR R{}",
-                         programCounter++, bin, line(),
+                         program_counter++, bin, line(),
                          sym == symbols.end() ? "" : sym->second.name(), width,
                          reg >> 6)));
   }

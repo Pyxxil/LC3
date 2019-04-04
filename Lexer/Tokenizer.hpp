@@ -228,7 +228,7 @@ class Tokenizer {
 public:
   Tokenizer(Lexer &t_lexer, File &t_file) : m_lexer(t_lexer), file(t_file) {}
 
-  std::unique_ptr<Token::Token> tokenizeImmediate(const std::string &s) {
+  std::unique_ptr<Token::Token> tokenize_immediate(const std::string &s) {
     // We know this is going to be negative, as this is only ever called when
     // the next character on the line is a '-'.
     switch (to_upper(s.front())) {
@@ -655,7 +655,7 @@ public:
             return !(std::isalnum(c));
           }));
           if (token.size() > 0) {
-            auto &&tok{tokenizeImmediate(token)};
+            auto &&tok{tokenize_immediate(token)};
             l_tokens.emplace_back(std::move(tok));
           } else {
             throw_error(

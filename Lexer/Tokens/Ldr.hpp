@@ -7,9 +7,9 @@ namespace Lexer {
 namespace Token {
 class Ldr : public Token {
 public:
-  explicit Ldr(const std::string &t, size_t tLine, size_t tColumn,
-               const std::string &tFile)
-      : Token(std::move(t), tLine, tColumn, tFile,
+  explicit Ldr(std::string t, size_t t_line, size_t t_column,
+               const std::string &t_file)
+      : Token(std::move(t), t_line, t_column, t_file,
               Requirements(3, {Match(TokenType::REGISTER),
                                Match(TokenType::REGISTER),
                                Match(TokenType::IMMEDIATE)})) {}
@@ -22,7 +22,7 @@ public:
 
   TokenType token_type() const final { return LDR; }
 
-  void assemble(int16_t &programCounter, size_t width,
+  void assemble(int16_t &program_counter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
     const auto &ops = operands();
 
@@ -40,8 +40,8 @@ public:
     bin |= DR | SR;
 
     auto sym = std::find_if(symbols.begin(), symbols.end(),
-                            [programCounter](const auto &sym) {
-                              return sym.second.address() == programCounter;
+                            [program_counter](const auto &sym) {
+                              return sym.second.address() == program_counter;
                             });
 
     set_assembled(AssembledToken(
@@ -49,7 +49,7 @@ public:
         fmt::format(
             "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} LDR R{5:d} "
             "R{6:d} #{7:d}",
-            programCounter++, bin, line(),
+            program_counter++, bin, line(),
             sym == symbols.end() ? "" : sym->second.name(), width, DR >> 9,
             SR >> 6, static_cast<int16_t>(offset))));
   }

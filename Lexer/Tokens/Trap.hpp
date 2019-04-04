@@ -7,8 +7,8 @@ namespace Lexer {
 namespace Token {
 class Trap : public Token {
 public:
-  Trap(const std::string &t, size_t tLine, size_t tColumn, const std::string &tFile)
-      : Token(std::move(t), tLine, tColumn, tFile,
+  Trap(std::string t, size_t t_line, size_t t_column, const std::string &t_file)
+      : Token(std::move(t), t_line, t_column, t_file,
               Requirements(1, {Match(TokenType::IMMEDIATE)})) {}
 
   Trap(const Trap &) = default;

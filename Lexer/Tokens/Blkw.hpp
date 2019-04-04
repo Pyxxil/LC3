@@ -7,9 +7,9 @@ namespace Lexer {
 namespace Token {
 class Blkw : public Token {
 public:
-  explicit Blkw(const std::string &t, size_t tLine, size_t tColumn,
-                const std::string &tFile)
-      : Token(std::move(t), tLine, tColumn, tFile,
+  explicit Blkw(std::string t, size_t t_line, size_t t_column,
+                const std::string &t_file)
+      : Token(std::move(t), t_line, t_column, t_file,
               Requirements(
                   1,
                   {Match(TokenType::IMMEDIATE),
@@ -24,7 +24,7 @@ public:
 
   TokenType token_type() const final { return BLKW; }
 
-  void assemble(int16_t &programCounter, size_t width,
+  void assemble(int16_t &program_counter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
     const auto &ops = operands();
 
@@ -54,8 +54,8 @@ public:
     }
 
     auto sym = std::find_if(symbols.begin(), symbols.end(),
-                            [programCounter](const auto &sym) {
-                              return sym.second.address() == programCounter;
+                            [program_counter](const auto &sym) {
+                              return sym.second.address() == program_counter;
                             });
 
     auto value =
@@ -71,7 +71,7 @@ public:
     set_assembled(AssembledToken(
         bin, fmt::format("({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
                          ".FILL {5:s}",
-                         programCounter++, bin, line(),
+                         program_counter++, bin, line(),
                          sym == symbols.end() ? "" : sym->second.name(), width,
                          value)));
 
@@ -81,7 +81,7 @@ public:
           bin, fmt::format(
                    "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
                    ".FILL {5:s}",
-                   programCounter++, bin, line(), std::string{}, width, value));
+                   program_counter++, bin, line(), std::string{}, width, value));
     }
   }
 

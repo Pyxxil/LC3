@@ -9,8 +9,8 @@ namespace Lexer {
 namespace Token {
 class Lshift : public Token {
 public:
-  Lshift(const std::string &t, size_t tLine, size_t tColumn, const std::string &tFile)
-      : Token(std::move(t), tLine, tColumn, tFile,
+  Lshift(std::string t, size_t t_line, size_t t_column, const std::string &t_file)
+      : Token(std::move(t), t_line, t_column, t_file,
               Requirements(2, {Match(TokenType::REGISTER),
                                Match(TokenType::IMMEDIATE)})) {}
 

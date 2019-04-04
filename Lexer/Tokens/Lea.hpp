@@ -7,9 +7,9 @@ namespace Lexer {
 namespace Token {
 class Lea : public Token {
 public:
-  explicit Lea(const std::string &t, size_t tLine, size_t tColumn,
-               const std::string &tFile)
-      : Token(std::move(t), tLine, tColumn, tFile,
+  explicit Lea(std::string t, size_t t_line, size_t t_column,
+               const std::string &t_file)
+      : Token(std::move(t), t_line, t_column, t_file,
               Requirements(2, {Match(TokenType::REGISTER),
                                Match(TokenType::LABEL) |
                                    Match(TokenType::IMMEDIATE)})) {}
@@ -22,7 +22,7 @@ public:
 
   TokenType token_type() const final { return LEA; }
 
-  void assemble(int16_t &programCounter, size_t width,
+  void assemble(int16_t &program_counter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
     const auto &ops = operands();
 
@@ -46,7 +46,7 @@ public:
       if (label != symbols.end()) {
         bin |=
             (static_cast<int16_t>(static_cast<int16_t>(label->second.address() -
-                                                       (programCounter + 1))
+                                                       (program_counter + 1))
                                   << 7) >>
              7) &
             0x1FF;
@@ -61,8 +61,8 @@ public:
     }
 
     auto sym = std::find_if(symbols.begin(), symbols.end(),
-                            [programCounter](const auto &sym) {
-                              return sym.second.address() == programCounter;
+                            [program_counter](const auto &sym) {
+                              return sym.second.address() == program_counter;
                             });
 
     set_assembled(AssembledToken(
@@ -70,7 +70,7 @@ public:
         fmt::format(
             "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} LEA R{5:d} "
             "{6:s}",
-            programCounter++, bin, line(),
+            program_counter++, bin, line(),
             sym == symbols.end() ? "" : sym->second.name(), width, DR >> 9,
             TokenType::IMMEDIATE == ops[1]->token_type()
                 ? fmt::format("#{:d}",

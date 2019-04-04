@@ -8,16 +8,16 @@ namespace Token {
 #ifdef ADDONS
 class Octal : public Immediate {
 public:
-  explicit Octal(const std::string &s, size_t tLine, size_t tColumn,
-                 const std::string &tFile, bool isNegative = false)
-      : Immediate(std::move(s), tLine, tColumn, tFile) {
+  explicit Octal(std::string s, size_t t_line, size_t t_column,
+                 const std::string &t_file, bool is_negative = false)
+      : Immediate(std::move(s), t_line, t_column, t_file) {
     char *check = nullptr;
     const auto v = std::strtoull(token.c_str(), &check, 8);
 
     if (nullptr == check || v > (2 * std::numeric_limits<int16_t>::max() + 1)) {
       too_big = true;
     } else {
-      if (isNegative) {
+      if (is_negative) {
         token = "-" + token;
       }
       m_value = static_cast<std::int16_t>(v);

@@ -23,7 +23,7 @@
 class Assembler {
 public:
   Assembler(int argc, char **argv)
-      : argumentCount(argc), argumentValues(argv),
+      : argument_count(argc), argument_values(argv),
         options("LC3AS", "An assembler for the LC3 Assembly language") {
     parse_options();
   }
@@ -49,17 +49,17 @@ public:
     using Parser::Parser;
     using namespace Notification;
 
-    bool weShouldPrintAST;
-    bool weShouldTreatWarningsAsErrors;
-    bool weShouldShowWarnings;
-    bool weShouldBeQuiet;
-    bool weShouldntUseColours;
+    bool we_should_print_ast;
+    bool we_should_treat_warnings_as_errors;
+    bool we_should_show_warnings;
+    bool we_should_be_quiet;
+    bool we_shouldnt_use_colours;
 
     std::vector<std::string> files;
 
     try {
       options.parse_positional("files");
-      auto parsed = options.parse(argumentCount, argumentValues);
+      auto parsed = options.parse(argument_count, argument_values);
 
       if (parsed["help"].as<bool>()) {
         std::cout << options.help() << '\n';
@@ -73,18 +73,18 @@ public:
 
       files = std::move(parsed["files"].as<std::vector<std::string>>());
 
-      weShouldPrintAST = parsed["print-ast"].as<bool>();
-      weShouldTreatWarningsAsErrors = parsed["error"].as<bool>();
-      weShouldShowWarnings = !parsed["no-warn"].as<bool>();
-      weShouldBeQuiet = parsed["quiet"].as<bool>();
-      weShouldntUseColours =
+      we_should_print_ast = parsed["print-ast"].as<bool>();
+      we_should_treat_warnings_as_errors = parsed["error"].as<bool>();
+      we_should_show_warnings = !parsed["no-warn"].as<bool>();
+      we_should_be_quiet = parsed["quiet"].as<bool>();
+      we_shouldnt_use_colours =
           parsed["no-colour"].as<bool>() || parsed["no-color"].as<bool>();
     } catch (const cxxopts::OptionParseException &e) {
       std::cerr << e.what() << '\n' << options.help();
       return 1;
     }
 
-    if (!weShouldBeQuiet) {
+    if (!we_should_be_quiet) {
       Callback errors(
           "LC3AS",
           [&errors](auto &&, auto &&diagnostic) {
@@ -101,9 +101,9 @@ public:
 
       Callback warnings(
           "LC3AS",
-          [&warnings, weShouldTreatWarningsAsErrors](auto &&,
+          [&warnings, we_should_treat_warnings_as_errors](auto &&,
                                                      auto &&diagnostic) {
-            if (weShouldTreatWarningsAsErrors) {
+            if (we_should_treat_warnings_as_errors) {
               warnings.error(
                   "{}: {}",
                   fmt::format("{0:s}{1:s}{2:s}",
@@ -121,7 +121,7 @@ public:
           },
           false, false);
 
-      if (weShouldShowWarnings) {
+      if (we_should_show_warnings) {
         warning_notifications << warnings;
       }
     }
@@ -129,12 +129,12 @@ public:
     int retValue = 0;
 
     for (auto &&file : files) {
-      int tempRetValue = 0;
-      Lexer lexer(File{file}, weShouldTreatWarningsAsErrors);
+      int temp_ret_value = 0;
+      Lexer lexer(File{file}, we_should_treat_warnings_as_errors);
 
       lexer.lex();
 
-      if (weShouldPrintAST) {
+      if (we_should_print_ast) {
         fmt::print("{}\n", lexer);
       }
 
@@ -200,7 +200,7 @@ public:
             auto &&t_assembled = token->assembled();
             if (t_assembled.size() != token->memory_required()) {
               DEBUG("Token that failed was {}", token->AST());
-              tempRetValue = 1;
+              temp_ret_value = 1;
             } else {
               assembled.insert(std::end(assembled),
                                std::make_move_iterator(std::begin(t_assembled)),
@@ -208,7 +208,7 @@ public:
             }
           }
 
-          if (tempRetValue == 0) {
+          if (temp_ret_value == 0) {
             for (auto &&word : assembled) {
               auto &&[high, low] = word.binary();
               bin_file << fmt::format("{:0>16b}\n",
@@ -220,24 +220,24 @@ public:
             }
           }
         } else {
-          tempRetValue = 1;
+          temp_ret_value = 1;
         }
       } else {
-        tempRetValue = 1;
+        temp_ret_value = 1;
       }
 
-      if (tempRetValue != 0) {
+      if (temp_ret_value != 0) {
         error_notifications.notify_all_and_clear();
       }
 
-      retValue += tempRetValue;
+      retValue += temp_ret_value;
     }
     return retValue;
   }
 
 private:
-  int argumentCount;
-  char **argumentValues;
+  int argument_count;
+  char **argument_values;
   cxxopts::Options options;
 };
 

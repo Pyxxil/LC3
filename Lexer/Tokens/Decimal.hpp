@@ -9,9 +9,9 @@ namespace Lexer {
 namespace Token {
 class Decimal : public Immediate {
 public:
-  explicit Decimal(const std::string &s, size_t tLine, size_t tColumn,
-                   const std::string &tFile, bool isNegative = false)
-      : Immediate(std::move(s), tLine, tColumn, tFile) {
+  explicit Decimal(std::string s, size_t t_line, size_t t_column,
+                   const std::string &t_file, bool is_negative = false)
+      : Immediate(std::move(s), t_line, t_column, t_file) {
     if (token.length() > 7) {
       // 7 digits (i.e. #-12345) is the largest that can fit inside a 16 bit
       // number
@@ -35,7 +35,7 @@ public:
       char *check = nullptr;
       auto v = std::strtoll(token.c_str(), &check, 10);
 
-      if (isNegative) {
+      if (is_negative) {
         v = -v;
         token = "-" + token;
       }

@@ -70,6 +70,8 @@ set(TEST_SOURCE_FILES Test.cpp)
 
 set(ASSEMBLER_SOURCE_FILES Assembler.hpp Assembler.cpp)
 
+set(DISASSEMBLER_SOURCE_FILES Disassembler.hpp Disassembler.cpp)
+
 set(FORMATTER_SOURCE_FILES Format.hpp Format.cpp)
 
 set(DEBUG_FLAGS ${COMPILE_FLAGS} -g -g3 -pg -pedantic)
@@ -90,7 +92,11 @@ set(RELEASE_FLAGS ${COMPILE_FLAGS} -flto -g)
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
 include(FetchContent)
-fetchcontent_declare(fmt GIT_REPOSITORY https://github.com/fmtlib/fmt)
+fetchcontent_declare(fmt
+	GIT_REPOSITORY https://github.com/fmtlib/fmt
+	GIT_PROGRESS TRUE
+	USES_TERMINAL_DOWNLOAD TRUE
+)
 
 fetchcontent_getproperties(fmt)
 if(NOT fmt_POPULATED)
@@ -117,11 +123,17 @@ target_compile_options(LC3AS PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>")
 target_compile_options(LC3AS PUBLIC "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>")
 target_link_libraries(LC3AS LC3 fmt)
 
+add_executable(LC3DIS ${DISASSEMBLER_SOURCE_FILES})
+include_directories(LC3DIS ${fmt_SOURCE_DIR})
+target_compile_options(LC3DIS PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>")
+target_compile_options(LC3DIS PUBLIC "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>")
+target_link_libraries(LC3DIS LC3 fmt)
+
 add_executable(LC3Format ${FORMATTER_SOURCE_FILES})
 target_compile_options(LC3Format PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>")
 target_compile_options(LC3Format PUBLIC "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>")
 target_compile_definitions(LC3Format PRIVATE KEEP_COMMENTS)
-target_link_libraries(LC3Format LC3 fmt)
+target_link_libraries(LC3Format LC3 fmt::fmt)
 
 if(USE_ADDONS)
   target_compile_definitions(LC3 INTERFACE ADDONS)

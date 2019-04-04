@@ -7,8 +7,8 @@ namespace Lexer {
 namespace Token {
 class String : public Token {
 public:
-  String(const std::string &s, size_t tLine, size_t tColumn, const std::string &tFile)
-      : Token(std::move(s), tLine, tColumn, tFile, Requirements()) {
+  String(std::string s, size_t t_line, size_t t_column, const std::string &t_file)
+      : Token(std::move(s), t_line, t_column, t_file, Requirements()) {
     std::string real{};
     for (auto idx = 0; idx < token.length(); ++idx) {
       switch (auto c = token[idx]; c) {

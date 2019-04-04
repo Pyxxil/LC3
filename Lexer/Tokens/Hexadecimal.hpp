@@ -7,9 +7,9 @@ namespace Lexer {
 namespace Token {
 class Hexadecimal : public Immediate {
 public:
-  explicit Hexadecimal(const std::string &s, size_t tLine, size_t tColumn,
-                       const std::string &tFile, bool isNegative = false)
-      : Immediate(std::move(s), tLine, tColumn, tFile) {
+  explicit Hexadecimal(std::string s, size_t t_line, size_t t_column,
+                       const std::string &t_file, bool is_negative = false)
+      : Immediate(std::move(s), t_line, t_column,t_file) {
 
     std::string immediate = token;
     if (immediate.length() > 2 && 'X' == std::toupper(immediate[1])) {
@@ -28,7 +28,7 @@ public:
     if (nullptr == check || v > (2 * std::numeric_limits<int16_t>::max()) + 1) {
       too_big = true;
     } else {
-      if (isNegative) {
+      if (is_negative) {
         token = "-" + token;
       }
       m_value = static_cast<int16_t>(v);

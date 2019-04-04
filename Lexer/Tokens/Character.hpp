@@ -8,9 +8,9 @@ namespace Token {
 #ifdef ADDONS
 class Character : public Immediate {
 public:
-  Character(const std::string &s, size_t tLine, size_t tColumn,
-            const std::string &tFile)
-      : Immediate(std::move(s), tLine, tColumn, tFile) {
+  Character(std::string s, size_t t_line, size_t t_column,
+            const std::string &t_file)
+      : Immediate(std::move(s), t_line, t_column, t_file) {
     if ('\\' == token.front()) {
       switch (token.back()) {
       case 'n':

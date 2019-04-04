@@ -9,7 +9,7 @@ namespace Lexer {
 namespace Token {
 class Binary : public Immediate {
 public:
-  explicit Binary(const std::string &s, size_t t_line, size_t t_column,
+  explicit Binary(std::string s, size_t t_line, size_t t_column,
                   const std::string &t_file, bool is_negative = false)
       : Immediate(std::move(s), t_line, t_column, t_file) {
     std::string immediate = token;
