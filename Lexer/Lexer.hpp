@@ -133,12 +133,12 @@ public:
         ;
 
     for (idx = 0; idx < tokens.size(); ++idx) {
-      DEBUG("Found token {}", tokens[idx]->get_token());
       auto &token = *(tokens[idx]);
+      DEBUG("Found token {}", token.get_token());
       const auto &requirements = token.requirements();
 
       for (auto &&tok : requirements.consume(tokens, idx, m_file)) {
-        DEBUG("Consumed - {}", tok->get_token());
+        DEBUG("\tConsumed - {}", tok->get_token());
         token.add_operand(std::move(tok));
       }
 
@@ -149,8 +149,8 @@ public:
       }
 
       if (!requirements.are_satisfied()) {
-        // No need to push a diagnostic here, as Requirements::consume will push
-        // the diagnostic for us.
+        // No need to push a diagnostic here, as Requirements::consume will have
+        // pushed the diagnostic for us.
         error();
         ++idx; // Skip the next token, because otherwise it's luikely that the
                // below else if will error out twice for that token.
@@ -174,29 +174,31 @@ public:
     }
 
 #ifdef ADDONS
-    std::vector<std::unique_ptr<Token::Token>> _tokens;
-    _tokens.reserve(tokens.capacity());
-    for (auto &&token : tokens) {
-      DEBUG("Working on token: {}", token->get_token());
-      if (token->token_type() == TokenType::INCLUDE) {
-        DEBUG("Found this: {}", token->operands().size());
-        const auto &file_name = token->operands().front()->get_token();
-        Lexer lexer(File{file_name.substr(1, file_name.length() - 2)});
-        lexer.lex();
+    if (has_includes) {
+      std::vector<std::unique_ptr<Token::Token>> _tokens;
+      _tokens.reserve(tokens.capacity());
+      for (auto &&token : tokens) {
+        DEBUG("Working on token: {}", token->get_token());
+        if (token->token_type() == TokenType::INCLUDE) {
+          DEBUG("Found this: {}", token->operands().size());
+          const auto &file_name = token->operands().front()->get_token();
+          Lexer lexer(File{file_name.substr(1, file_name.length() - 2)});
+          lexer.lex();
 
-        // it = tokens.erase(it);
-        if (m_okay = lexer.is_okay(); m_okay) {
-          // TODO: This annoyingly means we will look over every token inside
-          // the new tokens as well, which is done by the child lexer...
-          _tokens.insert(std::end(_tokens),
-                         std::make_move_iterator(std::begin(lexer.tokens)),
-                         std::make_move_iterator(std::end(lexer.tokens)));
+          // it = tokens.erase(it);
+          if (m_okay = lexer.is_okay(); m_okay) {
+            // TODO: This annoyingly means we will look over every token inside
+            // the new tokens as well, which is done by the child lexer...
+            _tokens.insert(std::end(_tokens),
+                           std::make_move_iterator(std::begin(lexer.tokens)),
+                           std::make_move_iterator(std::end(lexer.tokens)));
+          }
+        } else {
+          _tokens.emplace_back(std::move(token));
         }
-      } else {
-        _tokens.emplace_back(std::move(token));
       }
+      tokens = std::move(_tokens);
     }
-    tokens = std::move(_tokens);
 #endif
   }
 
@@ -257,7 +259,9 @@ private:
   bool m_okay{true};
   std::size_t error_count{0};
   Tokenizer::Tokenizer m_tokenizer;
+#ifdef ADDONS
   bool has_includes{false};
+#endif
 };
 
 bool file_exists(const std::string &file) {
