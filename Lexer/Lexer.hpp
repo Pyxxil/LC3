@@ -8,6 +8,7 @@
 
 #include "../Debug.hpp"
 
+#include "Algorithm.hpp"
 #include "File.hpp"
 #include "Line.hpp"
 #include "Notifier.hpp"
@@ -23,20 +24,20 @@ public:
   Lexer() : m_tokenizer(*this, m_file) {}
   explicit Lexer(File file, bool warnings_are_errors = false)
       : m_file(std::move(file)), from_file(true),
-        treat_warnings_as_errors(warnings_are_errors), m_tokenizer(*this, m_file) {
+        treat_warnings_as_errors(warnings_are_errors),
+        m_tokenizer(*this, m_file) {
     if (file_exists(m_file.name())) {
       Notification::error_notifications << Diagnostics::Diagnostic(
-          std::make_unique<Diagnostics::DiagnosticHighlighter>(0, 0,
-                                                               std::string{}),
-          "File is already open (probable recursive include)", m_file.name(), 0);
+          std::make_unique<Diagnostics::DiagnosticHighlighter>(),
+          "File is already open (probable recursive include)", m_file.name(),
+          0);
       error();
       return;
     }
 
     if (m_file.is_failure()) {
       Notification::error_notifications << Diagnostics::Diagnostic(
-          std::make_unique<Diagnostics::DiagnosticHighlighter>(0, 0,
-                                                               std::string{}),
+          std::make_unique<Diagnostics::DiagnosticHighlighter>(),
           "Unable to open file", m_file.name(), 0);
       error();
       return;
@@ -46,9 +47,8 @@ public:
 
     while (m_file.next_line()) {
       auto &&l_tokens = m_tokenizer.tokenize_line(Line(m_file.line()));
-      for (auto &&token : l_tokens) {
-        tokens.emplace_back(std::move(token));
-      }
+      tokens.insert(std::end(tokens), std::make_move_iterator(l_tokens.begin()),
+                    std::make_move_iterator(l_tokens.end()));
     }
   }
 
@@ -90,9 +90,7 @@ public:
   }
 
   void for_each(const std::function<void(const Token::Token &)> &f) {
-    for (auto &&t : tokens) {
-      f(*t);
-    }
+    Algorithm::each(tokens.cbegin(), tokens.cend(), [&f](auto &&t) { f(*t); });
   }
 
   auto is_okay() const { return m_okay; }
@@ -111,13 +109,14 @@ public:
    */
   void lex() {
     // DEBUG("Tokens size: {}", tokens.size());
-    const Match requires_zero = Match(TokenType::LABEL) | Match(TokenType::RET) |
-                               Match(TokenType::END) | Match(TokenType::HALT) |
-                               Match(TokenType::PUTS) | Match(TokenType::OUT) |
-                               Match(TokenType::GETC) | Match(TokenType::IN) |
-                               Match(TokenType::PUTC) | Match(TokenType::RTI)
+    const Match requires_zero = Match(TokenType::LABEL) |
+                                Match(TokenType::RET) | Match(TokenType::END) |
+                                Match(TokenType::HALT) |
+                                Match(TokenType::PUTS) | Match(TokenType::OUT) |
+                                Match(TokenType::GETC) | Match(TokenType::IN) |
+                                Match(TokenType::PUTC) | Match(TokenType::RTI)
 #ifdef KEEP_COMMENTS
-                               | Match(TokenType::COMMENT)
+                                | Match(TokenType::COMMENT)
 #endif
         ;
 
@@ -158,27 +157,29 @@ public:
     }
 
 #ifdef ADDONS
-    for (auto it = tokens.begin(); it != tokens.end();) {
-      DEBUG("Working on token: {}", (*it)->get_token());
-      if ((*it)->token_type() == TokenType::INCLUDE) {
-        DEBUG("Found this: {}", (*it)->operands().size());
-        const auto &file_name = (*it)->operands().front()->get_token();
+    std::vector<std::unique_ptr<Token::Token>> _tokens;
+    _tokens.reserve(tokens.capacity());
+    for (auto &&token : tokens) {
+      DEBUG("Working on token: {}", token->get_token());
+      if (token->token_type() == TokenType::INCLUDE) {
+        DEBUG("Found this: {}", token->operands().size());
+        const auto &file_name = token->operands().front()->get_token();
         Lexer lexer(File{file_name.substr(1, file_name.length() - 2)});
         lexer.lex();
 
-        it = tokens.erase(it);
+        // it = tokens.erase(it);
         if (m_okay = lexer.is_okay(); m_okay) {
           // TODO: This annoyingly means we will look over every token inside
           // the new tokens as well, which is done by the child lexer...
-          it = tokens.insert(it,
-                             std::make_move_iterator(std::begin(lexer.tokens)),
-                             std::make_move_iterator(std::end(lexer.tokens)));
+          _tokens.insert(std::end(_tokens),
+                         std::make_move_iterator(std::begin(lexer.tokens)),
+                         std::make_move_iterator(std::end(lexer.tokens)));
         }
       } else {
-        ++it;
+        _tokens.emplace_back(std::move(token));
       }
     }
-    // tokens = std::move(_tokens);
+    tokens = std::move(_tokens);
 #endif
   }
 
@@ -242,24 +243,23 @@ private:
 };
 
 bool file_exists(const std::string &file) {
-  return std::any_of(Lexer::open_files.cbegin(), Lexer::open_files.cend(), [&file](auto &&f) { return f == file; });
+  return Algorithm::any(Lexer::open_files.cbegin(), Lexer::open_files.cend(),
+                        [&file](auto &&f) { return f == file; });
 }
 
 template <> Lexer &Lexer::operator<<<std::string_view>(std::string_view s) {
   // DEBUG("Passed in line '{}'", s);
   auto &&l_tokens = m_tokenizer.tokenize_line(Line(std::string(s)));
-  for (auto &&token : l_tokens) {
-    tokens.emplace_back(std::move(token));
-  }
+  tokens.insert(std::end(tokens), std::make_move_iterator(l_tokens.begin()),
+                std::make_move_iterator(l_tokens.end()));
   return *this;
-}
+} // namespace Lexer
 
 template <> Lexer &Lexer::operator<<<std::string>(std::string s) {
   // DEBUG("Passed in line '{}'", s);
   auto &&l_tokens = m_tokenizer.tokenize_line(Line(s));
-  for (auto &&token : l_tokens) {
-    tokens.emplace_back(std::move(token));
-  }
+  tokens.insert(std::end(tokens), std::make_move_iterator(l_tokens.begin()),
+                std::make_move_iterator(l_tokens.end()));
   return *this;
 }
 
@@ -277,13 +277,13 @@ template <> Lexer &Lexer::operator<<<File>(File file) {
 } // namespace Lexer
 
 void throw_error(Lexer::Tokenizer::Tokenizer *tokenizer,
-                Diagnostics::Diagnostic error) {
+                 Diagnostics::Diagnostic error) {
   Notification::error_notifications << std::move(error);
   tokenizer->lexer().error();
 }
 
 void throw_warning(Lexer::Tokenizer::Tokenizer *tokenizer,
-                  Diagnostics::Diagnostic warning) {
+                   Diagnostics::Diagnostic warning) {
   Notification::warning_notifications << std::move(warning);
   tokenizer->lexer().warn();
 }

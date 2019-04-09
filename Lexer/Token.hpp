@@ -29,8 +29,8 @@ struct Symbol {
   Symbol() = default;
   Symbol(std::string t_name, size_t t_address, std::string t_file,
          size_t t_column, size_t t_line)
-      : m_name(std::move(t_name)), m_address(t_address), m_file(std::move(t_file)),
-        m_column(t_column), m_line(t_line) {}
+      : m_name(std::move(t_name)), m_address(t_address),
+        m_file(std::move(t_file)), m_column(t_column), m_line(t_line) {}
 
   Symbol(const Symbol &) = default;
   Symbol(Symbol &&) = default;
@@ -170,23 +170,23 @@ public:
 
   template <typename OStream>
   friend OStream &operator<<(OStream &os, const Match &t) {
-    using namespace Algorithm;
-    enumerate(t.matches.cbegin(), t.matches.cend(),
-              [&os, &t](auto &&token_type, size_t idx) {
-                if (0 == idx) {
-                  if (t.matches.size() > 1) {
-                    os << "one of (";
-                  }
-                } else {
-                  os << ", ";
-                }
+    Algorithm::enumerate(t.matches.cbegin(), t.matches.cend(),
+                         [&os, &t](auto &&token_type, size_t idx) {
+                           if (0 == idx) {
+                             if (t.matches.size() > 1) {
+                               os << "one of (";
+                             }
+                           } else {
+                             os << ", ";
+                           }
 
-                os << token_type;
+                           os << token_type;
 
-                if (t.matches.size() > 1 && idx == t.matches.size() - 1) {
-                  os << ')';
-                }
-              });
+                           if (t.matches.size() > 1 &&
+                               idx == t.matches.size() - 1) {
+                             os << ')';
+                           }
+                         });
 
     return os;
   }
@@ -213,8 +213,8 @@ public:
   }
 
   bool operator&(TokenType t) const {
-    return std::any_of(matches.cbegin(), matches.cend(),
-                       [&t](auto &&match) { return match == t; });
+    return Algorithm::any(matches.cbegin(), matches.cend(),
+                          [&t](auto &&match) { return match == t; });
   }
 
 private:

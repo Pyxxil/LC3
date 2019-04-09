@@ -93,8 +93,7 @@ public:
       std::ifstream object_file(file, std::ios::binary);
       if (!object_file.is_open() || object_file.fail()) {
         Notification::error_notifications << Diagnostics::Diagnostic(
-            std::make_unique<Diagnostics::DiagnosticHighlighter>(0, 0,
-                                                                 std::string{}),
+            std::make_unique<Diagnostics::DiagnosticHighlighter>(),
             "File cannot be opened", file, 0);
 
         ret_value = 1;
