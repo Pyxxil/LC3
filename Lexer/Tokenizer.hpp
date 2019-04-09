@@ -644,7 +644,7 @@ public:
               line.index(),
               line.find_if([](auto &&c) -> bool { return !std::isalnum(c); }))};
           if (!token.empty()) {
-            l_tokens.emplace_back(tokenizeImmediate(token));
+            l_tokens.emplace_back(tokenize_immediate(token));
           } else {
             throw_error(
                 this, Diagnostics::Diagnostic(

@@ -14,9 +14,9 @@ public:
   DiagnosticHighlighter() = default;
 
   DiagnosticHighlighter(size_t tColumn, size_t tLength, std::string tContext)
-      : mContext(std::move(tContext)), mColumn(tColumn), mLength(tLength) {
-    if (!mContext.empty()) {
-      mHighlighter.push_back('^');
+      : m_context(std::move(tContext)), m_column(tColumn), m_length(tLength) {
+    if (!m_context.empty()) {
+      m_highlighter.push_back('^');
       if (length() > 0) {
         m_highlighter += std::string(length() - 1, '~');
       }
