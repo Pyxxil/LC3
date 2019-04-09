@@ -94,7 +94,7 @@ public:
       if (!object_file.is_open() || object_file.fail()) {
         Notification::error_notifications << Diagnostics::Diagnostic(
             std::make_unique<Diagnostics::DiagnosticHighlighter>(),
-            "File cannot be opened", file, 0);
+            "File cannot be opened", file);
 
         ret_value = 1;
         continue;

@@ -48,7 +48,7 @@ public:
   Diagnostic() = default;
   explicit Diagnostic(std::unique_ptr<DiagnosticHighlighter> highlighter,
                       std::string t_message, const std::string &file_name,
-                      size_t at_line)
+                      size_t at_line = 0)
       : m_highlighter(std::move(highlighter)), m_message(std::move(t_message)),
         m_file(file_name), m_line(at_line) {}
 

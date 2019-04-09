@@ -220,9 +220,9 @@ constexpr bool is_valid_label(const std::string_view &s) {
 }
 
 struct TokenValues {
-  TokenValues(std::string s, size_t line, size_t column,
+  TokenValues(std::string_view s, size_t line, size_t column,
               const std::string &file_name)
-      : s(std::move(s)), line(line), column(column), file_name(file_name) {}
+      : s(std::string(s)), line(line), column(column), file_name(file_name) {}
   std::string s;
   size_t line;
   size_t column;
@@ -252,7 +252,7 @@ class Tokenizer {
 public:
   Tokenizer(Lexer &t_lexer, File &t_file) : m_lexer(t_lexer), file(t_file) {}
 
-  std::unique_ptr<Token::Token> tokenize_immediate(const std::string &s) {
+  std::unique_ptr<Token::Token> tokenize_immediate(const std::string_view &s) {
     // We know this is going to be negative, as this is only ever called when
     // the next character on the line is a '-'.
     const TokenValues vals{s, file.position().line(), file.position().column(),
@@ -329,8 +329,7 @@ public:
                             file.line()),
                         "Binary literal is too big to fit inside 16 bits",
                         file.name(), file.position().line()));
-        return std::make_unique<Token::Token>(
-            s, file.position().line(), file.position().column(), file.name());
+        return vals.to<Token::Token>();
       } else {
         throw_error(this,
                     Diagnostics::Diagnostic(
@@ -413,7 +412,7 @@ public:
     return vals.to<Token::Token>();
   }
 
-  std::unique_ptr<Token::Token> tokenize_directive(const std::string &s) {
+  std::unique_ptr<Token::Token> tokenize_directive(const std::string_view &s) {
     const auto &[column, line] = file.position();
     const TokenValues vals{s, line, column, file.name()};
     if (const auto _hash{hash(s)}; _hash > 0) {
@@ -452,7 +451,7 @@ public:
    * @param s The word to tokenize
    * @return The token the word corresponds to
    */
-  std::unique_ptr<Token::Token> tokenize(const std::string &s) {
+  std::unique_ptr<Token::Token> tokenize(const std::string_view &s) {
     const auto &[column, line] = file.position();
     const TokenValues vals{s, line, column, file.name()};
     if (const auto _hash = hash(s); _hash > 0) {
@@ -626,7 +625,7 @@ public:
 
       file.set_column(token_start);
 
-      if (token_end - token_start == 0) {
+      if (token_end == token_start) {
         switch (const auto next{line.next()}; next) {
         case '.': {
           terminator = '\0';
@@ -699,7 +698,8 @@ public:
           } else if ('"' == next) {
             auto &&str{line.substr(begin, end)};
             l_tokens.emplace_back(std::make_unique<Token::String>(
-                str, file.position().line(), token_start, file.name()));
+                std::string(str), file.position().line(), token_start,
+                file.name()));
           } else if ('\'' == next) {
             auto &&character{line.substr(begin, end)};
 #ifdef ADDONS
@@ -713,8 +713,8 @@ public:
                       file.name(), file.position().line()));
             } else {
               l_tokens.emplace_back(std::make_unique<Token::Character>(
-                  character, file.position().line(), file.position().column(),
-                  file.name()));
+                  std::string(character), file.position().line(),
+                  file.position().column(), file.name()));
             }
 #else
             throw_error(
@@ -744,13 +744,13 @@ public:
         case ';':
 #ifdef KEEP_COMMENTS
           l_tokens.emplace_back(std::make_unique<Token::Comment>(
-              line.substr(line.index(), -1), file.position().line(),
-              file.position().column(), file.name()));
+              std::string(line.substr(line.index(), -1)),
+              file.position().line(), file.position().column(), file.name()));
 #endif
           line.skip_while([](auto &&) -> bool { return true; });
           break;
         case '#': {
-          auto &&token{line.substr(token_start, line.find_if([](auto c) {
+          std::string token{line.substr(token_start, line.find_if([](auto c) {
             return !(is_digit(c) || '-' == c);
           }))};
           if (is_valid_decimal(token)) {
@@ -785,7 +785,11 @@ public:
           break;
         }
       } else {
+        DEBUG("TOKEN START {}, TOKEN END {}", token_start, token_end);
         auto &&token{line.substr(token_start, token_end)};
+        if (token.empty()) {
+          continue;
+        }
         if (auto &&t_token{tokenize(token)};
             t_token->token_type() == TokenType::IMMEDIATE &&
             t_token->is_too_big()) {
@@ -797,9 +801,10 @@ public:
                   "Immediate literal requires more than 16 bits to represent",
                   file.name(), file.position().line()));
           l_tokens.emplace_back(std::make_unique<Token::Token>(
-              token, file.position().line(), file.position().column(),
-              file.name()));
+              std::string(token), file.position().line(),
+              file.position().column(), file.name()));
         } else {
+          DEBUG("FOUND THIS {}", *t_token);
           l_tokens.emplace_back(std::move(t_token));
         }
         terminator = '\0';

@@ -41,8 +41,7 @@ public:
     if (file_exists(m_file.name())) {
       Notification::error_notifications << Diagnostics::Diagnostic(
           std::make_unique<Diagnostics::DiagnosticHighlighter>(),
-          "File is already open (probable recursive include)", m_file.name(),
-          0);
+          "File is already open (probable recursive include)", m_file.name());
       error();
       return;
     }
@@ -50,7 +49,7 @@ public:
     if (m_file.is_failure()) {
       Notification::error_notifications << Diagnostics::Diagnostic(
           std::make_unique<Diagnostics::DiagnosticHighlighter>(),
-          "Unable to open file", m_file.name(), 0);
+          "Unable to open file", m_file.name());
       error();
       return;
     }
@@ -121,17 +120,6 @@ public:
    */
   void lex() {
     // DEBUG("Tokens size: {}", tokens.size());
-    const Match requires_zero = Match(TokenType::LABEL) |
-                                Match(TokenType::RET) | Match(TokenType::END) |
-                                Match(TokenType::HALT) |
-                                Match(TokenType::PUTS) | Match(TokenType::OUT) |
-                                Match(TokenType::GETC) | Match(TokenType::IN) |
-                                Match(TokenType::PUTC) | Match(TokenType::RTI)
-#ifdef KEEP_COMMENTS
-                                | Match(TokenType::COMMENT)
-#endif
-        ;
-
     for (idx = 0; idx < tokens.size(); ++idx) {
       auto &token = *(tokens[idx]);
       DEBUG("Found token {}", token.get_token());

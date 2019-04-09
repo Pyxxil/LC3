@@ -10,7 +10,7 @@
 namespace Lexer {
 class Line {
 public:
-  explicit Line(const std::string &t_line) : m_line(t_line) {}
+  explicit Line(const std::string_view &t_line) : m_line(t_line) {}
 
   enum IGNORES {
     RESET = 0,
@@ -81,7 +81,7 @@ public:
       skip();
     }
 
-    // Couldn't find it
+    // Didn't find it
     return static_cast<size_t>(-1u);
   }
 
@@ -112,7 +112,7 @@ public:
    * @return The substring in the line.
    */
   auto substr(size_t begin, size_t end) const {
-    if (end == -1u) {
+    if (end == static_cast<size_t>(-1u)) {
       return m_line.substr(begin);
     }
 
@@ -132,7 +132,11 @@ public:
    * @return The character at the index
    */
   inline char at(size_t index) const {
+#ifndef NDEBUG
     return static_cast<char>((index >= m_line.length()) ? 0 : (*this)[index]);
+#else
+    return (*this)[index];
+#endif
   }
 
   inline char operator[](size_t index) const { return m_line[index]; }
@@ -147,7 +151,7 @@ public:
   const auto &line() const { return m_line; }
 
 private:
-  const std::string &m_line;
+  const std::string_view &m_line;
   size_t m_index{};
   size_t m_ignores{};
 
