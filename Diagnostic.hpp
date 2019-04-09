@@ -11,10 +11,12 @@ namespace Diagnostics {
 
 class DiagnosticHighlighter {
 public:
-  DiagnosticHighlighter(size_t t_column, size_t t_length, std::string t_context)
-      : m_context(std::move(t_context)), m_column(t_column), m_length(t_length) {
-    if (!m_context.empty()) {
-      m_highlighter.push_back('^');
+  DiagnosticHighlighter() = default;
+
+  DiagnosticHighlighter(size_t tColumn, size_t tLength, std::string tContext)
+      : mContext(std::move(tContext)), mColumn(tColumn), mLength(tLength) {
+    if (!mContext.empty()) {
+      mHighlighter.push_back('^');
       if (length() > 0) {
         m_highlighter += std::string(length() - 1, '~');
       }

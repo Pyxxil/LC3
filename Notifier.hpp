@@ -8,6 +8,7 @@
 
 #include "Debug.hpp"
 
+#include "Algorithm.hpp"
 #include "Callback.hpp"
 #include "Diagnostic.hpp"
 
@@ -59,29 +60,21 @@ public:
   }
 
   void for_each(std::function<void(const Diagnostics::Diagnostic &)> f) const {
-    for (const auto &diagnostic : diagnostics) {
-      f(diagnostic);
-    }
+    Algorithm::each(diagnostics.cbegin(), diagnostics.cend(), f);
   }
 
   void notify_for_each() const {
-    for (const auto &callback : callbacks) {
-      for_each(callback);
-    }
+    Algorithm::each(callbacks.cbegin(), callbacks.cend(),
+                    [this](const auto &cb) { for_each(cb); });
   }
 
   void notify_all(bool force_updates = false) {
-    if (force_updates) {
-      for (const auto &callback : callbacks) {
-        callback(diagnostics.back());
-      }
-    } else {
-      for (const auto &callback : callbacks) {
-        if (callback.wants_updates()) {
-          callback(diagnostics.back());
-        }
-      }
-    }
+    Algorithm::each(callbacks.cbegin(), callbacks.cend(),
+                    [this, force_updates](const auto &cb) {
+                      if (force_updates || cb.wants_updates()) {
+                        cb(diagnostics.back());
+                      }
+                    });
   }
 
   size_t count() const { return diagnostics.size(); }

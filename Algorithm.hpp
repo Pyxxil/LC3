@@ -27,6 +27,13 @@ constexpr bool all(InputIterator first, InputIterator last, Function f) {
   return true;
 }
 
+template <class InputIterator, class Function>
+constexpr void each(InputIterator first, InputIterator last, Function f) {
+  for (; first != last; ++first) {
+    f(*first);
+  }
+}
+
 template <typename T> struct greater_than {
   constexpr greater_than(T next, T prev) : n(next), p(prev) {}
   constexpr bool operator()() { return n > p; }

@@ -174,10 +174,10 @@ public:
           auto &&[high, low] = (*tokens.begin())->assembled().front().binary();
           program_counter = static_cast<int16_t>(high) << 8 | low;
 
-          sym_file << fmt::format(
-              "// Symbol table\n// Scope Level 0:\n//\t{: "
-              "<30} Page Address\n//\t{:-<30} ------------\n",
-              "Symbol Name", "-");
+          sym_file << "// Symbol table\n"
+                      "// Scope Level 0:\n"
+                      "//\tSymbol Name                    Page Address\n"
+                      "//-------------------------------- ------------\n";
 
           for (const auto &[addr, symbol] : symbols) {
             sym_file << fmt::format("//\t{: <30} {:04X}\n", symbol.name(),
@@ -211,10 +211,9 @@ public:
           if (temp_ret_value == 0) {
             for (auto &&word : assembled) {
               auto &&[high, low] = word.binary();
-              bin_file << fmt::format("{:0>16b}\n",
-                                      static_cast<uint16_t>(high) << 8 | low);
-              hex_file << fmt::format("{:0>4X}\n",
-                                      static_cast<uint16_t>(high) << 8 | low);
+              const uint16_t bin = static_cast<uint16_t>(high) << 8 | low;
+              bin_file << fmt::format("{:0>16b}\n", bin);
+              hex_file << fmt::format("{:0>4X}\n", bin);
               lst_file << word.lstStr() << '\n';
               obj_file.put(high).put(low);
             }
