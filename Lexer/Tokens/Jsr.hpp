@@ -7,9 +7,9 @@ namespace Lexer {
 namespace Token {
 class Jsr : public Token {
 public:
-  explicit Jsr(const std::string &t, size_t tLine, size_t tColumn,
-               const std::string &tFile)
-      : Token(std::move(t), tLine, tColumn, tFile,
+  explicit Jsr(std::string t, size_t t_line, size_t t_column,
+               const std::string &t_file)
+      : Token(std::move(t), t_line, t_column,t_file,
               Requirements(1, {Match(TokenType::LABEL) |
                                Match(TokenType::IMMEDIATE)})) {}
 
@@ -21,7 +21,7 @@ public:
 
   TokenType token_type() const final { return JSR; }
 
-  void assemble(int16_t &programCounter, size_t width,
+  void assemble(int16_t &program_counter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
     const auto &ops = operands();
 
@@ -41,7 +41,7 @@ public:
                        });
       if (label != symbols.end()) {
         bin |= ((static_cast<int16_t>(label->second.address() -
-                                      (programCounter + 1))
+                                      (program_counter + 1))
                  << 5) >>
                 5) &
                0x7FF;
@@ -56,15 +56,15 @@ public:
     }
 
     auto sym = std::find_if(symbols.begin(), symbols.end(),
-                            [programCounter](const auto &sym) {
-                              return sym.second.address() == programCounter;
+                            [program_counter](const auto &sym) {
+                              return sym.second.address() == program_counter;
                             });
 
     set_assembled(AssembledToken(
         bin, fmt::format(
                  "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
                  "JSR {5:s}",
-                 programCounter++, bin, line(),
+                 program_counter++, bin, line(),
                  sym == symbols.end() ? "" : sym->second.name(), width,
                  TokenType::IMMEDIATE == ops.front()->token_type()
                      ? fmt::format(

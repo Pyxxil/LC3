@@ -7,9 +7,9 @@ namespace Lexer {
 namespace Token {
 class Label : public Token {
 public:
-  explicit Label(const std::string &s, size_t tLine, size_t tColumn,
-                 const std::string &tFile)
-      : Token(std::move(s), tLine, tColumn, tFile) {}
+  explicit Label(std::string s, size_t t_line, size_t t_column,
+                 const std::string &t_file)
+      : Token(std::move(s), t_line, t_column,t_file) {}
 
   Label(const Label &) = default;
   Label(Label &&) = default;

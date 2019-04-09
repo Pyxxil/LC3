@@ -102,6 +102,7 @@ enum TokenType {
 #endif
 };
 
+namespace {
 const char *TOKEN_TYPE_STRING[] = {
     "INVALID",
     "Instruction ADD",
@@ -149,6 +150,7 @@ const char *TOKEN_TYPE_STRING[] = {
     "Comment",
 #endif
 };
+} // namespace
 
 template <typename OStream>
 inline OStream &operator<<(OStream &os, TokenType type) {
@@ -203,13 +205,8 @@ public:
   }
 
   bool operator&(const Match &t) const {
-    for (auto &&match : t.matches) {
-      if (*this & match) {
-        return true;
-      }
-    }
-
-    return false;
+    return Algorithm::any(t.matches.begin(), t.matches.cbegin(),
+                          [this](auto &&match) { return *this & match; });
   }
 
   bool operator&(TokenType t) const {
@@ -229,10 +226,8 @@ public:
   Requirements() = default;
   explicit Requirements(size_t _min, std::vector<Match> operands = {},
                         size_t _max = 0)
-      : min(_min), max(_max), arguments(std::move(operands)) {
-    if (_min > _max) {
-      max = _min;
-    }
+      : min(_min), max(_min > _max ? _min : _max),
+        arguments(std::move(operands)) {
 
     assert(arguments.size() >= min && arguments.size() <= max);
   }
@@ -253,11 +248,11 @@ public:
   consume(std::vector<std::unique_ptr<Token>> &tokens, std::size_t index,
           const File &file) const;
 
-  bool are_satisfied() const { return satisfied; }
+  auto are_satisfied() const { return satisfied; }
 
 private:
-  size_t min{};
-  size_t max{};
+  const size_t min{};
+  const size_t max{};
   const std::vector<Match> arguments{};
   mutable bool satisfied{false};
 };
@@ -363,9 +358,9 @@ protected:
   std::vector<AssembledToken> as_assembled{};
 
 private:
-  size_t at_line;
-  size_t at_column;
-  std::string m_file;
+  const size_t at_line;
+  const size_t at_column;
+  const std::string m_file;
   Requirements m_requirements;
   std::vector<std::unique_ptr<Token>> m_operands{};
   std::string ast{};

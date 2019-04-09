@@ -8,9 +8,9 @@ namespace Token {
 #ifdef ADDONS
 class Set : public Token {
 public:
-  explicit Set(const std::string &t, size_t tLine, size_t tColumn,
-               const std::string &tFile)
-      : Token(std::move(t), tLine, tColumn, tFile,
+  explicit Set(std::string t, size_t t_line, size_t t_column,
+               const std::string &t_file)
+      : Token(std::move(t), t_line, t_column, t_file,
               Requirements(2, {Match(TokenType::REGISTER),
                                Match(TokenType::IMMEDIATE) |
                                    Match(TokenType::LABEL)})) {}
@@ -23,7 +23,7 @@ public:
 
   TokenType token_type() const final { return SET; }
 
-  void assemble(int16_t &programCounter, size_t width,
+  void assemble(int16_t &program_counter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
     const auto &ops = operands();
 
@@ -41,7 +41,7 @@ public:
           line(), column(), file()));
       a.add_operand(
           std::make_unique<Immediate>("#0", line(), column(), file()));
-      a.assemble(programCounter, width, symbols);
+      a.assemble(program_counter, width, symbols);
 
       Add ad("ADD", line(), column(), file());
       ad.add_operand(std::make_unique<Register>(
@@ -54,7 +54,7 @@ public:
           line(), column(), file()));
       ad.add_operand(std::make_unique<Decimal>(fmt::format("#{:d}", value),
                                                line(), column(), file()));
-      ad.assemble(programCounter, width, symbols);
+      ad.assemble(program_counter, width, symbols);
 
       for (auto &&as : a.assembled()) {
         as_assembled.emplace_back(as);
@@ -66,12 +66,12 @@ public:
     } else {
       Br b("BR", true, true, true, line(), column(), file());
       b.add_operand(std::make_unique<Decimal>("#1", line(), column(), file()));
-      b.assemble(programCounter, width, symbols);
+      b.assemble(program_counter, width, symbols);
 
       Fill f(".FILL", line(), column(), file());
       f.add_operand(std::make_unique<Decimal>(fmt::format("#{:d}", value),
                                               line(), column(), file()));
-      f.assemble(programCounter, width, symbols);
+      f.assemble(program_counter, width, symbols);
 
       Ld l("LD", line(), column(), file());
       l.add_operand(std::make_unique<Register>(
@@ -79,7 +79,7 @@ public:
                       static_cast<Register *>(ops.front().get())->reg()),
           line(), column(), file()));
       l.add_operand(std::make_unique<Decimal>("#-2", line(), column(), file()));
-      l.assemble(programCounter, width, symbols);
+      l.assemble(program_counter, width, symbols);
 
       for (auto &&as : b.assembled()) {
         as_assembled.emplace_back(as);

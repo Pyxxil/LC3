@@ -7,8 +7,8 @@ namespace Lexer {
 namespace Token {
 class Putsp : public Token {
 public:
-  Putsp(const std::string &t, size_t tLine, size_t tColumn, const std::string &tFile)
-      : Token(std::move(t), tLine, tColumn, tFile) {}
+  Putsp(std::string t, size_t t_line, size_t t_column, const std::string &t_file)
+      : Token(std::move(t), t_line, t_column, t_file) {}
 
   Putsp(const Putsp &) = default;
   Putsp(Putsp &&) = default;
@@ -18,18 +18,18 @@ public:
 
   TokenType token_type() const final { return PUTSP; }
 
-  void assemble(int16_t &programCounter, size_t width,
+  void assemble(int16_t &program_counter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
     auto sym = std::find_if(symbols.begin(), symbols.end(),
-                            [programCounter](const auto &sym) {
-                              return sym.second.address() == programCounter;
+                            [program_counter](const auto &sym) {
+                              return sym.second.address() == program_counter;
                             });
 
     set_assembled(AssembledToken(
         0xF024,
         fmt::format(
             "({0:0>4X}) F024 1111000000100100 ({1: >4d}) {2: <{3}s} PUTSP",
-            programCounter++, line(),
+            program_counter++, line(),
             sym == symbols.end() ? "" : sym->second.name(), width)));
   }
 

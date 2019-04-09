@@ -252,7 +252,7 @@ class Tokenizer {
 public:
   Tokenizer(Lexer &t_lexer, File &t_file) : m_lexer(t_lexer), file(t_file) {}
 
-  std::unique_ptr<Token::Token> tokenizeImmediate(const std::string &s) {
+  std::unique_ptr<Token::Token> tokenize_immediate(const std::string &s) {
     // We know this is going to be negative, as this is only ever called when
     // the next character on the line is a '-'.
     const TokenValues vals{s, file.position().line(), file.position().column(),

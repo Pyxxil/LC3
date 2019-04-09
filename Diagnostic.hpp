@@ -18,29 +18,29 @@ public:
     if (!mContext.empty()) {
       mHighlighter.push_back('^');
       if (length() > 0) {
-        mHighlighter += std::string(length() - 1, '~');
+        m_highlighter += std::string(length() - 1, '~');
       }
     }
   }
 
-  auto column() const -> size_t { return mColumn; }
-  auto length() const -> size_t { return mLength; }
+  auto column() const -> size_t { return m_column; }
+  auto length() const -> size_t { return m_length; }
 
   template <typename OStream>
   friend OStream &operator<<(OStream &os,
-                             const DiagnosticHighlighter &Highlighter) {
+                             const DiagnosticHighlighter &highlighter) {
     using namespace Console;
-    return os << Highlighter.mContext << '\n'
-              << std::string(Highlighter.column(), ' ')
-              << Colour(FOREGROUND_COLOUR::MAGENTA) << Highlighter.mHighlighter
+    return os << highlighter.m_context << '\n'
+              << std::string(highlighter.column(), ' ')
+              << Colour(FOREGROUND_COLOUR::MAGENTA) << highlighter.m_highlighter
               << reset;
   }
 
 protected:
-  std::string mHighlighter{};
-  std::string mContext;
-  size_t mColumn;
-  size_t mLength;
+  std::string m_highlighter{};
+  std::string m_context;
+  size_t m_column;
+  size_t m_length;
 };
 
 class Diagnostic {
@@ -49,8 +49,8 @@ public:
   explicit Diagnostic(std::unique_ptr<DiagnosticHighlighter> highlighter,
                       std::string t_message, const std::string &file_name,
                       size_t at_line)
-      : mHighlighter(std::move(highlighter)), mMessage(std::move(t_message)),
-        mFile(file_name), mLine(at_line) {}
+      : m_highlighter(std::move(highlighter)), m_message(std::move(t_message)),
+        m_file(file_name), m_line(at_line) {}
 
   Diagnostic(const Diagnostic &) = default;
   Diagnostic(Diagnostic &&) noexcept = default;
@@ -58,10 +58,10 @@ public:
   Diagnostic &operator=(const Diagnostic &) = default;
   Diagnostic &operator=(Diagnostic &&) noexcept = default;
 
-  auto line() const { return mLine; }
-  auto column() const { return mHighlighter->column(); }
-  const auto &message() const { return mMessage; }
-  const auto &file() const { return mFile; }
+  auto line() const { return m_line; }
+  auto column() const { return m_highlighter->column(); }
+  const auto &message() const { return m_message; }
+  const auto &file() const { return m_file; }
 
   template <typename OStream>
   friend OStream &operator<<(OStream &os, const Diagnostic &diagnostic) {
@@ -69,14 +69,14 @@ public:
     return os << Colour(FOREGROUND_COLOUR::GREEN) << diagnostic.file() << reset
               << ':' << diagnostic.line() << ':' << diagnostic.column() << ": "
               << diagnostic.message() << '\n'
-              << *diagnostic.mHighlighter;
+              << *diagnostic.m_highlighter;
   }
 
 private:
-  std::unique_ptr<DiagnosticHighlighter> mHighlighter;
-  std::string mMessage;
-  std::string mFile;
-  size_t mLine;
+  std::unique_ptr<DiagnosticHighlighter> m_highlighter;
+  std::string m_message;
+  std::string m_file;
+  size_t m_line;
 };
 } // namespace Diagnostics
 

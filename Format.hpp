@@ -12,8 +12,8 @@
 namespace Formatter {
 class Formatter {
 public:
-  Formatter(int argCount, char **argVals)
-      : argumentCount(argCount), argumentValues(argVals),
+  Formatter(int arg_count, char **arg_vals)
+      : argument_count(arg_count), argument_values(arg_vals),
         options("LC3Format", "A formatter for LC3 Assembly files") {
     parse_options();
   }
@@ -55,7 +55,7 @@ public:
   int format() {
     try {
       options.parse_positional("files");
-      auto parsed = options.parse(argumentCount, argumentValues);
+      auto parsed = options.parse(argument_count, argument_values);
 
       if (parsed["help"].as<bool>()) {
         std::cout << options.help() << '\n';
@@ -183,8 +183,8 @@ public:
   }
 
 private:
-  int argumentCount;
-  char **argumentValues;
+  int argument_count;
+  char **argument_values;
   cxxopts::Options options;
 };
 } // namespace Formatter

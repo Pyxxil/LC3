@@ -7,9 +7,9 @@ namespace Lexer {
 namespace Token {
 class Register : public Token {
 public:
-  explicit Register(const std::string &s, size_t tLine, size_t tColumn,
-                    const std::string &tFile)
-      : Token(std::move(s), tLine, tColumn, tFile, Requirements()),
+  explicit Register(std::string s, size_t t_line, size_t t_column,
+                    const std::string &t_file)
+      : Token(std::move(s), t_line, t_column, t_file, Requirements()),
         mReg(static_cast<size_t>(token[1] - 0x30)) {}
 
   Register(const Register &) = default;
@@ -20,7 +20,7 @@ public:
 
   TokenType token_type() const final { return REGISTER; }
 
-  void assemble(int16_t &programCounter, size_t width,
+  void assemble(int16_t &program_counter, size_t width,
                 const std::map<std::string, Symbol> &symbol) override {}
 
   auto reg() const { return mReg; }

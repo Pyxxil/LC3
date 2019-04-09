@@ -19,6 +19,18 @@ namespace Lexer {
 
 bool file_exists(const std::string &file);
 
+namespace {
+const Match requires_zero = Match(TokenType::LABEL) | Match(TokenType::RET) |
+                            Match(TokenType::END) | Match(TokenType::HALT) |
+                            Match(TokenType::PUTS) | Match(TokenType::OUT) |
+                            Match(TokenType::GETC) | Match(TokenType::IN) |
+                            Match(TokenType::PUTC) | Match(TokenType::RTI)
+#ifdef KEEP_COMMENTS
+                            | Match(TokenType::COMMENT)
+#endif
+    ;
+} // namespace
+
 class Lexer {
 public:
   Lexer() : m_tokenizer(*this, m_file) {}
@@ -122,37 +134,42 @@ public:
 
     for (idx = 0; idx < tokens.size(); ++idx) {
       DEBUG("Found token {}", tokens[idx]->get_token());
-      const auto &requirements = tokens[idx]->requirements();
+      auto &token = *(tokens[idx]);
+      const auto &requirements = token.requirements();
 
-      for (auto &&token : requirements.consume(tokens, idx, m_file)) {
-        DEBUG("Consumed - {}", token->get_token());
-        tokens[idx]->add_operand(std::move(token));
+      for (auto &&tok : requirements.consume(tokens, idx, m_file)) {
+        DEBUG("Consumed - {}", tok->get_token());
+        token.add_operand(std::move(tok));
       }
 
       if (const auto tokens_removed = tokens[idx]->operands().size();
           tokens_removed > 0) {
-        tokens.erase(tokens.cbegin() + idx + 1,
-                     tokens.cbegin() + idx + tokens_removed + 1);
+        const auto begin = tokens.cbegin() + idx + 1;
+        tokens.erase(begin, begin + tokens_removed);
       }
 
       if (!requirements.are_satisfied()) {
         // No need to push a diagnostic here, as Requirements::consume will push
         // the diagnostic for us.
         error();
-        ++idx; // Skip the next token, because otherwise it's likely that the
+        ++idx; // Skip the next token, because otherwise it's luikely that the
                // below else if will error out twice for that token.
-      } else if (requirements.count() == 0 &&
-                 !(requires_zero & tokens[idx]->token_type())) {
-        const auto &tok = tokens[idx];
-        Notification::error_notifications << Diagnostics::Diagnostic(
-            std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                tok->column(), tok->get_token().length(),
-                m_file.line(tok->line() - 1)),
-            fmt::format("Expected Label, Instruction, or Directive, but "
-                        "found '{}' (type {}) instead.",
-                        *tok, tok->token_type()),
-            tok->file(), tok->line());
-        error();
+      } else if (requirements.count() == 0) {
+        if (!(requires_zero & token.token_type())) {
+          Notification::error_notifications << Diagnostics::Diagnostic(
+              std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                  token.column(), token.get_token().length(),
+                  m_file.line(token.line() - 1)),
+              fmt::format("Expected Label, Instruction, or Directive, but "
+                          "found '{}' (type {}) instead.",
+                          token, token.token_type()),
+              token.file(), token.line());
+          error();
+        }
+#ifdef ADDONS
+      } else if (token.token_type() == TokenType::INCLUDE) {
+        has_includes = true;
+#endif
       }
     }
 
@@ -187,8 +204,8 @@ public:
    *
    * @param begin The lowest number of acceptable tokens
    * @param end The highest number of acceptable tokens
-   * @return The consumed tokens if there are enough of them, otherwise an empty
-   * vector.
+   * @return The consumed tokens if there are enough of them, otherwise an
+   * empty vector.
    */
   auto consume_range(size_t begin, size_t end) {
     std::vector<std::unique_ptr<Token::Token>> consumed;
@@ -207,8 +224,8 @@ public:
   /* Consume count tokens from the held tokens.
    *
    * @param count The number of tokens to consume
-   * @return The consumed tokens if there are enough of them, otherwise an empty
-   * vector
+   * @return The consumed tokens if there are enough of them, otherwise an
+   * empty vector
    */
   auto consume(std::size_t count) {
     if (idx + count > tokens.size()) {
@@ -240,6 +257,7 @@ private:
   bool m_okay{true};
   std::size_t error_count{0};
   Tokenizer::Tokenizer m_tokenizer;
+  bool has_includes{false};
 };
 
 bool file_exists(const std::string &file) {

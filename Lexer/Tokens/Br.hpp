@@ -7,9 +7,9 @@ namespace Lexer {
 namespace Token {
 class Br : public Token {
 public:
-  Br(const std::string &t, bool n, bool z, bool p, size_t tLine, size_t tColumn,
-     const std::string &tFile)
-      : Token(std::move(t), tLine, tColumn, tFile,
+  Br(std::string t, bool n, bool z, bool p, size_t t_line, size_t t_column,
+     const std::string &t_file)
+      : Token(std::move(t), t_line, t_column, t_file,
               Requirements(
                   1, {Match(TokenType::LABEL) | Match(TokenType::IMMEDIATE)})),
         N(n), Z(z), P(p) {}
@@ -22,7 +22,7 @@ public:
 
   TokenType token_type() const final { return BR; }
 
-  void assemble(int16_t &programCounter, size_t width,
+  void assemble(int16_t &program_counter, size_t width,
                 const std::map<std::string, Symbol> &symbols) override {
     const auto &ops = operands();
 
@@ -45,7 +45,7 @@ public:
       if (label != symbols.end()) {
         bin |=
             (static_cast<int16_t>(static_cast<int16_t>(label->second.address() -
-                                                       (programCounter + 1))
+                                                       (program_counter + 1))
                                   << 7) >>
              7) &
             0x1FF;
@@ -60,15 +60,15 @@ public:
     }
 
     auto sym = std::find_if(symbols.begin(), symbols.end(),
-                            [programCounter](const auto &sym) {
-                              return sym.second.address() == programCounter;
+                            [program_counter](const auto &sym) {
+                              return sym.second.address() == program_counter;
                             });
 
     set_assembled(AssembledToken(
         bin, fmt::format(
                  "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
                  "BR{5:s}{6:s}{7:s} {8:s}",
-                 programCounter++, bin, line(),
+                 program_counter++, bin, line(),
                  sym == symbols.end() ? "" : sym->second.name(), width,
                  N ? "n" : "", Z ? "z" : "", P ? "p" : "",
                  TokenType::IMMEDIATE == ops.front()->token_type()
