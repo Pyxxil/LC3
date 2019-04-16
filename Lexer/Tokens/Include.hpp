@@ -3,11 +3,12 @@
 
 #include "Token.hpp"
 
-namespace Lexer {
-namespace Token {
+namespace Lexer::Token {
+
 class Include : public Token {
 public:
-  Include(std::string t, size_t t_line, size_t t_column, const std::string &t_file)
+  Include(std::string t, size_t t_line, size_t t_column,
+          const std::string &t_file)
       : Token(std::move(t), t_line, t_column, t_file,
               Requirements(1, {Match(TokenType::STRING)})) {}
 
@@ -21,7 +22,7 @@ public:
 
   word memory_required() const override { return 1_word; }
 };
-} // namespace Token
-} // namespace Lexer
+
+} // namespace Lexer::Token
 
 #endif

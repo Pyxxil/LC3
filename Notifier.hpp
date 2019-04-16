@@ -52,20 +52,20 @@ public:
    */
   Notification_Wrapper &operator<<(Callback callback) {
     if (callback.wants_previous()) {
-      for_each(callback);
+      each(callback);
     }
 
     callbacks.emplace_back(std::move(callback));
     return *this;
   }
 
-  void for_each(std::function<void(const Diagnostics::Diagnostic &)> f) const {
+  void each(std::function<void(const Diagnostics::Diagnostic &)> f) const {
     Algorithm::each(diagnostics.cbegin(), diagnostics.cend(), f);
   }
 
-  void notify_for_each() const {
+  void notify_each() const {
     Algorithm::each(callbacks.cbegin(), callbacks.cend(),
-                    [this](const auto &cb) { for_each(cb); });
+                    [this](const auto &cb) { each(cb); });
   }
 
   void notify_all(bool force_updates = false) {
@@ -80,7 +80,7 @@ public:
   size_t count() const { return diagnostics.size(); }
 
   void notify_all_and_clear() {
-    notify_for_each();
+    notify_each();
     diagnostics.clear();
   }
 
@@ -93,14 +93,11 @@ private:
   std::vector<Diagnostics::Diagnostic> diagnostics{};
 };
 
-Notification_Wrapper<NOTIFY_EVENT::DIAGNOSTIC> diagnostic_notifications;
-Notification_Wrapper<NOTIFY_EVENT::ERROR> error_notifications;
-Notification_Wrapper<NOTIFY_EVENT::WARNING> warning_notifications;
+extern Notification_Wrapper<NOTIFY_EVENT::DIAGNOSTIC> diagnostic_notifications;
+extern Notification_Wrapper<NOTIFY_EVENT::ERROR> error_notifications;
+extern Notification_Wrapper<NOTIFY_EVENT::WARNING> warning_notifications;
 
-size_t count() {
-  return diagnostic_notifications.count() + error_notifications.count() +
-         warning_notifications.count();
-}
+size_t count();
 
 } // namespace Notification
 

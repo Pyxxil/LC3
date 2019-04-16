@@ -10,7 +10,7 @@
 namespace Lexer {
 class Line {
 public:
-  explicit Line(const std::string_view &t_line) : m_line(t_line) {}
+  explicit Line(const std::string_view &t_line);
 
   enum IGNORES {
     RESET = 0,
@@ -21,7 +21,7 @@ public:
    *
    * @param to_ignore The things to ignore.
    */
-  void ignore(size_t to_ignore) {
+  constexpr void ignore(size_t to_ignore) {
     m_ignores = (RESET == to_ignore) ? 0 : m_ignores | to_ignore;
   }
 
@@ -30,14 +30,14 @@ public:
    * @return The next character in the line, unless we're at the end of the
    * line, in which case 0.
    */
-  inline auto peek() const { return at(m_index); }
+  constexpr auto peek() const { return at(m_index); }
 
   /*! Retrieve the next character from the string
    *
    * @return The character read if we're not at the end of the string, 0
    * otherwise.
    */
-  auto next() {
+  constexpr auto next() {
     const auto c = peek();
 
     if (0 != c) {
@@ -50,7 +50,7 @@ public:
   /*! Skip the next character
    *
    */
-  inline void skip() { ++m_index; }
+  constexpr void skip() { ++m_index; }
 
   /*! Keep advancing until pred becomes false.
    *
@@ -123,7 +123,7 @@ public:
    *
    * @return true if we have reached the end of the string, otherwise false.
    */
-  inline bool at_end() const { return m_index >= m_line.length(); }
+  constexpr bool at_end() const { return m_index >= m_line.length(); }
 
   /*! Return the character at a specified index (doesn't do bounds checking)
    *
@@ -131,7 +131,7 @@ public:
    *
    * @return The character at the index
    */
-  inline char at(size_t index) const {
+  constexpr char at(size_t index) const {
 #ifndef NDEBUG
     return static_cast<char>((index >= m_line.length()) ? 0 : (*this)[index]);
 #else
@@ -139,14 +139,14 @@ public:
 #endif
   }
 
-  inline char operator[](size_t index) const { return m_line[index]; }
+  constexpr char operator[](size_t index) const { return m_line[index]; }
 
   const Line &operator>>(char &c) {
     c = next();
     return *this;
   }
 
-  inline size_t index() const { return m_index; }
+  constexpr size_t index() const { return m_index; }
 
   const auto &line() const { return m_line; }
 
@@ -158,9 +158,6 @@ private:
   static const std::array<std::function<bool(const Line &, char)>, 2> ignores;
 };
 
-const std::array<std::function<bool(const Line &, char)>, 2> Line::ignores{
-    [](const Line &, char) -> bool { return true; },
-    [](const Line &l, char) -> bool { return l.at(l.index() - 1) != '\\'; }};
 } // namespace Lexer
 
 #endif

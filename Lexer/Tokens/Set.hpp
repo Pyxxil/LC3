@@ -1,19 +1,14 @@
 #ifndef TOKEN_SET_HPP
 #define TOKEN_SET_HPP
 
-#include "../Token.hpp"
+#include "Immediate.hpp"
 
-namespace Lexer {
-namespace Token {
+namespace Lexer::Token {
 #ifdef ADDONS
 class Set : public Token {
 public:
   explicit Set(std::string t, size_t t_line, size_t t_column,
-               const std::string &t_file)
-      : Token(std::move(t), t_line, t_column, t_file,
-              Requirements(2, {Match(TokenType::REGISTER),
-                               Match(TokenType::IMMEDIATE) |
-                                   Match(TokenType::LABEL)})) {}
+               const std::string &t_file);
 
   Set(const Set &) = default;
   Set(Set &&) = default;
@@ -24,76 +19,8 @@ public:
   TokenType token_type() const final { return SET; }
 
   void assemble(int16_t &program_counter, size_t width,
-                const std::map<std::string, Symbol> &symbols) override {
-    const auto &ops = operands();
-
-    const int16_t value = static_cast<Immediate *>(ops[1].get())->value();
-
-    if (value > -16 && value < 15) {
-      And a("AND", line(), column(), file());
-      a.add_operand(std::make_unique<Register>(
-          fmt::format("R{:d}",
-                      static_cast<Register *>(ops.front().get())->reg()),
-          line(), column(), file()));
-      a.add_operand(std::make_unique<Register>(
-          fmt::format("R{:d}",
-                      static_cast<Register *>(ops.front().get())->reg()),
-          line(), column(), file()));
-      a.add_operand(
-          std::make_unique<Immediate>("#0", line(), column(), file()));
-      a.assemble(program_counter, width, symbols);
-
-      Add ad("ADD", line(), column(), file());
-      ad.add_operand(std::make_unique<Register>(
-          fmt::format("R{:d}",
-                      static_cast<Register *>(ops.front().get())->reg()),
-          line(), column(), file()));
-      ad.add_operand(std::make_unique<Register>(
-          fmt::format("R{:d}",
-                      static_cast<Register *>(ops.front().get())->reg()),
-          line(), column(), file()));
-      ad.add_operand(std::make_unique<Decimal>(fmt::format("#{:d}", value),
-                                               line(), column(), file()));
-      ad.assemble(program_counter, width, symbols);
-
-      for (auto &&as : a.assembled()) {
-        as_assembled.emplace_back(as);
-      }
-
-      for (auto &&as : ad.assembled()) {
-        as_assembled.emplace_back(as);
-      }
-    } else {
-      Br b("BR", true, true, true, line(), column(), file());
-      b.add_operand(std::make_unique<Decimal>("#1", line(), column(), file()));
-      b.assemble(program_counter, width, symbols);
-
-      Fill f(".FILL", line(), column(), file());
-      f.add_operand(std::make_unique<Decimal>(fmt::format("#{:d}", value),
-                                              line(), column(), file()));
-      f.assemble(program_counter, width, symbols);
-
-      Ld l("LD", line(), column(), file());
-      l.add_operand(std::make_unique<Register>(
-          fmt::format("R{:d}",
-                      static_cast<Register *>(ops.front().get())->reg()),
-          line(), column(), file()));
-      l.add_operand(std::make_unique<Decimal>("#-2", line(), column(), file()));
-      l.assemble(program_counter, width, symbols);
-
-      for (auto &&as : b.assembled()) {
-        as_assembled.emplace_back(as);
-      }
-
-      for (auto &&as : f.assembled()) {
-        as_assembled.emplace_back(as);
-      }
-
-      for (auto &&as : l.assembled()) {
-        as_assembled.emplace_back(as);
-      }
-    }
-  }
+                const std::map<std::string, Symbol> &symbols,
+                const std::string &sym) override;
 
   word memory_required() const override {
     const auto immediate_value =
@@ -103,7 +30,6 @@ public:
   }
 };
 #endif
-} // namespace Token
-} // namespace Lexer
+} // namespace Lexer::Token
 
 #endif

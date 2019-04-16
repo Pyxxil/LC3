@@ -3,12 +3,12 @@
 
 #include "Token.hpp"
 
-namespace Lexer {
-namespace Token {
+namespace Lexer::Token {
+
 class Puts : public Token {
 public:
-  Puts(std::string t, size_t t_line, size_t t_column, const std::string &t_file)
-      : Token(std::move(t), t_line, t_column, t_file) {}
+  Puts(std::string t, size_t t_line, size_t t_column,
+       const std::string &t_file);
 
   Puts(const Puts &) = default;
   Puts(Puts &&) = default;
@@ -19,23 +19,12 @@ public:
   TokenType token_type() const final { return PUTS; }
 
   void assemble(int16_t &program_counter, size_t width,
-                const std::map<std::string, Symbol> &symbols) override {
-    auto sym = std::find_if(symbols.begin(), symbols.end(),
-                            [program_counter](const auto &sym) {
-                              return sym.second.address() == program_counter;
-                            });
-
-    set_assembled(AssembledToken(
-        0xF022,
-        fmt::format(
-            "({0:0>4X}) F022 1111000000100010 ({1: >4d}) {2: <{3}s} PUTS",
-            program_counter++, line(),
-            sym == symbols.end() ? "" : sym->second.name(), width)));
-  }
+                const std::map<std::string, Symbol> &symbols,
+                const std::string &sym) override;
 
   word memory_required() const override { return 1_word; }
 };
-} // namespace Token
-} // namespace Lexer
+
+} // namespace Lexer::Token
 
 #endif

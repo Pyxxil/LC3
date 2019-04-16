@@ -3,13 +3,13 @@
 
 #include "Token.hpp"
 
-namespace Lexer {
-namespace Token {
+namespace Lexer::Token {
+
 class Label : public Token {
 public:
   explicit Label(std::string s, size_t t_line, size_t t_column,
                  const std::string &t_file)
-      : Token(std::move(s), t_line, t_column,t_file) {}
+      : Token(std::move(s), t_line, t_column, t_file) {}
 
   Label(const Label &) = default;
   Label(Label &&) = default;
@@ -19,11 +19,9 @@ public:
 
   TokenType token_type() const final { return LABEL; }
 
-  word memory_required() const override { return 0_word; }
-
-private:
+  word memory_required() const override { return 0_words; }
 };
-} // namespace Token
-} // namespace Lexer
+
+} // namespace Lexer::Token
 
 #endif

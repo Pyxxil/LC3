@@ -3,8 +3,7 @@
 
 #include "Immediate.hpp"
 
-namespace Lexer {
-namespace Token {
+namespace Lexer::Token {
 #ifdef ADDONS
 class Octal : public Immediate {
 public:
@@ -31,7 +30,6 @@ public:
   Octal &operator=(Octal &&) = default;
 };
 #endif
-} // namespace Token
-} // namespace Lexer
+} // namespace Lexer::Token
 
 #endif

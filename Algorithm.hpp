@@ -110,6 +110,17 @@ constexpr T accumulate(InputIterator first, InputIterator last, T init) {
   return sum;
 }
 
+template <class InputIterator, class T, class Function>
+constexpr T accumulate(InputIterator first, InputIterator last, T init,
+                       Function f) {
+  T sum = init;
+  for (; first != last; ++first) {
+    sum = f(sum, *first);
+  }
+
+  return sum;
+}
+
 template <class InputIterator, class T>
 constexpr T accumulate2d(InputIterator first, InputIterator last, T init) {
   T sum = init;

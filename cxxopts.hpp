@@ -174,7 +174,7 @@ const std::string RQUOTE("\'");
 const std::string LQUOTE("‘");
 const std::string RQUOTE("’");
 #endif
-}
+} // namespace
 
 class Value : public std::enable_shared_from_this<Value> {
 public:

@@ -3,8 +3,7 @@
 
 #include "Token.hpp"
 
-namespace Lexer {
-namespace Token {
+namespace Lexer::Token {
 #ifdef KEEP_COMMENTS
 class Comment : public Token {
 public:
@@ -21,10 +20,10 @@ public:
   TokenType token_type() const final { return COMMENT; }
 
   void assemble(int16_t &programCounter, size_t width,
-                const std::map<std::string, Symbol> &symbol) override {}
+                const std::map<std::string, Symbol> &symbol,
+                const std::string &sym) override {}
 };
 #endif
-} // namespace Token
-} // namespace Lexer
+} // namespace Lexer::Token
 
 #endif

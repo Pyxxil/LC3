@@ -3,8 +3,8 @@
 
 #include "Token.hpp"
 
-namespace Lexer {
-namespace Token {
+namespace Lexer::Token {
+
 class Register : public Token {
 public:
   explicit Register(std::string s, size_t t_line, size_t t_column,
@@ -21,14 +21,15 @@ public:
   TokenType token_type() const final { return REGISTER; }
 
   void assemble(int16_t &program_counter, size_t width,
-                const std::map<std::string, Symbol> &symbol) override {}
+                const std::map<std::string, Symbol> &symbol,
+                const std::string &sym) override {}
 
   auto reg() const { return mReg; }
 
 private:
   size_t mReg{};
 };
-} // namespace Token
-} // namespace Lexer
+
+} // namespace Lexer::Token
 
 #endif

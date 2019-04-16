@@ -103,10 +103,10 @@ public:
         Lexer::Lexer lexer(Lexer::File{file});
         lexer.lex();
 
-        Notification::warning_notifications.notify_for_each();
+        Notification::warning_notifications.notify_each();
 
         if (!lexer.is_okay()) {
-          Notification::error_notifications.notify_for_each();
+          Notification::error_notifications.notify_each();
           continue;
         }
 
@@ -117,7 +117,7 @@ public:
         for (size_t index = 0; index < tokens.size(); ++index) {
           const auto &token = tokens[index];
 #ifdef KEEP_COMMENTS
-          if (token->token_type() == Lexer::TokenType::COMMENT) {
+          if (token->token_type() == TokenType::COMMENT) {
             formatFile << "; " << token->get_token() << '\n';
             continue;
           }
@@ -125,11 +125,11 @@ public:
 
           std::string line;
 
-          if (token->token_type() == Lexer::TokenType::LABEL) {
+          if (token->token_type() == TokenType::LABEL) {
             line.push_back(':');
             line = fmt::format("{}:", token->get_token());
-          } else if (token->token_type() == Lexer::TokenType::ORIG ||
-                     token->token_type() == Lexer::TokenType::END) {
+          } else if (token->token_type() == TokenType::ORIG ||
+                     token->token_type() == TokenType::END) {
             line = fmt::format("\n{}", token->get_token());
           } else {
             line = fmt::format("    {}", token->get_token());
@@ -153,7 +153,7 @@ public:
 
 #ifdef KEEP_COMMENTS
           if (index + 1 < tokens.size() &&
-              tokens[index + 1]->token_type() == Lexer::TokenType::COMMENT) {
+              tokens[index + 1]->token_type() == TokenType::COMMENT) {
             if (align_comments && line.length() < 40) {
               line += std::string(40 - line.length(), ' ');
             }
@@ -166,8 +166,8 @@ public:
           }
 #endif
 
-          if (token->token_type() == Lexer::TokenType::ORIG ||
-              token->token_type() == Lexer::TokenType::END) {
+          if (token->token_type() == TokenType::ORIG ||
+              token->token_type() == TokenType::END) {
             line.push_back('\n');
           }
 

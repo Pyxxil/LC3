@@ -94,12 +94,12 @@ auto main(int, char **) -> int {
 
     lexer.lex();
 
-    Notification::warning_notifications.notify_for_each();
+    Notification::warning_notifications.notify_each();
 
     if (lexer.is_okay()) {
       fmt::print("{}\n", lexer);
     } else {
-      Notification::error_notifications.notify_for_each();
+      Notification::error_notifications.notify_each();
     }
   }
 

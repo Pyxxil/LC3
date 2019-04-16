@@ -3,8 +3,8 @@
 
 #include "Token.hpp"
 
-namespace Lexer {
-namespace Token {
+namespace Lexer::Token {
+
 class Immediate : public Token {
 public:
   explicit Immediate(std::string t, size_t t_line, size_t tColumn,
@@ -20,14 +20,15 @@ public:
   TokenType token_type() const final { return IMMEDIATE; }
 
   void assemble(int16_t &program_counter, size_t width,
-                const std::map<std::string, Symbol> &symbol) override {}
+                const std::map<std::string, Symbol> &symbol,
+                const std::string &sym) override {}
 
   int16_t value() const { return m_value; }
 
 protected:
   int16_t m_value{};
 };
-} // namespace Token
-} // namespace Lexer
+
+} // namespace Lexer::Token
 
 #endif
