@@ -5,7 +5,7 @@ namespace Lexer::Token {
 
 Requirements::Requirements(size_t _min, std::vector<Match> operands,
                            size_t _max)
-    : min(_min), max(_min > _max ? _min : _max),
+    : min(_min), max(Algorithm::max(_min, _max)),
       arguments(std::move(operands)) {
   assert(arguments.size() >= min && arguments.size() <= max);
 }

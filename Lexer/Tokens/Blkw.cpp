@@ -11,7 +11,7 @@ Blkw::Blkw(std::string t, size_t t_line, size_t t_column,
                         Match(TokenType::IMMEDIATE) | Match(TokenType::LABEL)},
                        2)) {}
 
-void Blkw::assemble(int16_t &program_counter, size_t width,
+void Blkw::assemble(uint16_t &program_counter, size_t width,
                     const std::map<std::string, Symbol> &symbols,
                     const std::string &sym) {
   const auto &ops = operands();
@@ -42,27 +42,20 @@ void Blkw::assemble(int16_t &program_counter, size_t width,
     }
   }
 
-  const auto value =
-      ops.size() == 1
-          ? "0x0000"
-          : fmt::format(
-                "0x{:04X}",
-                TokenType::IMMEDIATE == ops[1]->token_type()
-                    ? (static_cast<Immediate *>(ops[1].get())->value() & 0xFFFF)
-                    : label->second.address());
+  auto &&value = fmt::format("0x{:04X}", bin);
+  auto &&lst = fmt::format("{0:0>4X} {0:0>16b} ({1: >4d}) {2:s} .FILL {3:s}",
+                           bin, line(), std::string(width, ' '), value);
 
   set_assembled(AssembledToken(
       bin, fmt::format("({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
                        ".FILL {5:s}",
                        program_counter++, bin, line(), sym, width, value)));
 
-  for (auto i = static_cast<Immediate *>(ops.front().get())->value() - 1; i > 0;
-       i--) {
+  const auto count = static_cast<Immediate *>(ops.front().get())->value() - 1;
+  for (auto i = 0; i < count; ++i) {
     as_assembled.emplace_back(
-        bin, fmt::format("({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
-                         ".FILL {5:s}",
-                         program_counter++, bin, line(), std::string{}, width,
-                         value));
+        bin, fmt::format("({0:0>4X}) ", program_counter++) + lst);
   }
 }
+
 } // namespace Lexer::Token

@@ -18,7 +18,7 @@ public:
 
   TokenType token_type() const final { return JMP; }
 
-  void assemble(int16_t &program_counter, size_t width,
+  void assemble(uint16_t &program_counter, size_t width,
                 const std::map<std::string, Symbol> &symbols,
                 const std::string &sym) override;
 

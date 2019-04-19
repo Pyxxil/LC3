@@ -19,7 +19,7 @@ public:
 
   // TODO: This could also just alter the NOT instructions lower bits to make
   // the simulator do 2's complement for us..
-  void assemble(int16_t &programCounter, size_t width,
+  void assemble(uint16_t &program_counter, size_t width,
                 const std::map<std::string, Symbol> &symbols,
                 const std::string &sym) override;
 

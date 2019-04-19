@@ -232,7 +232,7 @@ Tokenizer::Tokenizer::Tokenizer(Lexer &t_lexer, File &t_file)
     : m_lexer(t_lexer), file(t_file) {}
 
 std::unique_ptr<Token::Token>
-Tokenizer::tokenize_immediate(const std::string_view &s) {
+Tokenizer::tokenize_immediate(std::string_view s) {
   // We know this is going to be negative, as this is only ever called when
   // the next character on the line is a '-'.
   const TokenValues values{s, file.position().line(), file.position().column(),
@@ -393,7 +393,7 @@ Tokenizer::tokenize_immediate(const std::string_view &s) {
 }
 
 std::unique_ptr<Token::Token>
-Tokenizer::tokenize_directive(const std::string_view &s) {
+Tokenizer::tokenize_directive(std::string_view s) {
   const auto &[column, line] = file.position();
   const TokenValues vals{s, line, column, file.name()};
   if (const auto _hash{hash(s)}; _hash > 0) {
@@ -426,7 +426,7 @@ Tokenizer::tokenize_directive(const std::string_view &s) {
   return is_valid_label(s) ? vals.to<Token::Label>() : vals.to<Token::Token>();
 }
 
-std::unique_ptr<Token::Token> Tokenizer::tokenize(const std::string_view &s) {
+std::unique_ptr<Token::Token> Tokenizer::tokenize(std::string_view s) {
   const auto &[column, line] = file.position();
   const TokenValues vals{s, line, column, file.name()};
   if (const auto _hash = hash(s); _hash > 0) {
@@ -628,27 +628,27 @@ std::vector<std::unique_ptr<Token::Token>> Tokenizer::tokenize_line(Line line) {
         }
         break;
       }
-      case ',': {  // Just a seperator between operands, not required.
-                if (',' == terminator || ':' == terminator) {
-                  extraneous(next);
-                }
-                else if (l_tokens.empty() || (l_tokens.back()->token_type() != TokenType::REGISTER && l_tokens.back()->token_type() != TokenType::IMMEDIATE)) {
+      case ',': { // Just a seperator between operands, not required.
+        if (',' == terminator || ':' == terminator) {
+          extraneous(next);
+        } else if (l_tokens.empty() ||
+                   (l_tokens.back()->token_type() != TokenType::REGISTER &&
+                    l_tokens.back()->token_type() != TokenType::IMMEDIATE)) {
           extraneous(next);
         }
         terminator = next;
         break;
-                }
-      case ':': {  // As above.
-        if (':' == terminator) {
+      }
+      case ':': { // As above.
+        if (',' == terminator || ':' == terminator) {
           extraneous(next);
-        } else if (':' == next) {
-          if (l_tokens.empty() || l_tokens.back()->token_type() != TokenType::LABEL) {
-            extraneous(next);
-          }
+        } else if (l_tokens.empty() ||
+                   l_tokens.back()->token_type() != TokenType::LABEL) {
+          extraneous(next);
         }
         terminator = next;
         break;
-                }
+      }
       case '"': // string
         [[fallthrough]];
       case '\'': { // character
@@ -701,8 +701,7 @@ std::vector<std::unique_ptr<Token::Token>> Tokenizer::tokenize_line(Line line) {
                       Diagnostics::Diagnostic(
                           std::make_unique<Diagnostics::DiagnosticHighlighter>(
                               begin - 1, character.length() + 1, file.line()),
-                          "Found character literal, but Addons aren't "
-                          "enabled",
+                          "Found character literal, but Addons aren't enabled",
                           file.name(), file.position().line()));
 #endif
         }

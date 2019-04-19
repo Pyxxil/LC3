@@ -6,7 +6,7 @@ String::String(std::string s, size_t t_line, size_t t_column,
                const std::string &t_file)
     : Token(std::move(s), t_line, t_column, t_file, Requirements()) {
   std::string real{};
-  for (auto idx = 0; idx < token.length(); ++idx) {
+  for (size_t idx = 0; idx < token.length(); ++idx) {
     switch (auto c = token[idx]; c) {
     case '\\':
       if (idx == token.length() - 1) {
@@ -14,7 +14,7 @@ String::String(std::string s, size_t t_line, size_t t_column,
       }
       switch (auto cx = token[idx + 1]; cx) {
       case '"':
-        token.erase(static_cast<unsigned long>(idx), 1);
+        token.erase(idx, 1);
         real.push_back(cx);
         break;
       case 'n':

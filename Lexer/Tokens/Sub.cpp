@@ -16,7 +16,7 @@ Sub::Sub(std::string t, size_t t_line, size_t t_column,
                         Match(TokenType::REGISTER)},
                        3)) {}
 
-void Sub::assemble(int16_t &programCounter, size_t width,
+void Sub::assemble(uint16_t &program_counter, size_t width,
                    const std::map<std::string, Symbol> &symbols,
                    const std::string &sym) {
   const auto &ops = operands();
@@ -24,59 +24,55 @@ void Sub::assemble(int16_t &programCounter, size_t width,
   const size_t first_reg_idx = ops.size() - 2;
   const size_t second_reg_idx = ops.size() - 1;
 
-  if (static_cast<Register *>(ops[first_reg_idx].get())->reg() ==
-      static_cast<Register *>(ops[second_reg_idx].get())->reg()) {
-    And a("AND", line(), column(), file());
-    a.add_operand(std::make_unique<Register>(
-        fmt::format("R{:d}", static_cast<Register *>(ops.front().get())->reg()),
-        line(), column(), file()));
-    a.add_operand(std::make_unique<Register>(
-        fmt::format("R{:d}",
-                    static_cast<Register *>(ops[first_reg_idx].get())->reg()),
-        line(), column(), file()));
-    a.add_operand(std::make_unique<Decimal>(
-        fmt::format("0",
-                    static_cast<Register *>(ops[second_reg_idx].get())->reg()),
-        line(), column(), file()));
-    a.assemble(programCounter, width, symbols, sym);
+  const uint16_t DR = static_cast<Register *>(ops.front().get())->reg();
+  const uint16_t SR1 = static_cast<Register *>(ops[first_reg_idx].get())->reg();
+  const uint16_t SR2 =
+      static_cast<Register *>(ops[second_reg_idx].get())->reg();
 
+  auto &&dest_reg = fmt::format("R{:d}", DR);
+  auto &&first_reg = fmt::format("R{:d}", SR1);
+  auto &&second_reg = fmt::format("R{:d}", SR2);
+
+  if (SR1 == SR2) {
+    And a("AND", line(), column(), file());
+    a.add_operand(
+        std::make_unique<Register>(dest_reg, line(), column(), file()));
+    a.add_operand(
+        std::make_unique<Register>(first_reg, line(), column(), file()));
+    a.add_operand(
+        std::make_unique<Decimal>(second_reg, line(), column(), file()));
+    a.assemble(program_counter, width, symbols, sym);
     as_assembled = a.assembled();
   } else {
-    const uint16_t DR = static_cast<Register *>(ops.front().get())->reg();
-    const uint16_t SR1 =
-        static_cast<Register *>(ops[first_reg_idx].get())->reg();
-    const uint16_t SR2 =
-        static_cast<Register *>(ops[second_reg_idx].get())->reg();
-
     Neg n(".NEG", line(), column(), file());
-    n.add_operand(std::make_unique<Register>(fmt::format("R{:d}", SR2), line(),
-                                             column(), file()));
-    n.assemble(programCounter, width, symbols, sym);
-
-    Add a("ADD", line(), column(), file());
-    a.add_operand(std::make_unique<Register>(fmt::format("R{:d}", DR), line(),
-                                             column(), file()));
-    a.add_operand(std::make_unique<Register>(fmt::format("R{:d}", SR1), line(),
-                                             column(), file()));
-    a.add_operand(std::make_unique<Register>(fmt::format("R{:d}", SR2), line(),
-                                             column(), file()));
-    a.assemble(programCounter, width, symbols, std::string{});
+    n.add_operand(
+        std::make_unique<Register>(second_reg, line(), column(), file()));
+    n.assemble(program_counter, width, symbols, sym);
 
     as_assembled = n.assembled();
 
+    Add a("ADD", line(), column(), file());
+    a.add_operand(
+        std::make_unique<Register>(dest_reg, line(), column(), file()));
+    a.add_operand(
+        std::make_unique<Register>(first_reg, line(), column(), file()));
+    a.add_operand(
+        std::make_unique<Register>(second_reg, line(), column(), file()));
+    a.assemble(program_counter, width, symbols, std::string{});
+
     as_assembled.insert(std::end(as_assembled),
-                        std::make_move_iterator(a.assembled().begin()),
-                        std::make_move_iterator(a.assembled().end()));
+                        std::make_move_iterator(std::begin(a.assembled())),
+                        std::make_move_iterator(std::end(a.assembled())));
 
     if (DR != SR2) {
       Neg n(".NEG", line(), column(), file());
-      n.add_operand(std::make_unique<Register>(fmt::format("R{:d}", SR2),
-                                               line(), column(), file()));
-      n.assemble(programCounter, width, symbols, std::string{});
+      n.add_operand(
+          std::make_unique<Register>(second_reg, line(), column(), file()));
+      n.assemble(program_counter, width, symbols, std::string{});
 
       as_assembled.insert(std::end(as_assembled),
-                          std::make_move_iterator(n.assembled().begin()),
-                          std::make_move_iterator(n.assembled().end()));
+                          std::make_move_iterator(std::begin(n.assembled())),
+                          std::make_move_iterator(std::end(n.assembled())));
     }
   }
 }

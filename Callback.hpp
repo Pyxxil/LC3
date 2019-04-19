@@ -58,6 +58,7 @@ private:
   bool want_previous;
   bool update_on_each;
 };
+
 } // namespace Notification
 
 #endif

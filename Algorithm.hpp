@@ -74,6 +74,18 @@ constexpr auto max(InputIterator first, InputIterator last, Comp compare) {
   return _max;
 }
 
+template <class T, class Comp,
+          typename = std::enable_if_t<std::is_integral_v<T>>>
+constexpr T max(T first, T last, Comp compare) {
+  return compare(first, last) ? first : last;
+}
+
+template <class T, class Comp = greater_than<T>,
+          typename = std::enable_if_t<std::is_integral_v<T>>>
+constexpr T max(T first, T last) {
+  return Comp(first, last)() ? first : last;
+}
+
 template <class InputIterator,
           class Comp = less_than<
               typename std::iterator_traits<InputIterator>::value_type>>
@@ -98,6 +110,18 @@ constexpr auto min(InputIterator first, InputIterator last, Comp compare) {
   }
 
   return _min;
+}
+
+template <class T, class Comp,
+          typename = std::enable_if_t<std::is_integral_v<T>>>
+constexpr T min(T first, T last, Comp compare) {
+  return compare(first, last) ? first : last;
+}
+
+template <class T, class Comp = less_than<T>,
+          typename = std::enable_if_t<std::is_integral_v<T>>>
+constexpr T min(T first, T last) {
+  return Comp(first, last)() ? first : last;
 }
 
 template <class InputIterator, class T>

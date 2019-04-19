@@ -48,7 +48,7 @@ public:
 
   void add_operand(std::unique_ptr<Token> operand);
 
-  virtual void assemble(int16_t &programCounter, size_t width,
+  virtual void assemble(uint16_t &program_counter, size_t width,
                         const std::map<std::string, Symbol> &symbols,
                         const std::string &sym) {}
   virtual word memory_required() const { return -1; }

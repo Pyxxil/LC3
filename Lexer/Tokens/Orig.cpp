@@ -9,7 +9,7 @@ Orig::Orig(std::string t, size_t t_line, size_t t_column,
     : Token(std::move(t), t_line, t_column, t_file,
             Requirements(1, {Match(TokenType::IMMEDIATE)})) {}
 
-void Orig::assemble(int16_t &program_counter, size_t width,
+void Orig::assemble(uint16_t &program_counter, size_t width,
                     const std::map<std::string, Symbol> &symbols,
                     const std::string &sym) {
   program_counter = static_cast<Immediate *>(operands()[0].get())->value();

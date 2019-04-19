@@ -10,32 +10,23 @@ Jsr::Jsr(std::string t, size_t t_line, size_t t_column,
             Requirements(
                 1, {Match(TokenType::LABEL) | Match(TokenType::IMMEDIATE)})) {}
 
-void Jsr::assemble(int16_t &program_counter, size_t width,
+void Jsr::assemble(uint16_t &program_counter, size_t width,
                    const std::map<std::string, Symbol> &symbols,
                    const std::string &sym) {
   const auto &ops = operands();
 
-  uint16_t bin = 0x4800;
+  int16_t offset = 0;
 
   if (TokenType::IMMEDIATE == ops.front()->token_type()) {
-    bin |= ((static_cast<int16_t>(
-                 static_cast<Immediate *>(ops.front().get())->value() & 0x7FF)
-             << 5) >>
-            5) &
-           0x7FF;
+    offset = static_cast<Immediate *>(ops.front().get())->value() & 0x7FF;
   } else {
-    auto label =
+    const auto label =
         std::find_if(symbols.begin(), symbols.end(),
-                     [&token = ops.front()->get_token()](const auto &sym) {
+                     [&token = ops.front()->get_token()](auto &&sym) {
                        return sym.second.name() == token;
                      });
-    if (label != symbols.end()) {
-      bin |= ((static_cast<int16_t>(label->second.address() -
-                                    (program_counter + 1))
-               << 5) >>
-              5) &
-             0x7FF;
-    } else {
+
+    if (label == symbols.end()) {
       Notification::error_notifications << Diagnostics::Diagnostic(
           std::make_unique<Diagnostics::DiagnosticHighlighter>(
               ops.front()->column(), ops.front()->get_token().length(), ""),
@@ -43,7 +34,12 @@ void Jsr::assemble(int16_t &program_counter, size_t width,
           ops.front()->file(), ops.front()->line());
       return;
     }
+
+    offset =
+        static_cast<int16_t>(label->second.address()) - (program_counter + 1);
   }
+
+  const auto bin = static_cast<uint16_t>(0x4800 | ((offset << 5) >> 5 & 0x7FF));
 
   set_assembled(AssembledToken(
       bin, fmt::format(

@@ -21,16 +21,16 @@ class Tokenizer {
 public:
   Tokenizer(Lexer &t_lexer, File &t_file);
 
-  std::unique_ptr<Token::Token> tokenize_immediate(const std::string_view &s);
+  std::unique_ptr<Token::Token> tokenize_immediate(std::string_view s);
 
-  std::unique_ptr<Token::Token> tokenize_directive(const std::string_view &s);
+  std::unique_ptr<Token::Token> tokenize_directive(std::string_view s);
 
   /*! Tokenize a single word
    *
    * @param s The word to tokenize
    * @return The token the word corresponds to
    */
-  std::unique_ptr<Token::Token> tokenize(const std::string_view &s);
+  std::unique_ptr<Token::Token> tokenize(std::string_view s);
 
   void extraneous(char character);
 

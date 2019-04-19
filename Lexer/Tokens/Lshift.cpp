@@ -10,7 +10,7 @@ Lshift::Lshift(std::string t, size_t t_line, size_t t_column,
             Requirements(2, {Match(TokenType::REGISTER),
                              Match(TokenType::IMMEDIATE)})) {}
 
-void Lshift::assemble(int16_t &programCounter, size_t width,
+void Lshift::assemble(uint16_t &program_counter, size_t width,
                       const std::map<std::string, Symbol> &symbols,
                       const std::string &sym) {
   const auto &ops = operands();
@@ -25,7 +25,7 @@ void Lshift::assemble(int16_t &programCounter, size_t width,
         fmt::format(
             "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} ADD R{5:d} "
             "R{5:d} R{5:d}",
-            programCounter++, bin, line(), sym, width, reg));
+            program_counter++, bin, line(), sym, width, reg));
   }
 }
 #endif

@@ -12,14 +12,14 @@ Lea::Lea(std::string t, size_t t_line, size_t t_column,
                 2, {Match(TokenType::REGISTER),
                     Match(TokenType::LABEL) | Match(TokenType::IMMEDIATE)})) {}
 
-void Lea::assemble(int16_t &program_counter, size_t width,
+void Lea::assemble(uint16_t &program_counter, size_t width,
                    const std::map<std::string, Symbol> &symbols,
                    const std::string &sym) {
   const auto &ops = operands();
 
-  const uint16_t DR = static_cast<Register *>(ops[0].get())->reg() << 9;
+  const uint16_t DR = static_cast<Register *>(ops[0].get())->reg();
 
-  uint16_t bin = 0xE000 | DR;
+  uint16_t bin = static_cast<uint16_t>(0xE000 | (DR << 9));
 
   if (TokenType::IMMEDIATE == ops[1]->token_type()) {
     bin |= ((static_cast<int16_t>(
@@ -54,7 +54,7 @@ void Lea::assemble(int16_t &program_counter, size_t width,
       fmt::format(
           "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} LEA R{5:d} "
           "{6:s}",
-          program_counter++, bin, line(), sym, width, DR >> 9,
+          program_counter++, bin, line(), sym, width, DR,
           TokenType::IMMEDIATE == ops[1]->token_type()
               ? fmt::format("#{:d}",
                             static_cast<Immediate *>(ops[1].get())->value())

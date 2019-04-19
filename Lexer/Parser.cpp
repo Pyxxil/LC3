@@ -68,8 +68,8 @@ void Parser::parse() {
                    "Previous definition found here", sym.file(), sym.line());
       } else {
         longest_symbol_length =
-            std::max(longest_symbol_length,
-                     static_cast<int>(token->get_token().length()));
+            Algorithm::max(longest_symbol_length,
+                           static_cast<int>(token->get_token().length()));
       }
       break;
     }
@@ -77,14 +77,19 @@ void Parser::parse() {
       if (origin_seen) {
         error();
       } else {
-        current_address =
-            static_cast<uint16_t>(static_cast<Lexer::Token::Immediate *>(
-                                      token->operands().front().get())
-                                      ->value());
+        current_address = static_cast<Lexer::Token::Immediate *>(
+                              token->operands().front().get())
+                              ->value();
         origin_seen = true;
       }
       break;
     case TokenType::END:
+      if (end_seen) {
+        Notification::warning_notifications << Diagnostics::Diagnostic(
+            std::make_unique<Diagnostics::DiagnosticHighlighter>(
+                token->column(), token->get_token().length(), std::string{}),
+            "Extra .END directive found.", token->file(), token->line());
+      }
       end_seen = true;
       break;
     default:
@@ -94,7 +99,8 @@ void Parser::parse() {
         Notification::warning_notifications << Diagnostics::Diagnostic(
             std::make_unique<Diagnostics::DiagnosticHighlighter>(
                 token->column(), token->get_token().length(), std::string{}),
-            "Extra .END directive found.", token->file(), token->line());
+            "Token found after .END, ignoring it", token->file(),
+            token->line());
       } else {
         if (const word memory_required = token->memory_required();
             memory_required == -1) {

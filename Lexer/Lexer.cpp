@@ -64,8 +64,9 @@ Lexer::Lexer(File file, bool warnings_are_errors)
 
   while (m_file.next_line()) {
     auto &&l_tokens = m_tokenizer.tokenize_line(Line(m_file.line()));
-    tokens.insert(std::end(tokens), std::make_move_iterator(l_tokens.begin()),
-                  std::make_move_iterator(l_tokens.end()));
+    tokens.insert(std::end(tokens),
+                  std::make_move_iterator(std::begin(l_tokens)),
+                  std::make_move_iterator(std::end(l_tokens)));
   }
 }
 
@@ -173,7 +174,9 @@ std::vector<std::unique_ptr<Token::Token>> Lexer::consume_range(size_t begin,
     return consumed;
   }
 
-  for (std::size_t i = 0; i < end && idx < tokens.size(); ++i) {
+  const auto _end = Algorithm::min(end, tokens.size() - idx);
+
+  for (std::size_t i = 0; i < _end; ++i) {
     consumed.emplace_back(std::move(tokens[idx++]));
   }
 
@@ -204,16 +207,16 @@ template <typename T, typename> Lexer &Lexer::operator<<(T s) {
 template <> Lexer &Lexer::operator<<<std::string_view>(std::string_view s) {
   // DEBUG("Passed in line '{}'", s);
   auto &&l_tokens = m_tokenizer.tokenize_line(Line(s));
-  tokens.insert(std::end(tokens), std::make_move_iterator(l_tokens.begin()),
-                std::make_move_iterator(l_tokens.end()));
+  tokens.insert(std::end(tokens), std::make_move_iterator(std::begin(l_tokens)),
+                std::make_move_iterator(std::end(l_tokens)));
   return *this;
 }
 
 template <> Lexer &Lexer::operator<<<std::string>(std::string s) {
   // DEBUG("Passed in line '{}'", s);
   auto &&l_tokens = m_tokenizer.tokenize_line(Line(s));
-  tokens.insert(std::end(tokens), std::make_move_iterator(l_tokens.begin()),
-                std::make_move_iterator(l_tokens.end()));
+  tokens.insert(std::end(tokens), std::make_move_iterator(std::begin(l_tokens)),
+                std::make_move_iterator(std::end(l_tokens)));
   return *this;
 }
 

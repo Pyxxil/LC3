@@ -11,43 +11,39 @@ Br::Br(std::string t, bool n, bool z, bool p, size_t t_line, size_t t_column,
                 1, {Match(TokenType::LABEL) | Match(TokenType::IMMEDIATE)})),
       N(n), Z(z), P(p) {}
 
-void Br::assemble(int16_t &program_counter, size_t width,
+void Br::assemble(uint16_t &program_counter, size_t width,
                   const std::map<std::string, Symbol> &symbols,
                   const std::string &sym) {
   const auto &ops = operands();
 
-  uint16_t bin = static_cast<uint16_t>(
-      0x0000 | (static_cast<uint16_t>(N) << 11) |
-      (static_cast<uint16_t>(Z) << 10) | (static_cast<uint16_t>(P) << 9));
+  int16_t offset = 0;
 
   if (TokenType::IMMEDIATE == ops.front()->token_type()) {
-    bin |= ((static_cast<int16_t>(
-                 static_cast<Immediate *>(ops.front().get())->value() & 0x1FF)
-             << 7) >>
-            7) &
-           0x1FF;
+    offset = static_cast<Immediate *>(ops.front().get())->value() & 0x1FF;
   } else {
-    auto label =
+    const auto label =
         std::find_if(symbols.begin(), symbols.end(),
-                     [&token = ops.front()->get_token()](const auto &sym) {
+                     [&token = ops.front()->get_token()](auto &&sym) {
                        return sym.second.name() == token;
                      });
-    if (label != symbols.end()) {
-      bin |=
-          (static_cast<int16_t>(static_cast<int16_t>(label->second.address() -
-                                                     (program_counter + 1))
-                                << 7) >>
-           7) &
-          0x1FF;
-    } else {
+
+    if (label == symbols.end()) {
       Notification::error_notifications << Diagnostics::Diagnostic(
           std::make_unique<Diagnostics::DiagnosticHighlighter>(
-              ops[1]->column(), ops[1]->get_token().length(), ""),
+              ops[1]->column(), ops[1]->get_token().length(), std::string{}),
           fmt::format("Undefined label '{}'", *(ops[1])), ops[1]->file(),
           ops[1]->line());
       return;
     }
+
+    offset =
+        static_cast<int16_t>(label->second.address()) - (program_counter + 1);
   }
+
+  const auto bin = static_cast<uint16_t>(
+      0x0000 | (static_cast<uint16_t>(N) << 11) |
+      (static_cast<uint16_t>(Z) << 10) | (static_cast<uint16_t>(P) << 9) |
+      ((offset << 7) >> 7 & 0x1FF));
 
   set_assembled(AssembledToken(
       bin, fmt::format(

@@ -158,7 +158,7 @@ int Assembler::assemble() {
         std::vector<::Lexer::Token::AssembledToken> assembled{};
         assembled.reserve(tokens.size());
 
-        int16_t program_counter{0};
+        uint16_t program_counter{0};
         // Assemble the Orig statement simply because it's required as the
         // starting program counter
         auto &&origin = *tokens.begin();
