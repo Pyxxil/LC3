@@ -40,10 +40,12 @@ public:
     callback.second(name(), diagnostic);
   }
 
-  auto name() const -> const Callback_Name_t & { return callback.first; }
+  [[nodiscard]] auto name() const -> const Callback_Name_t & {
+    return callback.first;
+  }
 
-  auto wants_previous() const { return want_previous; }
-  auto wants_updates() const { return update_on_each; }
+  [[nodiscard]] auto wants_previous() const { return want_previous; }
+  [[nodiscard]] auto wants_updates() const { return update_on_each; }
 
   template <typename... Args> void warn(const char *fmt, Args &&... args) {
     fmt::print("{0:s}\n", fmt::format(fmt, args...));

@@ -3,6 +3,8 @@
 #include "Immediate.hpp"
 #include "Register.hpp"
 
+#include "TokenExtras.hpp"
+
 namespace Lexer::Token {
 
 Lea::Lea(std::string t, size_t t_line, size_t t_column,
@@ -17,48 +19,44 @@ void Lea::assemble(uint16_t &program_counter, size_t width,
                    const std::string &sym) {
   const auto &ops = operands();
 
-  const uint16_t DR = static_cast<Register *>(ops[0].get())->reg();
+  const auto DR = static_cast<Register *>(ops.front().get())->reg();
 
-  uint16_t bin = static_cast<uint16_t>(0xE000 | (DR << 9));
+  int16_t offset;
 
-  if (TokenType::IMMEDIATE == ops[1]->token_type()) {
-    bin |= ((static_cast<int16_t>(
-                 static_cast<Immediate *>(ops[1].get())->value() & 0x1FF)
-             << 7) >>
-            7);
+  const bool is_immediate = TokenType::IMMEDIATE == ops.back()->token_type();
+
+  if (is_immediate) {
+    offset = static_cast<Immediate *>(ops.back().get())->value();
   } else {
     const auto label =
         std::find_if(symbols.begin(), symbols.end(),
-                     [&token = ops[1]->get_token()](const auto &sym) {
+                     [&token = ops.back()->get_token()](auto &&sym) {
                        return sym.second.name() == token;
                      });
-    if (label != symbols.end()) {
-      bin |=
-          (static_cast<int16_t>(static_cast<int16_t>(label->second.address() -
-                                                     (program_counter + 1))
-                                << 7) >>
-           7) &
-          0x1FF;
-    } else {
+
+    if (label == symbols.end()) {
       Notification::error_notifications << Diagnostics::Diagnostic(
           std::make_unique<Diagnostics::DiagnosticHighlighter>(
-              ops[1]->column(), ops[1]->get_token().length(), ""),
-          fmt::format("Undefined label '{}'", *(ops[1])), ops[1]->file(),
-          ops[1]->line());
+              ops.back()->column(), ops.back()->get_token().length(), ""),
+          fmt::format("Undefined label '{}'", *(ops.back())),
+          ops.back()->file(), ops.back()->line());
       return;
     }
+
+    offset =
+        static_cast<int16_t>(label->second.address() - (program_counter + 1));
   }
 
+  const auto bin =
+      static_cast<uint16_t>(OP_LEA | DR << 9 | mask<9>(sign_extend<7>(offset)));
+
   set_assembled(AssembledToken(
-      bin,
-      fmt::format(
-          "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} LEA R{5:d} "
-          "{6:s}",
-          program_counter++, bin, line(), sym, width, DR,
-          TokenType::IMMEDIATE == ops[1]->token_type()
-              ? fmt::format("#{:d}",
-                            static_cast<Immediate *>(ops[1].get())->value())
-              : ops[1]->get_token())));
+      bin, fmt::format(
+               "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} LEA R{5:d} "
+               "{6:s}",
+               program_counter++, bin, line(), sym, width, DR,
+               is_immediate ? fmt::format("#{:d}", offset)
+                            : ops.back()->get_token())));
 }
 
 } // namespace Lexer::Token

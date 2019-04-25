@@ -142,7 +142,7 @@ if ( NOT WIN32 )
   # -Wno-error=sign-conversion)
 endif ()
 
-set( RELEASE_FLAGS ${COMPILE_FLAGS} -flto -g )
+set( RELEASE_FLAGS ${COMPILE_FLAGS} -flto -g -fno-rtti -fno-trapping-math -fno-math-errno )
 
 set( CMAKE_VERBOSE_MAKEFILE True )
 set( CMAKE_EXPORT_COMPILE_COMMANDS True )
@@ -166,11 +166,13 @@ include_directories( LC3 ${CMAKE_CURRENT_SOURCE_DIR}
 target_compile_options( LC3 INTERFACE "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>" )
 target_compile_options( LC3 INTERFACE "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>" )
 target_link_libraries( LC3 fmt::fmt )
+target_compile_definitions( LC3 PUBLIC CXXOPTS_NO_RTTI )
 
 add_executable( Test ${TEST_SOURCE_FILES} )
 target_compile_options( Test PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>" )
 target_compile_options( Test PUBLIC "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>" )
 target_link_libraries( Test LC3 fmt )
+target_compile_definitions( Test PUBLIC CXXOPTS_NO_RTTI )
 
 add_executable( LC3AS ${ASSEMBLER_SOURCE_FILES} )
 include_directories( LC3AS ${CMAKE_CURRENT_SOURCE_DIR}
@@ -179,17 +181,19 @@ include_directories( LC3AS ${FMT_SOURCE_DIR} )
 target_compile_options( LC3AS PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>" )
 target_compile_options( LC3AS PUBLIC "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>" )
 target_link_libraries( LC3AS LC3 fmt )
+target_compile_definitions( LC3AS PUBLIC CXXOPTS_NO_RTTI )
 
 add_executable( LC3DIS ${DISASSEMBLER_SOURCE_FILES} )
 include_directories( LC3DIS ${FMT_SOURCE_DIR} )
 target_compile_options( LC3DIS PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>" )
 target_compile_options( LC3DIS PUBLIC "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>" )
 target_link_libraries( LC3DIS LC3 fmt )
+target_compile_definitions( LC3DIS PUBLIC CXXOPTS_NO_RTTI )
 
 add_executable( LC3Format ${FORMATTER_SOURCE_FILES} )
 target_compile_options( LC3Format PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>" )
 target_compile_options( LC3Format PUBLIC "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>" )
-target_compile_definitions( LC3Format PRIVATE KEEP_COMMENTS )
+target_compile_definitions( LC3Format PRIVATE KEEP_COMMENTS CXXOPTS_NO_RTTI )
 target_link_libraries( LC3Format LC3 fmt::fmt )
 
 if ( USE_ADDONS )

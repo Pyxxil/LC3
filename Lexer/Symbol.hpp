@@ -20,12 +20,12 @@ struct Symbol {
 
   ~Symbol() = default;
 
-  constexpr const std::string &name() const { return m_name; }
-  constexpr const std::string &file() const { return m_file; }
+  [[nodiscard]] constexpr const auto &name() const { return m_name; }
+  [[nodiscard]] constexpr const auto &file() const { return m_file; }
 
-  constexpr uint16_t address() const { return m_address; }
-  constexpr size_t column() const { return m_column; }
-  constexpr size_t line() const { return m_line; }
+  [[nodiscard]] constexpr auto address() const { return m_address; }
+  [[nodiscard]] constexpr auto column() const { return m_column; }
+  [[nodiscard]] constexpr auto line() const { return m_line; }
 
   const std::string m_name{};
   const uint16_t m_address{};

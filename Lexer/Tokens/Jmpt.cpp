@@ -14,7 +14,7 @@ void Jmpt::assemble(uint16_t &program_counter, size_t width,
                     const std::string &sym) {
 
   const uint16_t reg = static_cast<Register *>(operands().front().get())->reg();
-  const auto bin = static_cast<uint16_t>(0xC001 | (reg << 6));
+  const auto bin = static_cast<uint16_t>(OP_JMPT | reg << 6);
 
   set_assembled(AssembledToken(
       bin, fmt::format("({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "

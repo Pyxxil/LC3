@@ -17,7 +17,7 @@ void Ldi::assemble(uint16_t &program_counter, size_t width,
                    const std::string &sym) {
   const auto &ops = operands();
 
-  const uint16_t DR = static_cast<Register *>(ops[0].get())->reg();
+  const auto DR = static_cast<Register *>(ops.front().get())->reg();
 
   int16_t offset;
 
@@ -43,8 +43,8 @@ void Ldi::assemble(uint16_t &program_counter, size_t width,
         static_cast<int16_t>(label->second.address() - (program_counter + 1));
   }
 
-  const auto bin =
-      static_cast<uint16_t>(0xA000 | (DR << 9) | ((offset << 7) >> 7 & 0x1FF));
+  const auto bin = static_cast<uint16_t>(OP_LDI | DR << 9 |
+                                         (sign_extend<7>(offset) & 0x1FF));
 
   set_assembled(AssembledToken(
       bin,

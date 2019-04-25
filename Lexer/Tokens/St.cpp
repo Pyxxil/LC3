@@ -21,7 +21,7 @@ void St::assemble(uint16_t &program_counter, size_t width,
   int16_t offset;
 
   if (TokenType::IMMEDIATE == ops[1]->token_type()) {
-    offset = static_cast<Immediate *>(ops[1].get())->value() & 0x1FF;
+    offset = mask<9>(static_cast<Immediate *>(ops[1].get())->value());
   } else {
     const auto label =
         std::find_if(symbols.begin(), symbols.end(),
@@ -42,8 +42,8 @@ void St::assemble(uint16_t &program_counter, size_t width,
         static_cast<int16_t>(label->second.address() - (program_counter + 1));
   }
 
-  const auto bin =
-      static_cast<uint16_t>(0x3000 | (DR << 9) | ((offset << 7) >> 7 & 0x1FF));
+  const auto bin = static_cast<uint16_t>(OP_ST | DR << 9 |
+                                         (mask<9>(sign_extend<7>(offset))));
 
   set_assembled(AssembledToken(
       bin,
@@ -55,6 +55,6 @@ void St::assemble(uint16_t &program_counter, size_t width,
               ? fmt::format("#{:d}",
                             static_cast<Immediate *>(ops[1].get())->value())
               : ops[1]->get_token())));
-} // namespace Lexer::Token
+}
 
 } // namespace Lexer::Token

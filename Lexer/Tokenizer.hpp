@@ -36,7 +36,7 @@ public:
 
   std::vector<std::unique_ptr<Token::Token>> tokenize_line(Line line);
 
-  Lexer &lexer() const { return m_lexer; }
+  [[nodiscard]] Lexer &lexer() const { return m_lexer; }
 
 private:
   Lexer &m_lexer;

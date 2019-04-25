@@ -18,20 +18,17 @@ void Blkw::assemble(uint16_t &program_counter, size_t width,
 
   uint16_t bin = 0x0000;
 
-  std::map<std::string, Symbol>::const_iterator label;
-
   if (ops.size() > 1) {
     if (TokenType::IMMEDIATE == ops[1]->token_type()) {
-      bin = static_cast<uint16_t>(
-          static_cast<Immediate *>(ops[1].get())->value());
+      bin = static_cast<Immediate *>(ops[1].get())->value();
     } else {
-      label = std::find_if(symbols.begin(), symbols.end(),
-                           [&token = ops[1]->get_token()](const auto &sym) {
-                             return sym.second.name() == token;
-                           });
-      if (label != symbols.end()) {
-        bin = label->second.address();
-      } else {
+      const auto label =
+          std::find_if(symbols.begin(), symbols.end(),
+                       [&token = ops[1]->get_token()](const auto &sym) {
+                         return sym.second.name() == token;
+                       });
+
+      if (label == symbols.end()) {
         Notification::error_notifications << Diagnostics::Diagnostic(
             std::make_unique<Diagnostics::DiagnosticHighlighter>(
                 ops[1]->column(), ops[1]->get_token().length(), ""),
@@ -39,6 +36,8 @@ void Blkw::assemble(uint16_t &program_counter, size_t width,
             ops[1]->line());
         return;
       }
+
+      bin = label->second.address();
     }
   }
 

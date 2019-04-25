@@ -32,8 +32,9 @@ void Token::compile_ast() const {
 }
 
 const std::string &Token::AST() const {
-  if (!ast_compiled)
+  if (!ast_compiled) {
     compile_ast();
+  }
 
   return ast;
 }

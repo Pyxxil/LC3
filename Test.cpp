@@ -14,13 +14,7 @@
 
 #include "fmt/printf.h"
 
-#if __APPLE__
-#define TEST_FILE_PATH "/Users/pyxxil/Sync/Projects/LC3/Examples"
-#elif __linux__
-#define TEST_FILE_PATH "/home/pyxxil/Sync/Projects/LC3/Examples"
-#endif
-
-auto main(int, char **) -> int {
+int main(int /* unused */, char ** /* unused */) {
   using namespace std::literals; // For string_view literals
   using namespace Lexer::Token;
 
@@ -35,6 +29,7 @@ auto main(int, char **) -> int {
             diagnostic);
       },
       false, false);
+
   Notification::error_notifications << errors;
 
   Notification::Callback warnings(
@@ -48,6 +43,7 @@ auto main(int, char **) -> int {
             diagnostic);
       },
       false, false);
+
   Notification::warning_notifications << warnings;
 
   Notification::Callback test("Test", [](auto &&, auto &&diagnostic) {
@@ -56,40 +52,34 @@ auto main(int, char **) -> int {
                diagnostic.line(), diagnostic.column(), diagnostic.message(),
                diagnostic.file());
   });
+
   Notification::warning_notifications << test;
   Notification::error_notifications << test;
 
-  // Notification::diagnostic_notifications.for_each(
-  //     [](auto &&diagnostic) { std::cout << diagnostic << '\n'; });
+  Notification::diagnostic_notifications.each(
+      [](auto &&d) { fmt::print("{}", d); });
 
   Lexer::Lexer lexer;
 
-  lexer
-      << "\tAdd R1 R2 '\n'; Yay for comments!"sv
-      << "\"Hello\" \"\\\"\" \""sv
-      << "'H'  'Hello'  '\n'"sv
-      << "Jmp R7 JSR  LABEL JSRR R2 NOT R2 ,, R3 TEST:.FILL, -x300 AND R1, R2"sv
-      << "\"Unterminated string"sv;
+  lexer << "\tAdd R1 R2 '\n'; Yay for comments!"sv
+        << ".STRINGZ \"Hello\" \"\\\"\" \"\""sv
+        << ".FILL 'H'  .sTRINGZ \"Hello\"  .FILL '\n'"sv
+        << "Jmp R7 JSR  LABEL JSRR R2 NOT R2 , R3 TEST:.FILL -x300 AND R1, R2"sv
+        << ".STRINGZ \"Unterminated string\""sv;
 
   lexer.lex();
 
   Notification::warning_notifications.notify_all(true);
 
   if (lexer.is_okay()) {
-    std::cout << lexer;
+    fmt::print("{}", lexer);
   } else {
     Notification::error_notifications.notify_all(true);
   }
 
   lexer.clear();
 
-  for (auto &&file : {
-           "Test.asm", // TEST_FILE_PATH "/Fibonacci.asm",
-                       // TEST_FILE_PATH "/Recursive_Fibonacci.asm",
-           // TEST_FILE_PATH "/Compare.asm", TEST_FILE_PATH "/input.asm",
-           // TEST_FILE_PATH "/Multi_Word_Addition.asm"
-           // TEST_FILE_PATH "/Features.asm"
-       }) {
+  for (auto &&file : {"Test.asm"}) {
     Lexer::Lexer lexer(Lexer::File{file});
 
     lexer.lex();
@@ -97,7 +87,7 @@ auto main(int, char **) -> int {
     Notification::warning_notifications.notify_each();
 
     if (lexer.is_okay()) {
-      fmt::print("{}\n", lexer);
+      fmt::print("{}", lexer);
     } else {
       Notification::error_notifications.notify_each();
     }

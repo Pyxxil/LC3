@@ -10,7 +10,7 @@ public:
   explicit Register(std::string s, size_t t_line, size_t t_column,
                     const std::string &t_file)
       : Token(std::move(s), t_line, t_column, t_file, Requirements()),
-        mReg(static_cast<size_t>(token[1] - 0x30)) {}
+        mReg{static_cast<uint16_t>(token[1] - 0x30)} {}
 
   Register(const Register &) = default;
   Register(Register &&) = default;
@@ -27,7 +27,7 @@ public:
   auto reg() const { return mReg; }
 
 private:
-  size_t mReg{};
+  uint16_t mReg{};
 };
 
 } // namespace Lexer::Token

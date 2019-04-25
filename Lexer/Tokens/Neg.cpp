@@ -19,8 +19,7 @@ void Neg::assemble(uint16_t &program_counter, size_t width,
   const uint16_t DR = static_cast<Register *>(ops.front().get())->reg();
   const uint16_t SR =
       ops.size() == 2 ? static_cast<Register *>(ops[1].get())->reg() : DR;
-  const uint16_t bin =
-      static_cast<const uint16_t>(0x903F | (DR << 9) | (SR << 6));
+  const auto bin = static_cast<uint16_t>(0x903F | (DR << 9) | (SR << 6));
 
   set_assembled(AssembledToken(
       bin, fmt::format("({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: "
@@ -28,8 +27,7 @@ void Neg::assemble(uint16_t &program_counter, size_t width,
                        "R{6:d}",
                        program_counter++, bin, line(), sym, width, DR, SR)));
 
-  const uint16_t bin1 =
-      static_cast<const uint16_t>(0x1021 | (DR << 9) | (SR << 6));
+  const auto bin1 = static_cast<uint16_t>(0x1021 | (DR << 9) | (SR << 6));
 
   as_assembled.emplace_back(
       bin1,

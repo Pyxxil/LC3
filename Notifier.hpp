@@ -69,6 +69,10 @@ public:
   }
 
   void notify_all(bool force_updates = false) {
+    if (count() == 0) {
+      return;
+    }
+
     Algorithm::each(callbacks.cbegin(), callbacks.cend(),
                     [this, force_updates](const auto &cb) {
                       if (force_updates || cb.wants_updates()) {
@@ -77,7 +81,7 @@ public:
                     });
   }
 
-  size_t count() const { return diagnostics.size(); }
+  [[nodiscard]] auto count() const { return diagnostics.size(); }
 
   void notify_all_and_clear() {
     notify_each();

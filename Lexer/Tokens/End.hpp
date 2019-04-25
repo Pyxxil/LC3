@@ -3,8 +3,8 @@
 
 #include "Token.hpp"
 
-namespace Lexer {
-namespace Token {
+namespace Lexer::Token {
+
 class End : public Token {
 public:
   explicit End(std::string t, size_t t_line, size_t t_column,
@@ -20,10 +20,8 @@ public:
   TokenType token_type() const final { return END; }
 
   word memory_required() const override { return 1_word; }
-
-private:
 };
-} // namespace Token
-} // namespace Lexer
+
+} // namespace Lexer::Token
 
 #endif

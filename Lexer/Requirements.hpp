@@ -1,6 +1,7 @@
 #ifndef REQUIREMENTS_HPP
 #define REQUIREMENTS_HPP
 
+#include <memory>
 #include <vector>
 
 #include "File.hpp"

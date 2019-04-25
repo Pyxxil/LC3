@@ -2,28 +2,44 @@
 
 namespace {
 
+constexpr int UPPER_TOGGLE = 0x20;
+constexpr int LOWER_CASE_A = 0x61;
+constexpr int UPPER_CASE_A = LOWER_CASE_A ^ UPPER_TOGGLE;
+constexpr int UPPER_CASE_F = 0x46;
+constexpr int LOWER_CASE_Z = 0x7A;
+constexpr int UPPER_CASE_Z = LOWER_CASE_Z ^ UPPER_TOGGLE;
+constexpr int ZERO = 0x30;
+constexpr int ONE = 0x31;
+constexpr int SEVEN = 0x37;
+constexpr int NINE = 0x39;
+constexpr size_t LAST_FIVE_BIT_MASK = 0x1F;
+
+constexpr size_t STARTING_HASH = 37;
+
 constexpr size_t HASHED_LETTERS[] = {
     100363, 99989, 97711, 97151, 92311, 80147, 82279, 72997,
     66457,  65719, 70957, 50262, 48407, 51151, 41047, 39371,
     35401,  37039, 28697, 27791, 20201, 21523, 6449,  4813,
     16333,  13337, 3571,  5519,  26783, 71471, 68371, 104729};
 
-constexpr char to_upper(char c) {
-  return (c >= 0x61 && c <= 0x7a) ? static_cast<char>(c ^ 0x20) : c;
+constexpr int to_upper(int c) {
+  return (c >= LOWER_CASE_A && c <= LOWER_CASE_Z) ? (c ^ UPPER_TOGGLE) : c;
 }
 
-constexpr bool is_alpha(const size_t c) {
-  return (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A);
+constexpr bool is_alpha(int c) {
+  return (c >= UPPER_CASE_A && c <= UPPER_CASE_Z) ||
+         (c >= LOWER_CASE_A && c <= LOWER_CASE_Z);
 }
 
-constexpr bool is_digit(char c) { return c >= 0x30 && c <= 0x39; }
+constexpr bool is_digit(char c) { return c >= ZERO && c <= NINE; }
 
-constexpr bool is_bin_digit(char c) { return c == 0x30 || c == 0x31; }
+constexpr bool is_bin_digit(char c) { return c == ZERO || c == ONE; }
 
-constexpr bool is_oct_digit(char c) { return c >= 0x30 && c <= 0x37; }
+constexpr bool is_oct_digit(char c) { return c >= ZERO && c <= SEVEN; }
 
 constexpr bool is_hex_digit(char c) {
-  return is_digit(c) || (c >= 0x61 && c <= 0x66) || (c >= 0x41 && c <= 0x46);
+  const auto upper = to_upper(c);
+  return is_digit(c) || (upper >= UPPER_CASE_A && upper <= UPPER_CASE_F);
 }
 
 /*! Create a hash from a string.
@@ -53,12 +69,13 @@ constexpr size_t hash(const std::string_view &string) {
     return {};
   }
 
-  size_t hashed{37};
+  size_t hashed{STARTING_HASH};
 
   for (auto character : string) {
     const size_t as_hashed{
-        HASHED_LETTERS[(static_cast<size_t>(to_upper(character)) - 0x41u) &
-                       0x1F]};
+        HASHED_LETTERS[(static_cast<size_t>(to_upper(character)) -
+                        UPPER_CASE_A) &
+                       LAST_FIVE_BIT_MASK]};
     hashed = (hashed * as_hashed) ^ (first_char * as_hashed);
   }
 
@@ -168,7 +185,9 @@ constexpr bool is_valid_decimal(const std::string_view &s) {
     // Anything that's of length 1 that doesn't have a digit as the only
     // character is invalid
     return false;
-  } else if (s.length() == 2) {
+  }
+
+  if (s.length() == 2) {
     if (('#' == s.front() || '-' == s.front()) && !is_digit(s[1])) {
       // Anything without a digit in the second position but the length is 2
       // characters is invalid.

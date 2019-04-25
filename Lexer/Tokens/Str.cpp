@@ -17,24 +17,19 @@ void Str::assemble(uint16_t &program_counter, size_t width,
                    const std::string &sym) {
   const auto &ops = operands();
 
-  const uint16_t DR = static_cast<Register *>(ops.front().get())->reg();
-  const uint16_t SR = static_cast<Register *>(ops[1].get())->reg();
-  const uint16_t offset =
-      static_cast<int16_t>(
-          static_cast<int16_t>(
-              static_cast<Immediate *>(ops.back().get())->value())
-          << 10) >>
-          10 &
+  const auto DR = static_cast<Register *>(ops.front().get())->reg();
+  const auto SR = static_cast<Register *>(ops[1].get())->reg();
+  const auto offset =
+      sign_extend<10>(static_cast<Immediate *>(ops.back().get())->value()) &
       0x3F;
 
-  const uint16_t bin = 0x7000 | (DR << 9) | (SR << 6) | offset;
+  const auto bin = static_cast<uint16_t>(OP_STR | DR << 9 | SR << 6 | offset);
 
   set_assembled(AssembledToken(
       bin, fmt::format(
                "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} STR R{5:d} "
                "R{6:d} #{7:d}",
-               program_counter++, bin, line(), sym, width, DR, SR,
-               static_cast<int16_t>(offset))));
+               program_counter++, bin, line(), sym, width, DR, SR, offset)));
 }
 
 } // namespace Lexer::Token

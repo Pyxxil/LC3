@@ -2,6 +2,8 @@
 
 #include "Register.hpp"
 
+#include "TokenExtras.hpp"
+
 namespace Lexer::Token {
 
 Not::Not(std::string t, size_t t_line, size_t t_column,
@@ -16,10 +18,9 @@ void Not::assemble(uint16_t &program_counter, size_t width,
                    const std::string &sym) {
   const auto &ops = operands();
 
-  const uint16_t DR = static_cast<Register *>(ops.front().get())->reg();
-  const uint16_t SR1 =
-      ops.size() > 1 ? static_cast<Register *>(ops[1].get())->reg() : DR;
-  const uint16_t bin = static_cast<const uint16_t>(0x903F | DR << 9 | SR1 << 6);
+  const auto DR = static_cast<Register *>(ops.front().get())->reg();
+  const auto SR1 = static_cast<Register *>(ops.back().get())->reg();
+  const auto bin = static_cast<uint16_t>(OP_NOT | DR << 9 | SR1 << 6);
 
   set_assembled(AssembledToken(
       bin, fmt::format(

@@ -15,8 +15,8 @@ public:
   AssembledToken &operator=(AssembledToken &&) noexcept = default;
   ~AssembledToken() = default;
 
-  const std::string &lst_str() const;
-  std::pair<uint8_t, uint8_t> binary() const;
+  [[nodiscard]] const std::string &lst_str() const;
+  [[nodiscard]] std::pair<uint8_t, uint8_t> binary() const;
 
 private:
   uint16_t m_bin{};

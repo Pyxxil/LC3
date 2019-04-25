@@ -18,8 +18,8 @@ public:
 
   ~Position() = default;
 
-  size_t column() const;
-  size_t line() const;
+  [[nodiscard]] size_t column() const;
+  [[nodiscard]] size_t line() const;
 
   void inc_column();
   void set_column(size_t column);
@@ -42,18 +42,18 @@ public:
 
   ~File() = default;
 
-  const std::string &name() const { return m_file_name; }
-  const Position &position() const { return m_position; }
-  std::string line() const;
+  [[nodiscard]] const std::string &name() const { return m_file_name; }
+  [[nodiscard]] const Position &position() const { return m_position; }
+  [[nodiscard]] std::string line() const;
 
   void set_column(size_t column);
 
-  bool next_line();
+  [[nodiscard]] bool next_line();
 
   void next_column();
-  const std::string &line(size_t l) const;
+  [[nodiscard]] const std::string &line(size_t l) const;
 
-  bool is_failure() const;
+  [[nodiscard]] bool is_failure() const;
 
 private:
   std::string m_file_name;

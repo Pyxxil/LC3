@@ -17,25 +17,27 @@ void Sti::assemble(uint16_t &program_counter, size_t width,
                    const std::string &sym) {
   const auto &ops = operands();
 
-  const uint16_t DR = static_cast<Register *>(ops[0].get())->reg() << 9;
+  const auto DR = static_cast<Register *>(ops.front().get())->reg() << 9;
 
   int16_t offset;
 
-  if (TokenType::IMMEDIATE == ops[1]->token_type()) {
-    offset = static_cast<Immediate *>(ops[1].get())->value() & 0x1FF;
+  const bool immediate = TokenType::IMMEDIATE == ops.back()->token_type();
+
+  if (immediate) {
+    offset = static_cast<Immediate *>(ops.back().get())->value() & 0x1FF;
   } else {
     const auto label =
         std::find_if(symbols.begin(), symbols.end(),
-                     [&token = ops[1]->get_token()](const auto &sym) {
+                     [&token = ops.back()->get_token()](const auto &sym) {
                        return sym.second.name() == token;
                      });
 
     if (label == symbols.end()) {
       Notification::error_notifications << Diagnostics::Diagnostic(
           std::make_unique<Diagnostics::DiagnosticHighlighter>(
-              ops[1]->column(), ops[1]->get_token().length(), ""),
-          fmt::format("Undefined label '{}'", *(ops[1])), ops[1]->file(),
-          ops[1]->line());
+              ops.back()->column(), ops.back()->get_token().length(), ""),
+          fmt::format("Undefined label '{}'", *(ops.back())),
+          ops.back()->file(), ops.back()->line());
       return;
     }
 
@@ -44,7 +46,7 @@ void Sti::assemble(uint16_t &program_counter, size_t width,
   }
 
   const auto bin =
-      static_cast<uint16_t>(0xB000 | (DR << 9) | ((offset << 7) >> 7 & 0x1FF));
+      static_cast<uint16_t>(OP_STI | DR | (sign_extend<7>(offset) & 0x1FF));
 
   set_assembled(AssembledToken(
       bin,
@@ -52,10 +54,10 @@ void Sti::assemble(uint16_t &program_counter, size_t width,
           "({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} STI R{5:d} "
           "{6:s}",
           program_counter++, bin, line(), sym, width, DR >> 9,
-          TokenType::IMMEDIATE == ops[1]->token_type()
+          immediate
               ? fmt::format("#{:d}",
-                            static_cast<Immediate *>(ops[1].get())->value())
-              : ops[1]->get_token())));
+                            static_cast<Immediate *>(ops.back().get())->value())
+              : ops.back()->get_token())));
 }
 
 } // namespace Lexer::Token

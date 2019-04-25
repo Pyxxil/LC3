@@ -23,8 +23,8 @@ public:
     }
   }
 
-  auto column() const -> size_t { return m_column; }
-  auto length() const -> size_t { return m_length; }
+  [[nodiscard]] auto column() const -> size_t { return m_column; }
+  [[nodiscard]] auto length() const -> size_t { return m_length; }
 
   template <typename OStream>
   friend OStream &operator<<(OStream &os,
@@ -58,10 +58,10 @@ public:
   Diagnostic &operator=(const Diagnostic &) = default;
   Diagnostic &operator=(Diagnostic &&) noexcept = default;
 
-  auto line() const { return m_line; }
-  auto column() const { return m_highlighter->column(); }
-  const auto &message() const { return m_message; }
-  const auto &file() const { return m_file; }
+  [[nodiscard]] auto line() const { return m_line; }
+  [[nodiscard]] auto column() const { return m_highlighter->column(); }
+  [[nodiscard]] const auto &message() const { return m_message; }
+  [[nodiscard]] const auto &file() const { return m_file; }
 
   template <typename OStream>
   friend OStream &operator<<(OStream &os, const Diagnostic &diagnostic) {
@@ -78,6 +78,7 @@ private:
   std::string m_file;
   size_t m_line;
 };
+
 } // namespace Diagnostics
 
 #endif

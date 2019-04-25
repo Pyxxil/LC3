@@ -39,7 +39,8 @@ void Jsr::assemble(uint16_t &program_counter, size_t width,
         static_cast<int16_t>(label->second.address()) - (program_counter + 1);
   }
 
-  const auto bin = static_cast<uint16_t>(0x4800 | ((offset << 5) >> 5 & 0x7FF));
+  const auto bin =
+      static_cast<uint16_t>(OP_JSR | 0x0800 | (sign_extend<5>(offset) & 0x7FF));
 
   set_assembled(AssembledToken(
       bin, fmt::format(

@@ -3,8 +3,8 @@
 
 #include "Token.hpp"
 
-namespace Lexer {
-namespace Token {
+namespace Lexer::Token {
+
 class Rti : public Token {
 public:
   Rti(std::string t, size_t t_line, size_t t_column, const std::string &t_file)
@@ -24,7 +24,7 @@ public:
 
   word memory_required() const override { return 1_word; }
 };
-} // namespace Token
-} // namespace Lexer
+
+} // namespace Lexer::Token
 
 #endif

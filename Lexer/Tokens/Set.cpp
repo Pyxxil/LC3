@@ -32,9 +32,8 @@ void Set::assemble(uint16_t &program_counter, size_t width,
     And a("AND", line(), column(), file());
     a.add_operand(
         std::make_unique<Register>(reg_string, line(), column(), file()));
-    a.add_operand(std::make_unique<Register>(
-        fmt::format("R{:d}", static_cast<Register *>(ops.front().get())->reg()),
-        line(), column(), file()));
+    a.add_operand(
+        std::make_unique<Register>(reg_string, line(), column(), file()));
     a.add_operand(std::make_unique<Immediate>("#0", line(), column(), file()));
     a.assemble(program_counter, width, symbols, sym);
 

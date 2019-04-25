@@ -15,9 +15,9 @@ void Lshift::assemble(uint16_t &program_counter, size_t width,
                       const std::string &sym) {
   const auto &ops = operands();
 
-  const uint16_t reg = static_cast<Register *>(ops.front().get())->reg();
-  const uint16_t bin = 0x1000 | (reg << 9) | (reg << 6) | reg;
-  const uint16_t count = static_cast<Immediate *>(ops[1].get())->value();
+  const auto reg = static_cast<Register *>(ops.front().get())->reg();
+  const auto bin = static_cast<uint16_t>(OP_ADD | reg << 9 | reg << 6 | reg);
+  const auto count = static_cast<Immediate *>(ops.back().get())->value();
 
   for (auto i = 0; i < count; i++) {
     as_assembled.emplace_back(

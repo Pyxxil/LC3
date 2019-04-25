@@ -30,14 +30,14 @@ public:
    * @return The next character in the line, unless we're at the end of the
    * line, in which case 0.
    */
-  constexpr auto peek() const { return at(m_index); }
+  [[nodiscard]] constexpr auto peek() const { return at(m_index); }
 
   /*! Retrieve the next character from the string
    *
    * @return The character read if we're not at the end of the string, 0
    * otherwise.
    */
-  constexpr auto next() {
+  [[nodiscard]] constexpr auto next() {
     const auto c = peek();
 
     if (0 != c) {
@@ -71,7 +71,7 @@ public:
    *
    * @return The index of the character, or -1 if it wasn't found
    */
-  auto find_next(char needle) {
+  [[nodiscard]] auto find_next(char needle) {
     while (!at_end()) {
       if (needle == peek()) {
         if (ignores[m_ignores](*this, needle)) {
@@ -92,7 +92,7 @@ public:
    *
    * @returns The index of the character if pred is ever true, -1 otherwise.
    */
-  template <typename Func> auto find_if(Func &&func) {
+  template <typename Func>[[nodiscard]] auto find_if(Func &&func) {
     while (!at_end()) {
       if (func(peek())) {
         return m_index;
@@ -111,7 +111,7 @@ public:
    *
    * @return The substring in the line.
    */
-  auto substr(size_t begin, size_t end) const {
+  [[nodiscard]] auto substr(size_t begin, size_t end) const {
     if (end == static_cast<size_t>(-1u)) {
       return m_line.substr(begin);
     }
@@ -123,7 +123,9 @@ public:
    *
    * @return true if we have reached the end of the string, otherwise false.
    */
-  constexpr bool at_end() const { return m_index >= m_line.length(); }
+  [[nodiscard]] constexpr bool at_end() const {
+    return m_index >= m_line.length();
+  }
 
   /*! Return the character at a specified index (doesn't do bounds checking)
    *
@@ -131,7 +133,7 @@ public:
    *
    * @return The character at the index
    */
-  constexpr char at(size_t index) const {
+  [[nodiscard]] constexpr char at(size_t index) const {
 #ifndef NDEBUG
     return static_cast<char>((index >= m_line.length()) ? 0 : (*this)[index]);
 #else
@@ -139,16 +141,18 @@ public:
 #endif
   }
 
-  constexpr char operator[](size_t index) const { return m_line[index]; }
+  [[nodiscard]] constexpr char operator[](size_t index) const {
+    return m_line[index];
+  }
 
   const Line &operator>>(char &c) {
     c = next();
     return *this;
   }
 
-  constexpr size_t index() const { return m_index; }
+  [[nodiscard]] constexpr size_t index() const { return m_index; }
 
-  const auto &line() const { return m_line; }
+  [[nodiscard]] const auto &line() const { return m_line; }
 
 private:
   const std::string_view &m_line;

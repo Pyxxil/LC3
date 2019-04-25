@@ -21,13 +21,12 @@ void Sub::assemble(uint16_t &program_counter, size_t width,
                    const std::string &sym) {
   const auto &ops = operands();
 
-  const size_t first_reg_idx = ops.size() - 2;
-  const size_t second_reg_idx = ops.size() - 1;
+  const auto first_reg_idx = ops.size() - 2;
+  const auto second_reg_idx = ops.size() - 1;
 
-  const uint16_t DR = static_cast<Register *>(ops.front().get())->reg();
-  const uint16_t SR1 = static_cast<Register *>(ops[first_reg_idx].get())->reg();
-  const uint16_t SR2 =
-      static_cast<Register *>(ops[second_reg_idx].get())->reg();
+  const auto DR = static_cast<Register *>(ops.front().get())->reg();
+  const auto SR1 = static_cast<Register *>(ops[first_reg_idx].get())->reg();
+  const auto SR2 = static_cast<Register *>(ops[second_reg_idx].get())->reg();
 
   auto &&dest_reg = fmt::format("R{:d}", DR);
   auto &&first_reg = fmt::format("R{:d}", SR1);

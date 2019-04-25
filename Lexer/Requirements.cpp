@@ -29,9 +29,9 @@ size_t Requirements::count() const { return min; }
 std::vector<std::unique_ptr<Token>>
 Requirements::consume(std::vector<std::unique_ptr<Token>> &tokens, size_t index,
                       const File &file) const {
-  std::vector<std::unique_ptr<Token>> consumed;
+  std::vector<std::unique_ptr<Token>> consumed{};
   if (0 == min) {
-    DEBUG("Trying to consume for a token which takes no operands", "");
+    DEBUG("Trying to consume for a token which takes no operands", 0);
     satisfied = true;
     return consumed;
   }
@@ -41,7 +41,7 @@ Requirements::consume(std::vector<std::unique_ptr<Token>> &tokens, size_t index,
     return consumed;
   }
 
-  if (max == -1u) {
+  if (max == -1U) {
     // Need to match at least one of the tokens
     if (!(arguments[0] & tokens[index + 1]->token_type())) {
       auto &&token = tokens[index + 1];

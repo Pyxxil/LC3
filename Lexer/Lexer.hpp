@@ -38,7 +38,7 @@ public:
 
   void each(const std::function<void(const Token::Token &)> &f) const;
 
-  auto is_okay() const { return m_okay; }
+  [[nodiscard]] auto is_okay() const { return m_okay; }
   void error();
   void warn();
 
