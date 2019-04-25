@@ -15,7 +15,7 @@ void Trap::assemble(uint16_t &program_counter, size_t width,
   const auto &ops = operands();
 
   const auto trap_vector =
-      static_cast<Immediate *>(ops.front().get())->value() & 0xFF;
+      mask<8>(static_cast<Immediate *>(ops.front().get())->value());
   const auto bin = static_cast<uint16_t>(OP_TRAP | trap_vector);
 
   set_assembled(AssembledToken(

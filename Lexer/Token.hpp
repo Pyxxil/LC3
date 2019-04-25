@@ -1,21 +1,14 @@
 #ifndef TOKEN_HPP
 #define TOKEN_HPP
 
-#include <cassert>
 #include <map>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "Algorithm.hpp"
 #include "AssembledToken.hpp"
-#include "Debug.hpp"
-#include "Diagnostic.hpp"
-#include "File.hpp"
-#include "Notifier.hpp"
 #include "Requirements.hpp"
 #include "Symbol.hpp"
-#include "TokenExtras.hpp"
 
 #include "fmt/format.h"
 
@@ -76,6 +69,10 @@ private:
   mutable std::string ast{};
   mutable bool ast_compiled{false};
 };
+
+extern std::map<std::string, Symbol>::const_iterator
+find_symbol(const std::map<std::string, Symbol> &symbols,
+            std::string_view symbol, const Token &token);
 
 template <typename OStream>
 inline OStream &operator<<(OStream &os, const Token &t) {

@@ -206,7 +206,6 @@ int Assembler::assemble() {
 
           auto &&t_assembled = token->assembled();
           if (t_assembled.size() != token->memory_required()) {
-            DEBUG("Token that failed was {}", token->AST());
             temp_ret_value = 1;
           } else {
             assembled.insert(std::end(assembled),
@@ -215,17 +214,15 @@ int Assembler::assemble() {
           }
         }
 
-        if (temp_ret_value != 0) {
-          continue;
-        }
-
-        for (auto &&word : assembled) {
-          auto &&[high, low] = word.binary();
-          const auto bin = static_cast<uint16_t>(high) << 8 | low;
-          fmt::print(bin_file, "{:0>16b}\n", bin);
-          fmt::print(hex_file, "{:0>4X}\n", bin);
-          fmt::print(lst_file, "{}\n", word.lst_str());
-          obj_file.put(high).put(low);
+        if (temp_ret_value == 0) {
+          for (auto &&word : assembled) {
+            auto &&[high, low] = word.binary();
+            const auto bin = static_cast<uint16_t>(high) << 8 | low;
+            fmt::print(bin_file, "{:0>16b}\n", bin);
+            fmt::print(hex_file, "{:0>4X}\n", bin);
+            fmt::print(lst_file, "{}\n", word.lst_str());
+            obj_file.put(high).put(low);
+          }
         }
       } else {
         temp_ret_value = 1;

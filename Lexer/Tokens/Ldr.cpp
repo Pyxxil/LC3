@@ -17,10 +17,10 @@ void Ldr::assemble(uint16_t &program_counter, size_t width,
                    const std::string &sym) {
   const auto &ops = operands();
 
-  const auto DR = static_cast<Register *>(ops[0].get())->reg();
+  const auto DR = static_cast<Register *>(ops.front().get())->reg();
   const auto SR = static_cast<Register *>(ops[1].get())->reg();
-  const auto offset =
-      sign_extend<10>(static_cast<Immediate *>(ops[2].get())->value()) & 0x3F;
+  const auto offset = mask<7>(
+      sign_extend<10>(static_cast<Immediate *>(ops.back().get())->value()));
 
   const auto bin =
       static_cast<const uint16_t>(OP_LDR | DR << 9 | SR << 6 | offset);

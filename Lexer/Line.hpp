@@ -82,7 +82,7 @@ public:
     }
 
     // Didn't find it
-    return static_cast<size_t>(-1u);
+    return static_cast<size_t>(-1U);
   }
 
   /*! Keep searching until pred becomes true
@@ -101,7 +101,7 @@ public:
     }
 
     // Didn't find it
-    return static_cast<size_t>(-1u);
+    return static_cast<size_t>(-1U);
   }
 
   /*! Grab a sub string from within the string
@@ -112,7 +112,7 @@ public:
    * @return The substring in the line.
    */
   [[nodiscard]] auto substr(size_t begin, size_t end) const {
-    if (end == static_cast<size_t>(-1u)) {
+    if (end == static_cast<size_t>(-1U)) {
       return m_line.substr(begin);
     }
 

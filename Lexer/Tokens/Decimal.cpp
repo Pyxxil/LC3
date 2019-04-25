@@ -1,5 +1,6 @@
 #include "Decimal.hpp"
 
+#include <charconv>
 #include <limits>
 
 namespace Lexer::Token {
@@ -13,37 +14,11 @@ Decimal::Decimal(std::string s, size_t t_line, size_t t_column,
     too_big = true;
     return;
   }
-  switch (token.front()) {
-  case '#': {
-    char *check = nullptr;
-    const auto v = std::strtoll(token.c_str() + 1ull, &check, 10);
 
-    if (nullptr == check || v > std::numeric_limits<int16_t>::max() ||
-        v < std::numeric_limits<int16_t>::min()) {
-      too_big = true;
-    } else {
-      m_value = static_cast<std::int16_t>(v);
-    }
-    break;
-  }
-  default: {
-    char *check = nullptr;
-    auto v = std::strtoll(token.c_str(), &check, 10);
-
-    if (is_negative) {
-      v = -v;
-      token = "-" + token;
-    }
-
-    if (nullptr == check || v > std::numeric_limits<int16_t>::max() ||
-        v < std::numeric_limits<int16_t>::min()) {
-      too_big = true;
-    } else {
-      m_value = static_cast<std::int16_t>(v);
-    }
-    break;
-  }
-  }
+  auto &&[_, err] =
+      std::from_chars(token.c_str() + static_cast<int>('#' == token.front()),
+                      token.c_str() + token.size(), m_value);
+  too_big = err != std::errc();
 }
 
 } // namespace Lexer::Token

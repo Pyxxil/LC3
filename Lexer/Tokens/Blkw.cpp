@@ -22,22 +22,13 @@ void Blkw::assemble(uint16_t &program_counter, size_t width,
     if (TokenType::IMMEDIATE == ops[1]->token_type()) {
       bin = static_cast<Immediate *>(ops[1].get())->value();
     } else {
-      const auto label =
-          std::find_if(symbols.begin(), symbols.end(),
-                       [&token = ops[1]->get_token()](const auto &sym) {
-                         return sym.second.name() == token;
-                       });
-
-      if (label == symbols.end()) {
-        Notification::error_notifications << Diagnostics::Diagnostic(
-            std::make_unique<Diagnostics::DiagnosticHighlighter>(
-                ops[1]->column(), ops[1]->get_token().length(), ""),
-            fmt::format("Undefined label '{}'", *ops[1]), ops[1]->file(),
-            ops[1]->line());
+      if (const auto label =
+              find_symbol(symbols, ops[1]->get_token(), *(ops[1].get()));
+          label == symbols.cend()) {
         return;
+      } else {
+        bin = label->second.address();
       }
-
-      bin = label->second.address();
     }
   }
 

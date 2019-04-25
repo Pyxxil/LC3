@@ -16,7 +16,7 @@ constexpr size_t LAST_FIVE_BIT_MASK = 0x1F;
 
 constexpr size_t STARTING_HASH = 37;
 
-constexpr size_t HASHED_LETTERS[] = {
+constexpr std::array<size_t, 32> HASHED_LETTERS{
     100363, 99989, 97711, 97151, 92311, 80147, 82279, 72997,
     66457,  65719, 70957, 50262, 48407, 51151, 41047, 39371,
     35401,  37039, 28697, 27791, 20201, 21523, 6449,  4813,
@@ -60,7 +60,7 @@ constexpr size_t hash(const std::string_view &string) {
     return {};
   }
 
-  const size_t first_char{static_cast<size_t>(to_upper(string.front()))};
+  const auto first_char{static_cast<size_t>(to_upper(string.front()))};
 
   if (first_char != '.' && !is_alpha(first_char)) {
     // Basically, we don't really want something that's likely to be an
@@ -232,14 +232,14 @@ struct TokenValues {
     return std::make_unique<T>(s, line, column, file_name);
   }
 
-  template <typename T, typename E> constexpr auto to(E extra) const {
+  template <typename T, typename E> constexpr auto to(E negative) const {
     // For immeduate values
-    return std::make_unique<T>(s, line, column, file_name, extra);
+    return std::make_unique<T>(s, line, column, file_name, negative);
   }
 
-  template <typename T, typename E> constexpr auto to(E e1, E e2, E e3) const {
+  template <typename T, typename E> constexpr auto to(E n, E z, E p) const {
     // For branch instructions
-    return std::make_unique<T>(s, e1, e2, e3, line, column, file_name);
+    return std::make_unique<T>(s, n, z, p, line, column, file_name);
   }
 };
 
@@ -676,7 +676,7 @@ std::vector<std::unique_ptr<Token::Token>> Tokenizer::tokenize_line(Line line) {
         const auto begin{line.index()};
         const auto end{line.find_next(next)};
         line.ignore(Line::RESET);
-        if (-1u == end) {
+        if (-1U == end) {
 #ifdef ADDONS
           const std::string unterminated_literal{
               next == '"' ? "Unterminated String literal"
@@ -748,9 +748,9 @@ std::vector<std::unique_ptr<Token::Token>> Tokenizer::tokenize_line(Line line) {
         line.skip_while([](auto &&) -> bool { return true; });
         break;
       case '#': {
-        std::string token{line.substr(token_start, line.find_if([](auto c) {
-          return !(is_digit(c) || '-' == c);
-        }))};
+        const std::string token{line.substr(
+            token_start,
+            line.find_if([](auto c) { return !is_digit(c) && '-' != c; }))};
         if (is_valid_decimal(token)) {
           auto &&decimal{std::make_unique<Token::Decimal>(
               token, file.position().line(), file.position().column(),
@@ -782,7 +782,6 @@ std::vector<std::unique_ptr<Token::Token>> Tokenizer::tokenize_line(Line line) {
         break;
       }
     } else {
-      DEBUG("TOKEN START {}, TOKEN END {}", token_start, token_end);
       auto &&token{line.substr(token_start, token_end)};
       if (token.empty()) {
         continue;
@@ -801,7 +800,6 @@ std::vector<std::unique_ptr<Token::Token>> Tokenizer::tokenize_line(Line line) {
             std::string(token), file.position().line(),
             file.position().column(), file.name()));
       } else {
-        DEBUG("FOUND THIS {}", *t_token);
         l_tokens.emplace_back(std::move(t_token));
       }
       terminator = '\0';

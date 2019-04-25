@@ -2,7 +2,7 @@
 
 #include "Match.hpp"
 
-std::vector<std::string> Lexer::open_files{};
+std::map<std::string, const Lexer::File &> Lexer::open_files{};
 
 void throw_error(Lexer::Tokenizer::Tokenizer *tokenizer,
                  Diagnostics::Diagnostic error) {
@@ -22,7 +22,7 @@ using namespace Lexer;
 
 bool file_exists(const std::string &file) {
   return Algorithm::any(open_files.cbegin(), open_files.cend(),
-                        [&file](auto &&f) { return f == file; });
+                        [&file](auto &&f) { return f.first == file; });
 }
 
 const Match requires_zero = Match(TokenType::LABEL) | Match(TokenType::RET) |
@@ -60,7 +60,7 @@ Lexer::Lexer(File file, bool warnings_are_errors)
     return;
   }
 
-  open_files.emplace_back(m_file.name());
+  open_files.emplace(m_file.name(), m_file);
 
   while (m_file.next_line()) {
     auto &&l_tokens = m_tokenizer.tokenize_line(Line(m_file.line()));
@@ -71,9 +71,7 @@ Lexer::Lexer(File file, bool warnings_are_errors)
 }
 
 Lexer::~Lexer() {
-  if (const auto it =
-          std::find(open_files.begin(), open_files.end(), m_file.name());
-      it != open_files.end()) {
+  if (const auto it = open_files.find(m_file.name()); it != open_files.end()) {
     open_files.erase(it);
   }
 }
@@ -95,14 +93,11 @@ void Lexer::warn() {
 }
 
 void Lexer::lex() {
-  // DEBUG("Tokens size: {}", tokens.size());
   for (idx = 0; idx < tokens.size(); ++idx) {
     auto &token = *(tokens[idx]);
-    DEBUG("Found token {}", token.get_token());
     const auto &requirements = token.requirements();
 
     for (auto &&tok : requirements.consume(tokens, idx, m_file)) {
-      DEBUG("\tConsumed - {}", tok->get_token());
       token.add_operand(std::move(tok));
     }
 
@@ -142,9 +137,7 @@ void Lexer::lex() {
     std::vector<std::unique_ptr<Token::Token>> _tokens;
     _tokens.reserve(tokens.capacity());
     for (auto &&token : tokens) {
-      DEBUG("Working on token: {}", token->get_token());
       if (token->token_type() == TokenType::INCLUDE) {
-        DEBUG("Found this: {}", token->operands().size());
         const auto &file_name = token->operands().front()->get_token();
         Lexer lexer(File{file_name.substr(1, file_name.length() - 2)});
         lexer.lex();
@@ -205,7 +198,6 @@ template <typename T, typename> Lexer &Lexer::operator<<(T s) {
 }
 
 template <> Lexer &Lexer::operator<<<std::string_view>(std::string_view s) {
-  // DEBUG("Passed in line '{}'", s);
   auto &&l_tokens = m_tokenizer.tokenize_line(Line(s));
   tokens.insert(std::end(tokens), std::make_move_iterator(std::begin(l_tokens)),
                 std::make_move_iterator(std::end(l_tokens)));
@@ -213,7 +205,6 @@ template <> Lexer &Lexer::operator<<<std::string_view>(std::string_view s) {
 }
 
 template <> Lexer &Lexer::operator<<<std::string>(std::string s) {
-  // DEBUG("Passed in line '{}'", s);
   auto &&l_tokens = m_tokenizer.tokenize_line(Line(s));
   tokens.insert(std::end(tokens), std::make_move_iterator(std::begin(l_tokens)),
                 std::make_move_iterator(std::end(l_tokens)));

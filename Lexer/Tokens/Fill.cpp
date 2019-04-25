@@ -20,27 +20,18 @@ void Fill::assemble(uint16_t &program_counter, size_t width,
   if (TokenType::IMMEDIATE == ops.front()->token_type()) {
     bin = static_cast<Immediate *>(ops.front().get())->value();
   } else {
-    const auto label =
-        std::find_if(symbols.begin(), symbols.end(),
-                     [&token = ops.front()->get_token()](auto &&sym) {
-                       return sym.second.name() == token;
-                     });
-
-    if (label == symbols.end()) {
-      Notification::error_notifications << Diagnostics::Diagnostic(
-          std::make_unique<Diagnostics::DiagnosticHighlighter>(
-              ops.front()->column(), ops.front()->get_token().length(), ""),
-          fmt::format("Undefined label '{}'", *(ops.front())),
-          ops.front()->file(), ops.front()->line());
+    if (const auto label = find_symbol(symbols, ops.front()->get_token(),
+                                       *(ops.front().get()));
+        label == symbols.cend()) {
       return;
+    } else {
+      bin = label->second.address();
     }
-
-    bin = label->second.address();
   }
 
   set_assembled(AssembledToken(
       bin, fmt::format("({0:0>4X}) {1:0>4X} {1:0>16b} ({2: >4d}) {3: <{4}s} "
-                       ".FILL 0x{5:04x}",
+                       ".FILL 0x{5:04X}",
                        program_counter++, bin, line(), sym, width, bin)));
 }
 

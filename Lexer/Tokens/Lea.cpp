@@ -24,27 +24,17 @@ void Lea::assemble(uint16_t &program_counter, size_t width,
   int16_t offset;
 
   const bool is_immediate = TokenType::IMMEDIATE == ops.back()->token_type();
-
   if (is_immediate) {
     offset = static_cast<Immediate *>(ops.back().get())->value();
   } else {
-    const auto label =
-        std::find_if(symbols.begin(), symbols.end(),
-                     [&token = ops.back()->get_token()](auto &&sym) {
-                       return sym.second.name() == token;
-                     });
-
-    if (label == symbols.end()) {
-      Notification::error_notifications << Diagnostics::Diagnostic(
-          std::make_unique<Diagnostics::DiagnosticHighlighter>(
-              ops.back()->column(), ops.back()->get_token().length(), ""),
-          fmt::format("Undefined label '{}'", *(ops.back())),
-          ops.back()->file(), ops.back()->line());
+    if (const auto label =
+            find_symbol(symbols, ops.back()->get_token(), *(ops.back().get()));
+        label == symbols.cend()) {
       return;
+    } else {
+      offset =
+          static_cast<int16_t>(label->second.address()) - (program_counter + 1);
     }
-
-    offset =
-        static_cast<int16_t>(label->second.address() - (program_counter + 1));
   }
 
   const auto bin =

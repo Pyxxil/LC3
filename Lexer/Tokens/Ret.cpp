@@ -12,8 +12,7 @@ void Ret::assemble(uint16_t &program_counter, size_t width,
 
   set_assembled(AssembledToken(
       0xC1C0,
-      fmt::format("({0:0>4X}) 1100000111000000 C1C0 ({1: >4d}) {2: <{3}s} "
-                  "RET",
+      fmt::format("({0:0>4X}) C1C0 1100000111000000 ({1: >4d}) {2: <{3}s} RET",
                   program_counter++, line(), sym, width)));
 }
 

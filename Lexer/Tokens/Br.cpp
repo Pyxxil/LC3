@@ -19,27 +19,17 @@ void Br::assemble(uint16_t &program_counter, size_t width,
   int16_t offset;
 
   const bool is_immediate = TokenType::IMMEDIATE == ops.front()->token_type();
-
   if (is_immediate) {
     offset = static_cast<Immediate *>(ops.front().get())->value();
   } else {
-    const auto label =
-        std::find_if(symbols.begin(), symbols.end(),
-                     [&token = ops.front()->get_token()](auto &&sym) {
-                       return sym.second.name() == token;
-                     });
-
-    if (label == symbols.end()) {
-      Notification::error_notifications << Diagnostics::Diagnostic(
-          std::make_unique<Diagnostics::DiagnosticHighlighter>(
-              ops.front()->column(), ops.front()->get_token().length(), ""),
-          fmt::format("Undefined label '{}'", *(ops.front())),
-          ops.front()->file(), ops.back()->line());
+    if (const auto label = find_symbol(symbols, ops.front()->get_token(),
+                                       *(ops.front().get()));
+        label == symbols.cend()) {
       return;
+    } else {
+      offset =
+          static_cast<int16_t>(label->second.address()) - (program_counter + 1);
     }
-
-    offset =
-        static_cast<int16_t>(label->second.address()) - (program_counter + 1);
   }
 
   const auto bin = static_cast<uint16_t>(
@@ -52,9 +42,8 @@ void Br::assemble(uint16_t &program_counter, size_t width,
                        "BR{5:s}{6:s}{7:s} {8:s}",
                        program_counter++, bin, line(), sym, width, N ? "n" : "",
                        Z ? "z" : "", P ? "p" : "",
-                       TokenType::IMMEDIATE == ops.front()->token_type()
-                           ? fmt::format("#{:d}", offset)
-                           : ops.front()->get_token())));
+                       is_immediate ? fmt::format("#{:d}", offset)
+                                    : ops.front()->get_token())));
 }
 
 } // namespace Lexer::Token

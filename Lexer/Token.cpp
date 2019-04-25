@@ -1,6 +1,12 @@
 #include "Token.hpp"
 
-#include "Requirements.hpp"
+#include "Algorithm.hpp"
+#include "Debug.hpp"
+#include "Diagnostic.hpp"
+#include "File.hpp"
+#include "Lexer.hpp"
+#include "Notifier.hpp"
+#include "TokenExtras.hpp"
 
 namespace Lexer::Token {
 
@@ -54,6 +60,28 @@ void Token::set_assembled(AssembledToken assembled) {
 
 const std::vector<AssembledToken> &Token::assembled() const {
   return as_assembled;
+}
+
+std::map<std::string, Symbol>::const_iterator
+find_symbol(const std::map<std::string, Symbol> &symbols,
+            std::string_view symbol, const Token &token) {
+  const auto label =
+      std::find_if(symbols.cbegin(), symbols.cend(), [&symbol](auto &&sym) {
+        return sym.second.name() == symbol;
+      });
+
+  if (label == symbols.cend()) {
+    Notification::error_notifications << Diagnostics::Diagnostic(
+        std::make_unique<Diagnostics::DiagnosticHighlighter>(
+            token.column(), token.get_token().length(),
+            open_files.at(token.file()).line(token.line() - 1)),
+        fmt::format("Undefined label '{}'", token), token.file(), token.line());
+
+    // TODO: Add in some sort of string checker to check for the closest (and
+    // maybe likeliest) candidate to what they meant
+  }
+
+  return label;
 }
 
 } // namespace Lexer::Token

@@ -17,7 +17,7 @@
 
 namespace Lexer {
 
-extern std::vector<std::string> open_files;
+extern std::map<std::string, const File &> open_files;
 
 class Lexer {
 public:

@@ -16,11 +16,12 @@ Binary::Binary(std::string s, size_t t_line, size_t t_column,
 
   if (immediate.length() > 16) {
     too_big = true;
-  } else {
-    m_value = is_negative
-                  ? -static_cast<int16_t>(std::bitset<16>(immediate).to_ulong())
-                  : static_cast<int16_t>(std::bitset<16>(immediate).to_ulong());
+    return;
   }
+
+  m_value = is_negative
+                ? -static_cast<int16_t>(std::bitset<16>(immediate).to_ulong())
+                : static_cast<int16_t>(std::bitset<16>(immediate).to_ulong());
 }
 
 } // namespace Lexer::Token
